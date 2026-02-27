@@ -14,12 +14,23 @@
 		601C35A9B00A1DB151051547 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEB87C6F11C9CD08D683B7ED /* AppRootView.swift */; };
 		80BA78F819D86A875444BF87 /* RetrievalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56ACACA61D8E261D6E98C107 /* RetrievalView.swift */; };
 		84F07A743C05A628C18F0556 /* OnboardingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E3F8D2A538452DAA45EFD9 /* OnboardingFlowView.swift */; };
+		922815F7B002ED3086F72266 /* YOMUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CD603EFFFA6C72C1051A20 /* YOMUITests.swift */; };
 		94825F1141F1B7D898AE97BF /* SettingsTabRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814CFBBB975C559A04614B3B /* SettingsTabRootView.swift */; };
 		B2FBED56AED2D4DC6377871D /* AppShellState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 330C4CF0526472DBA280F754 /* AppShellState.swift */; };
 		DA7CE9EBDCABD70173FF7D6B /* LanguageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E48BA3076C1C631CC5B040BD /* LanguageStore.swift */; };
 		F5C2F86251E20844932CB975 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F9215FF8C831F5F25ADF69B /* AppLanguage.swift */; };
 		F8DCC8888CDA9F29AA55DD2A /* MapTabRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EEC5CF1D0E364422DB2B5A4 /* MapTabRootView.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		0DEB1BAB52D5B8482C1E28D2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E0CDE8C4665D4E441269BD66 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8999E9E7BAAD80538C1EF326;
+			remoteInfo = YOM;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		30EC77F863A9C094EC9FC979 /* PointOfInterest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointOfInterest.swift; sourceTree = "<group>"; };
@@ -34,6 +45,8 @@
 		B6E3F6C94A84994F1B12C854 /* YOM.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = YOM.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D7BDBF9EB1B292ED4D8B8791 /* YOMApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YOMApp.swift; sourceTree = "<group>"; };
 		E48BA3076C1C631CC5B040BD /* LanguageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageStore.swift; sourceTree = "<group>"; };
+		EB9BA07413744F5858115582 /* YOMUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = YOMUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F4CD603EFFFA6C72C1051A20 /* YOMUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YOMUITests.swift; sourceTree = "<group>"; };
 		F8E3F8D2A538452DAA45EFD9 /* OnboardingFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlowView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -72,6 +85,14 @@
 			path = Onboarding;
 			sourceTree = "<group>";
 		};
+		22B1E8BDF142DAF10810D39E /* YOMUITests */ = {
+			isa = PBXGroup;
+			children = (
+				F4CD603EFFFA6C72C1051A20 /* YOMUITests.swift */,
+			);
+			path = YOMUITests;
+			sourceTree = "<group>";
+		};
 		39AFC04FDEE19A8353F472CA /* Features */ = {
 			isa = PBXGroup;
 			children = (
@@ -90,6 +111,7 @@
 				D0E19DE7725FFD25D63D1C40 /* App */,
 				39AFC04FDEE19A8353F472CA /* Features */,
 				6A11193AEF0E214AB361A581 /* Shared */,
+				22B1E8BDF142DAF10810D39E /* YOMUITests */,
 				638D2E323B46C0F7D03A7404 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -98,6 +120,7 @@
 			isa = PBXGroup;
 			children = (
 				B6E3F6C94A84994F1B12C854 /* YOM.app */,
+				EB9BA07413744F5858115582 /* YOMUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -165,6 +188,24 @@
 			productReference = B6E3F6C94A84994F1B12C854 /* YOM.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A573D0B57D756B6343FBE0ED /* YOMUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C2543C2D1DE4D9A6F5D21CF9 /* Build configuration list for PBXNativeTarget "YOMUITests" */;
+			buildPhases = (
+				697ED5D01285B8A3019AD301 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E7A29C15EFC17E2FA42BB306 /* PBXTargetDependency */,
+			);
+			name = YOMUITests;
+			packageProductDependencies = (
+			);
+			productName = YOMUITests;
+			productReference = EB9BA07413744F5858115582 /* YOMUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -177,6 +218,11 @@
 					8999E9E7BAAD80538C1EF326 = {
 						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
+					};
+					A573D0B57D756B6343FBE0ED = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+						TestTargetID = 8999E9E7BAAD80538C1EF326;
 					};
 				};
 			};
@@ -195,11 +241,20 @@
 			projectRoot = "";
 			targets = (
 				8999E9E7BAAD80538C1EF326 /* YOM */,
+				A573D0B57D756B6343FBE0ED /* YOMUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		697ED5D01285B8A3019AD301 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				922815F7B002ED3086F72266 /* YOMUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FC8DCDD2CE35334CE2201347 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -221,7 +276,35 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		E7A29C15EFC17E2FA42BB306 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8999E9E7BAAD80538C1EF326 /* YOM */;
+			targetProxy = 0DEB1BAB52D5B8482C1E28D2 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		0A6F5B115CAD858E98CC5D47 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yom.appshell.uitests;
+				PRODUCT_MODULE_NAME = YOMUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = YOM;
+			};
+			name = Release;
+		};
 		0ED2DECF491CC921B2C1A99A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -261,6 +344,26 @@
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
+		};
+		307211991ACBB6756C82A887 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yom.appshell.uitests;
+				PRODUCT_MODULE_NAME = YOMUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = YOM;
+			};
+			name = Debug;
 		};
 		66935CE44FEBF163E36F36C4 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -400,6 +503,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		C2543C2D1DE4D9A6F5D21CF9 /* Build configuration list for PBXNativeTarget "YOMUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				307211991ACBB6756C82A887 /* Debug */,
+				0A6F5B115CAD858E98CC5D47 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		C3685CE7FE7FB90F6B7737E3 /* Build configuration list for PBXNativeTarget "YOM" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

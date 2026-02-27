@@ -91,6 +91,38 @@ struct AppStrings {
         }
     }
 
+    var onboardingStep1Of2: String {
+        switch language {
+        case .en: return "Step 1 of 2"
+        case .zhHans: return "第 1 步，共 2 步"
+        case .yue: return "第 1 步，共 2 步"
+        }
+    }
+
+    var onboardingStep2Of2: String {
+        switch language {
+        case .en: return "Step 2 of 2"
+        case .zhHans: return "第 2 步，共 2 步"
+        case .yue: return "第 2 步，共 2 步"
+        }
+    }
+
+    var selectedStateText: String {
+        switch language {
+        case .en: return "Selected"
+        case .zhHans: return "已选中"
+        case .yue: return "已選取"
+        }
+    }
+
+    var onboardingPermissionOptionalHint: String {
+        switch language {
+        case .en: return "Optional in first-round app shell"
+        case .zhHans: return "首轮壳层中该权限为可选项"
+        case .yue: return "首輪殼層中此權限屬可選"
+        }
+    }
+
     var mapTitle: String {
         switch language {
         case .en: return "Map"
@@ -163,6 +195,22 @@ struct AppStrings {
         }
     }
 
+    var openNavigationDetailsHint: String {
+        switch language {
+        case .en: return "Open navigation details"
+        case .zhHans: return "打开导航详情"
+        case .yue: return "打開導航詳情"
+        }
+    }
+
+    var searchResultFallbackTitle: String {
+        switch language {
+        case .en: return "Search Result"
+        case .zhHans: return "搜索结果"
+        case .yue: return "搜尋結果"
+        }
+    }
+
     var navigationActive: String {
         switch language {
         case .en: return "Navigation Active"
@@ -176,6 +224,86 @@ struct AppStrings {
         case .en: return "End"
         case .zhHans: return "结束"
         case .yue: return "結束"
+        }
+    }
+
+    var routeLoading: String {
+        switch language {
+        case .en: return "Calculating route..."
+        case .zhHans: return "正在计算路线..."
+        case .yue: return "正在計算路線..."
+        }
+    }
+
+    var routeUnavailable: String {
+        switch language {
+        case .en: return "Route unavailable"
+        case .zhHans: return "暂无可用路线"
+        case .yue: return "暫無可用路線"
+        }
+    }
+
+    var routeFailedRetry: String {
+        switch language {
+        case .en: return "Route update failed, retrying when location changes"
+        case .zhHans: return "路线更新失败，定位变化后将重试"
+        case .yue: return "路線更新失敗，定位變化後會重試"
+        }
+    }
+
+    var retryText: String {
+        switch language {
+        case .en: return "Retry"
+        case .zhHans: return "重试"
+        case .yue: return "重試"
+        }
+    }
+
+    var searchNoResultsTitle: String {
+        switch language {
+        case .en: return "No Results Found"
+        case .zhHans: return "未找到结果"
+        case .yue: return "未找到結果"
+        }
+    }
+
+    var searchNoResultsBody: String {
+        switch language {
+        case .en: return "Try another keyword or pick a recommendation."
+        case .zhHans: return "请尝试其他关键词，或选择推荐地点。"
+        case .yue: return "請嘗試其他關鍵詞，或選擇推薦地點。"
+        }
+    }
+
+    var locationPermissionTitle: String {
+        switch language {
+        case .en: return "Location Access Needed"
+        case .zhHans: return "需要位置权限"
+        case .yue: return "需要位置權限"
+        }
+    }
+
+    var locationPermissionBody: String {
+        switch language {
+        case .en: return "Enable location access in Settings to use Locate Me and route guidance."
+        case .zhHans: return "请在设置中启用定位权限，以使用“定位我”和路线导航。"
+        case .yue: return "請在設定啟用定位權限，以使用「定位我」同路線導航。"
+        }
+    }
+
+    var openSettingsText: String {
+        switch language {
+        case .en: return "Open Settings"
+        case .zhHans: return "打开设置"
+        case .yue: return "打開設定"
+        }
+    }
+
+    var notNowText: String {
+        switch language {
+        case .en: return "Not Now"
+        case .zhHans: return "暂不"
+        case .yue: return "暫不"
         }
     }
 

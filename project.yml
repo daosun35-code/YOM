@@ -34,3 +34,28 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIStatusBarStyle: UIStatusBarStyleDefault
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: We use your location to show your position on the map.
+
+  YOMUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - YOMUITests
+    dependencies:
+      - target: YOM
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yom.appshell.uitests
+        PRODUCT_NAME: $(TARGET_NAME)
+        PRODUCT_MODULE_NAME: YOMUITests
+        TEST_TARGET_NAME: YOM
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  YOM:
+    build:
+      targets:
+        YOM: all
+    test:
+      targets:
+        - YOMUITests

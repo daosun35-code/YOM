@@ -91,9 +91,11 @@ struct OnboardingFlowView: View {
     }
 
     private var progressLabel: String {
-        switch (strings.language, step) {
-        case (_, .language): return "Step 1 of 2"
-        case (_, .permission): return "Step 2 of 2"
+        switch step {
+        case .language:
+            strings.onboardingStep1Of2
+        case .permission:
+            strings.onboardingStep2Of2
         }
     }
 
@@ -122,7 +124,7 @@ struct OnboardingFlowView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(language.displayName)
-                .accessibilityValue(languageStore.language == language ? "Selected" : "")
+                .accessibilityValue(languageStore.language == language ? strings.selectedStateText : "")
                 .accessibilityAddTraits(.isButton)
             }
 
@@ -132,6 +134,7 @@ struct OnboardingFlowView: View {
                 }
             }
             .buttonStyle(.borderedProminent)
+            .accessibilityIdentifier("onboarding_continue")
             .frame(maxWidth: .infinity, minHeight: 44)
             .padding(.top, 4)
             .lineLimit(1)
@@ -149,12 +152,13 @@ struct OnboardingFlowView: View {
             .lineLimit(1)
             .minimumScaleFactor(0.8)
             .disabled(isRequestingNotificationPermission)
-            .accessibilityHint("Optional in first-round app shell")
+            .accessibilityHint(strings.onboardingPermissionOptionalHint)
 
             Button(strings.skipForNow) {
                 onFinish()
             }
             .buttonStyle(.bordered)
+            .accessibilityIdentifier("onboarding_skip")
             .frame(maxWidth: .infinity, minHeight: 44)
             .lineLimit(1)
             .minimumScaleFactor(0.8)

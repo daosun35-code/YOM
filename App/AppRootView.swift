@@ -8,31 +8,29 @@ struct AppRootView: View {
     private var strings: AppStrings { AppStrings(language: languageStore.language) }
 
     var body: some View {
-        ZStack {
-            TabView(selection: $shellState.selectedTab) {
-                ArchiveTabRootView()
-                    .tabItem { Label(strings.tabArchive, systemImage: "tray.full") }
-                    .tag(AppTab.archive)
+        Group {
+            if languageStore.hasCompletedOnboarding {
+                TabView(selection: $shellState.selectedTab) {
+                    ArchiveTabRootView()
+                        .tabItem { Label(strings.tabArchive, systemImage: "tray.full") }
+                        .tag(AppTab.archive)
 
-                MapTabRootView()
-                    .tabItem { Label(strings.tabMap, systemImage: "map") }
-                    .tag(AppTab.map)
+                    MapTabRootView()
+                        .tabItem { Label(strings.tabMap, systemImage: "map") }
+                        .tag(AppTab.map)
 
-                SettingsTabRootView()
-                    .tabItem { Label(strings.tabSettings, systemImage: "gearshape") }
-                    .tag(AppTab.settings)
-            }
-            .allowsHitTesting(languageStore.hasCompletedOnboarding)
-            .accessibilityHidden(!languageStore.hasCompletedOnboarding)
-
-            if !languageStore.hasCompletedOnboarding {
+                    SettingsTabRootView()
+                        .tabItem { Label(strings.tabSettings, systemImage: "gearshape") }
+                        .tag(AppTab.settings)
+                }
+                .transition(.opacity)
+            } else {
                 OnboardingFlowView {
                     withAnimation(shellAnimation) {
                         languageStore.completeOnboarding()
                     }
                 }
                 .transition(.opacity)
-                .zIndex(1)
             }
         }
         .animation(shellAnimation, value: languageStore.hasCompletedOnboarding)
