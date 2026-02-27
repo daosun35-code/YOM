@@ -195,6 +195,14 @@ struct AppStrings {
         }
     }
 
+    var archiveItemUnavailable: String {
+        switch language {
+        case .en: return "This archive item is no longer available."
+        case .zhHans: return "该档案条目当前不可用。"
+        case .yue: return "此檔案項目目前不可用。"
+        }
+    }
+
     var settingsTitle: String {
         switch language {
         case .en: return "Settings"

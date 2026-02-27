@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 struct ArchiveTabRootView: View {
@@ -5,6 +6,9 @@ struct ArchiveTabRootView: View {
     @EnvironmentObject private var languageStore: LanguageStore
 
     private let points = PointOfInterest.samples
+    private var pointsByID: [UUID: PointOfInterest] {
+        Dictionary(uniqueKeysWithValues: points.map { ($0.id, $0) })
+    }
 
     private var strings: AppStrings { AppStrings(language: languageStore.language) }
 
@@ -20,7 +24,7 @@ struct ArchiveTabRootView: View {
                 Section {
                     ForEach(points) { point in
                         Button {
-                            shellState.archivePath.append(ArchiveRoute.retrieval(point))
+                            shellState.archivePath.append(ArchiveRoute.retrieval(point.id))
                         } label: {
                             HStack(spacing: 12) {
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -58,8 +62,16 @@ struct ArchiveTabRootView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: ArchiveRoute.self) { route in
                 switch route {
-                case .retrieval(let point):
-                    RetrievalView(point: point, showsCloseButton: false, onClose: nil)
+                case .retrieval(let pointID):
+                    if let point = pointsByID[pointID] {
+                        RetrievalView(point: point, showsCloseButton: false, onClose: nil)
+                    } else {
+                        ContentUnavailableView(
+                            strings.archiveTitle,
+                            systemImage: "exclamationmark.triangle",
+                            description: Text(strings.archiveItemUnavailable)
+                        )
+                    }
                 }
             }
         }

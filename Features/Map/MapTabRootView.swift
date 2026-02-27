@@ -506,7 +506,7 @@ private struct SearchOverlayCard: View {
                                 Text(point.title(in: language))
                                     .font(.body)
                                     .foregroundStyle(.primary)
-                                Text("\\(point.year) · \\(point.distanceText(in: language))")
+                                Text("\(point.year) · \(point.distanceText(in: language))")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }

@@ -1,4 +1,5 @@
 import SwiftUI
+import UserNotifications
 
 struct OnboardingFlowView: View {
     enum Step {
@@ -12,6 +13,7 @@ struct OnboardingFlowView: View {
     let onFinish: () -> Void
 
     @State private var step: Step = .language
+    @State private var isRequestingNotificationPermission = false
 
     private var strings: AppStrings { AppStrings(language: languageStore.language) }
 
@@ -140,12 +142,13 @@ struct OnboardingFlowView: View {
     private var permissionStep: some View {
         VStack(spacing: 12) {
             Button(strings.allowPermission) {
-                onFinish()
+                requestNotificationPermissionAndFinish()
             }
             .buttonStyle(.borderedProminent)
             .frame(maxWidth: .infinity, minHeight: 44)
             .lineLimit(1)
             .minimumScaleFactor(0.8)
+            .disabled(isRequestingNotificationPermission)
             .accessibilityHint("Optional in first-round app shell")
 
             Button(strings.skipForNow) {
@@ -160,5 +163,23 @@ struct OnboardingFlowView: View {
 
     private var stepAnimation: Animation {
         reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.35, dampingFraction: 0.9)
+    }
+
+    private func requestNotificationPermissionAndFinish() {
+        guard isRequestingNotificationPermission == false else { return }
+        isRequestingNotificationPermission = true
+
+        Task {
+            do {
+                _ = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
+            } catch {
+                // Onboarding should not block app entry when authorization request fails.
+            }
+
+            await MainActor.run {
+                isRequestingNotificationPermission = false
+                onFinish()
+            }
+        }
     }
 }
