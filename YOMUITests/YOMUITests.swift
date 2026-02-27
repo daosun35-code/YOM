@@ -13,6 +13,35 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(app.tabBars.buttons["Map"].exists)
     }
 
+    func testOnboardingPermissionCopyIsVisible() {
+        let app = makeApp()
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["Choose your language"].waitForExistence(timeout: 8))
+
+        let continueButton = app.buttons["onboarding_continue"]
+        XCTAssertTrue(continueButton.waitForExistence(timeout: 5))
+        continueButton.tap()
+
+        XCTAssertTrue(app.staticTexts["Stay updated while walking"].waitForExistence(timeout: 5))
+        XCTAssertTrue(
+            app.staticTexts["Push permission is optional and does not block map access in the first round shell."]
+                .waitForExistence(timeout: 5)
+        )
+
+        let allowButton = app.buttons
+            .matching(identifier: "onboarding_allow_permission")
+            .firstMatch
+        XCTAssertTrue(allowButton.waitForExistence(timeout: 5))
+        XCTAssertEqual(allowButton.label, "Allow Notifications and Open Map")
+
+        let skipButton = app.buttons
+            .matching(identifier: "onboarding_skip")
+            .firstMatch
+        XCTAssertTrue(skipButton.waitForExistence(timeout: 5))
+        XCTAssertEqual(skipButton.label, "Open Map Without Notifications")
+    }
+
     func testLocateMeShowsRecoveryAlertWhenPermissionDenied() {
         let app = makeApp(extraArguments: ["UITEST_FORCE_LOCATION_DENIED"])
         app.launch()
@@ -29,16 +58,39 @@ final class YOMUITests: XCTestCase {
         permissionAlert.buttons["Not Now"].tap()
     }
 
-    func testSearchNoResultShowsRecoveryAlert() {
-        let app = makeApp(extraArguments: ["UITEST_SHOW_SEARCH_NO_RESULT_ALERT"])
+    func testSearchSuggestionsAndNoResultRecoveryFlow() {
+        let app = makeApp(extraArguments: ["UITEST_FORCE_SEARCH_NO_RESULTS_ON_SUBMIT"])
         app.launch()
 
         completeOnboarding(in: app)
+
+        let searchField = app.searchFields["Search places"]
+        XCTAssertTrue(searchField.waitForExistence(timeout: 8))
+        searchField.tap()
+
+        XCTAssertTrue(app.staticTexts["Recommendations"].firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Market Street Corner"].firstMatch.exists)
+
+        searchField.typeText("zzzzzz")
+        let searchButton = app.keyboards.buttons["Search"]
+        if searchButton.waitForExistence(timeout: 2) {
+            searchButton.tap()
+        } else {
+            searchField.typeText("\n")
+        }
+
         let noResultAlert = app.alerts["No Results Found"]
-        XCTAssertTrue(noResultAlert.waitForExistence(timeout: 5))
+        XCTAssertTrue(noResultAlert.waitForExistence(timeout: 8))
         XCTAssertTrue(noResultAlert.buttons["Retry"].exists)
         XCTAssertTrue(noResultAlert.buttons["Not Now"].exists)
-        noResultAlert.buttons["Not Now"].tap()
+
+        noResultAlert.buttons["Retry"].tap()
+        let retriedNoResultAlert = app.alerts["No Results Found"]
+        if retriedNoResultAlert.waitForExistence(timeout: 2) {
+            retriedNoResultAlert.buttons["Not Now"].tap()
+        } else {
+            XCTAssertTrue(searchField.waitForExistence(timeout: 3))
+        }
     }
 
     func testEndNavigationRequiresConfirmation() {

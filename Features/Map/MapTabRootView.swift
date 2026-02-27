@@ -157,6 +157,9 @@ struct MapTabRootView: View {
     private var forceRouteFailureForUITests: Bool {
         launchArguments.contains("UITEST_FORCE_ROUTE_FAILURE")
     }
+    private var forceSearchNoResultsOnSubmitForUITests: Bool {
+        launchArguments.contains("UITEST_FORCE_SEARCH_NO_RESULTS_ON_SUBMIT")
+    }
 
     private enum MapFeedbackAlert: Identifiable {
         case searchNoResults(query: String)
@@ -486,6 +489,11 @@ struct MapTabRootView: View {
     private func handleSearchSubmit() async {
         let keyword = state.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard keyword.isEmpty == false else { return }
+
+        if forceSearchNoResultsOnSubmitForUITests {
+            activeAlert = .searchNoResults(query: keyword)
+            return
+        }
 
         if let place = await searchModel.search(
             query: keyword,
