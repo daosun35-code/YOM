@@ -155,6 +155,14 @@ struct AppStrings {
         }
     }
 
+    var searchInputHint: String {
+        switch language {
+        case .en: return "Try a landmark name or street"
+        case .zhHans: return "可输入地标名称或街道"
+        case .yue: return "可輸入地標名稱或街道"
+        }
+    }
+
     var searchRecommendations: String {
         switch language {
         case .en: return "Recommendations"
@@ -203,6 +211,14 @@ struct AppStrings {
         }
     }
 
+    var changeDestinationHint: String {
+        switch language {
+        case .en: return "This will replace your current destination and recalculate the route."
+        case .zhHans: return "此操作会替换当前目的地，并重新计算路线。"
+        case .yue: return "此操作會取代目前目的地，並重新計算路線。"
+        }
+    }
+
     var detailsText: String {
         switch language {
         case .en: return "Details"
@@ -240,6 +256,30 @@ struct AppStrings {
         case .en: return "End"
         case .zhHans: return "结束"
         case .yue: return "結束"
+        }
+    }
+
+    var endNavigationConfirmTitle: String {
+        switch language {
+        case .en: return "End navigation?"
+        case .zhHans: return "确认结束导航？"
+        case .yue: return "確認結束導航？"
+        }
+    }
+
+    var endNavigationConfirmBody: String {
+        switch language {
+        case .en: return "Your active route will be cleared."
+        case .zhHans: return "当前导航路线将被清除。"
+        case .yue: return "目前導航路線將被清除。"
+        }
+    }
+
+    var endNavigationConfirmAction: String {
+        switch language {
+        case .en: return "End Navigation"
+        case .zhHans: return "结束导航"
+        case .yue: return "結束導航"
         }
     }
 
@@ -336,6 +376,30 @@ struct AppStrings {
         case .en: return "Tap a card to open a retrieval page (shell placeholder)."
         case .zhHans: return "点击卡片进入记忆提取页（壳层占位）。"
         case .yue: return "點擊卡片進入記憶提取頁（殼層占位）。"
+        }
+    }
+
+    var archiveListSectionTitle: String {
+        switch language {
+        case .en: return "Memory Timeline"
+        case .zhHans: return "记忆时间线"
+        case .yue: return "記憶時間線"
+        }
+    }
+
+    var archiveOpenRetrievalText: String {
+        switch language {
+        case .en: return "Open Retrieval"
+        case .zhHans: return "进入提取页"
+        case .yue: return "進入提取頁"
+        }
+    }
+
+    var archiveOpenRetrievalHint: String {
+        switch language {
+        case .en: return "Open this archive card in the retrieval page"
+        case .zhHans: return "打开该档案卡片的记忆提取页"
+        case .yue: return "打開此檔案卡片嘅記憶提取頁"
         }
     }
 

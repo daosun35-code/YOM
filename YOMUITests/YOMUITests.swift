@@ -41,6 +41,34 @@ final class YOMUITests: XCTestCase {
         noResultAlert.buttons["Not Now"].tap()
     }
 
+    func testEndNavigationRequiresConfirmation() {
+        let app = makeApp(extraArguments: ["UITEST_FORCE_NAVIGATION_ACTIVE"])
+        app.launch()
+
+        completeOnboarding(in: app)
+
+        let endButton = app.buttons["map_end_navigation"]
+        XCTAssertTrue(endButton.waitForExistence(timeout: 8))
+
+        endButton.tap()
+        let confirmButton = app.buttons
+            .matching(identifier: "map_confirm_end_navigation")
+            .firstMatch
+        let confirmButtonByTitle = app.buttons["End Navigation"].firstMatch
+        let firstDialogShown =
+            confirmButton.waitForExistence(timeout: 5) ||
+            confirmButtonByTitle.waitForExistence(timeout: 1)
+        XCTAssertTrue(firstDialogShown)
+        if confirmButton.waitForExistence(timeout: 5) {
+            confirmButton.tap()
+        } else {
+            XCTAssertTrue(confirmButtonByTitle.waitForExistence(timeout: 5))
+            confirmButtonByTitle.tap()
+        }
+
+        XCTAssertTrue(waitForDisappearance(of: endButton, timeout: 5))
+    }
+
     func testMapRouteRetryFlowAfterFailure() {
         let app = makeApp(
             extraArguments: [
@@ -69,6 +97,24 @@ final class YOMUITests: XCTestCase {
         retryButton.tap()
         XCTAssertTrue(waitForDisappearance(of: retryButton, timeout: 3))
         XCTAssertTrue(retryButton.waitForExistence(timeout: 8))
+    }
+
+    func testArchiveCardShowsOpenActionAndNavigatesToRetrieval() {
+        let app = makeApp()
+        app.launch()
+
+        completeOnboarding(in: app)
+
+        let archiveTab = app.tabBars.buttons["Archive"]
+        XCTAssertTrue(archiveTab.waitForExistence(timeout: 5))
+        archiveTab.tap()
+
+        let archiveCard = app.buttons["archive_item_1935"]
+        XCTAssertTrue(archiveCard.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Open Retrieval"].firstMatch.exists)
+
+        archiveCard.tap()
+        XCTAssertTrue(app.navigationBars["Retrieval"].waitForExistence(timeout: 5))
     }
 
     private func makeApp(extraArguments: [String] = []) -> XCUIApplication {
@@ -102,4 +148,5 @@ final class YOMUITests: XCTestCase {
         let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
         return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
     }
+
 }

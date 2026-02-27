@@ -183,6 +183,7 @@ struct MapTabRootView: View {
                         language: languageStore.language,
                         isChangingDestination: state.navigationPoint != nil,
                         primaryActionTitle: state.navigationPoint == nil ? strings.goText : strings.changeDestination,
+                        changeDestinationHint: strings.changeDestinationHint,
                         detailsTitle: strings.detailsText,
                         onPrimaryAction: {
                             handleNavigationAction()
@@ -245,12 +246,29 @@ struct MapTabRootView: View {
                     placement: .navigationBarDrawer(displayMode: .automatic),
                     prompt: Text(strings.searchPrompt)
                 )
+                .submitLabel(.search)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
                 .searchSuggestions {
                     if searchModel.completions.isEmpty {
+                        Text(strings.searchInputHint)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        if state.recentSearchQueries.isEmpty == false {
+                            Text(strings.searchRecents)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                        }
+
                         ForEach(state.recentSearchQueries, id: \.self) { query in
                             Text(query)
                                 .searchCompletion(query)
                         }
+
+                        Text(strings.searchRecommendations)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
 
                         ForEach(recommendedPoints) { point in
                             Text(point.title(in: languageStore.language))
@@ -358,15 +376,31 @@ struct MapTabRootView: View {
             Button {
                 handleLocateMeAction()
             } label: {
-                Image(systemName: "location.fill")
-                    .font(.system(size: 18, weight: .semibold))
-                    .frame(width: 44, height: 44)
-                    .background(.ultraThinMaterial, in: Circle())
+                if state.navigationPoint == nil {
+                    ViewThatFits(in: .horizontal) {
+                        Label(strings.locateMe, systemImage: "location.fill")
+                            .font(.subheadline.weight(.semibold))
+                            .labelStyle(.titleAndIcon)
+                            .padding(.horizontal, 14)
+                            .frame(height: 44)
+                            .background(.ultraThinMaterial, in: Capsule())
+
+                        Image(systemName: "location.fill")
+                            .font(.system(size: 18, weight: .semibold))
+                            .frame(width: 44, height: 44)
+                            .background(.ultraThinMaterial, in: Circle())
+                    }
+                } else {
+                    Image(systemName: "location.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .frame(width: 44, height: 44)
+                        .background(.ultraThinMaterial, in: Circle())
+                }
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("map_locate_me")
             .padding(.trailing, 12)
-            .padding(.top, 12)
+            .padding(.top, state.navigationPoint == nil ? 12 : 68)
             .accessibilityLabel(strings.locateMe)
         }
         .onChange(of: state.searchText) { _, newValue in
@@ -661,6 +695,13 @@ struct MapTabRootView: View {
         if launchArguments.contains("UITEST_SHOW_SEARCH_NO_RESULT_ALERT") {
             activeAlert = .searchNoResults(query: "forced")
         }
+
+        if launchArguments.contains("UITEST_FORCE_NAVIGATION_ACTIVE"),
+           let point = points.first {
+            state.navigationPoint = point
+            state.previewPoint = nil
+            state.routeStatus = .ready
+        }
     }
 }
 
@@ -669,6 +710,7 @@ private struct MapPreviewSheetView: View {
     let language: AppLanguage
     let isChangingDestination: Bool
     let primaryActionTitle: String
+    let changeDestinationHint: String
     let detailsTitle: String
     let onPrimaryAction: () -> Void
     let onDetails: () -> Void
@@ -691,6 +733,7 @@ private struct MapPreviewSheetView: View {
                     onPrimaryAction()
                 }
                 .buttonStyle(.borderedProminent)
+                .controlSize(.large)
                 .frame(maxWidth: .infinity, minHeight: 44)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
@@ -700,16 +743,16 @@ private struct MapPreviewSheetView: View {
                     onDetails()
                 }
                 .buttonStyle(.bordered)
+                .controlSize(.large)
                 .frame(maxWidth: .infinity, minHeight: 44)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             }
 
             if isChangingDestination {
-                Text(primaryActionTitle)
+                Text(changeDestinationHint)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
-                    .accessibilityHidden(true)
             }
 
             Spacer(minLength: 0)
@@ -719,6 +762,8 @@ private struct MapPreviewSheetView: View {
 }
 
 private struct NavigationPillView: View {
+    @State private var isEndNavigationDialogPresented = false
+
     let point: PointOfInterest
     let language: AppLanguage
     let onOpenDetail: () -> Void
@@ -752,16 +797,33 @@ private struct NavigationPillView: View {
             .accessibilityHint(strings.openNavigationDetailsHint)
 
             Button(strings.endNavigation) {
-                onEnd()
+                isEndNavigationDialogPresented = true
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
             .frame(minWidth: 44, minHeight: 44)
+            .accessibilityIdentifier("map_end_navigation")
+            .confirmationDialog(
+                strings.endNavigationConfirmTitle,
+                isPresented: $isEndNavigationDialogPresented,
+                titleVisibility: .visible
+            ) {
+                Button(strings.endNavigationConfirmAction, role: .destructive) {
+                    onEnd()
+                }
+                .accessibilityIdentifier("map_confirm_end_navigation")
+
+                Button(strings.notNowText, role: .cancel) {}
+            } message: {
+                Text(strings.endNavigationConfirmBody)
+            }
         }
     }
 }
 
 private struct NavigationDetailSheet: View {
+    @State private var isEndNavigationDialogPresented = false
+
     let point: PointOfInterest?
     let language: AppLanguage
     let onEnd: () -> Void
@@ -781,14 +843,29 @@ private struct NavigationDetailSheet: View {
 
                 Section {
                     Button(role: .destructive) {
-                        onEnd()
+                        isEndNavigationDialogPresented = true
                     } label: {
                         Text(strings.endNavigation)
                     }
+                    .accessibilityIdentifier("map_end_navigation_in_sheet")
                 }
             }
             .navigationTitle(strings.navigationActive)
             .navigationBarTitleDisplayMode(.inline)
+            .confirmationDialog(
+                strings.endNavigationConfirmTitle,
+                isPresented: $isEndNavigationDialogPresented,
+                titleVisibility: .visible
+            ) {
+                Button(strings.endNavigationConfirmAction, role: .destructive) {
+                    onEnd()
+                }
+                .accessibilityIdentifier("map_confirm_end_navigation_in_sheet")
+
+                Button(strings.notNowText, role: .cancel) {}
+            } message: {
+                Text(strings.endNavigationConfirmBody)
+            }
         }
     }
 }

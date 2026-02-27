@@ -159,6 +159,43 @@
 5. 视觉层级一致性
 - 主 CTA、次级 CTA、辅助文案在 Map/Onboarding/Archive 的层级关系一致。
 
+6. xcodebuildmcp 验证门禁（必须执行）
+- 本计划所有任务在“验收通过”前，必须完整执行一轮 xcodebuildmcp 验证流程；未执行则视为未验收。
+
+### 5.1 验收时的 xcodebuildmcp 必跑流程
+
+1. 发现并确认工程
+- 执行：`discover_projs`
+- 目标：确认 `YOM.xcodeproj` 可被正确发现。
+
+2. 确认 Scheme 与 Simulator
+- 执行：`list_schemes`、`list_sims`
+- 目标：确认 `YOM` scheme 与可用 iOS simulator 存在。
+
+3. 编译验证（至少一次）
+- 执行：`build_sim`
+- 目标：编译成功，无编译错误。
+
+4. UI 自动化验证（必须）
+- 执行：`test_sim`
+- 目标：`YOMUITests` 全量通过（至少覆盖本计划新增/修改交互路径）。
+
+5. 功能冒烟（必须）
+- 执行：`build_run_sim`（或 `install_app_sim` + `launch_app_sim`）
+- 目标：App 可在 simulator 启动并进入主流程，无启动崩溃。
+
+6. 关键界面快照留档（建议转强制）
+- 执行：`screenshot`
+- 目标：至少留存 Onboarding、Map、Archive、Settings 四个界面截图，用于回归对比。
+
+### 5.2 xcodebuildmcp 通过判定
+
+- 必须同时满足以下条件才可标记“验收通过”：
+- `build_sim` 成功。
+- `test_sim` 成功，且与本计划相关的 UI 测试全部通过。
+- simulator 冒烟启动成功（`build_run_sim` 或等效流程）。
+- 输出验证记录：执行时间、使用 simulator、测试结果摘要、失败项（如有）与处理结论。
+
 ## 6. 风险与边界
 
 - 以下 tips 与当前 App Shell 关联较低，暂不纳入本轮：`Social Login`、`Highlight The Best Offer`、`Choose Chart Types Carefully`、Landing Page Hero 系列。
