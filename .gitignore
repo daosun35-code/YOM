@@ -1,0 +1,10 @@
+# macOS Finder 元数据
+.DS_Store
+
+# 防止归档/迁移文档误入新仓库
+迁移任务/
+*legacy-archive*
+app-dev-legacy-archive/
+*.pen
+.build/
+.swiftpm/
