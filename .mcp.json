@@ -1,3 +1,11 @@
 {
-  "_comment": "占位文件。MCP 配置待首轮文档重建时编写。"
+  "mcpServers": {
+    "github": {
+      "command": "bash",
+      "args": [
+        "-lc",
+        "exec npx -y mcp-remote https://api.githubcopilot.com/mcp/ --header \"Authorization: Bearer $GITHUB_PAT_TOKEN\""
+      ]
+    }
+  }
 }
