@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct RetrievalView: View {
+    private static let readableContentMaxWidth: CGFloat = 680
+
     @EnvironmentObject private var languageStore: LanguageStore
 
     let point: PointOfInterest
@@ -11,34 +13,51 @@ struct RetrievalView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color(.secondarySystemBackground))
-                    .frame(height: 220)
-                    .overlay(alignment: .bottomLeading) {
-                        Text(point.title(in: languageStore.language))
-                            .font(.title2.weight(.semibold))
-                            .padding()
-                    }
-                    .accessibilityHidden(true)
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("\(point.year)")
-                        .font(.headline)
-                    Text(point.summary(in: languageStore.language))
-                        .font(.body)
-                    Text(strings.retrievalModeStatic)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+            VStack(spacing: 20) {
+                readableSection {
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(Color(.secondarySystemBackground))
+                        .frame(height: 220)
+                        .overlay(alignment: .bottomLeading) {
+                            Text(point.title(in: languageStore.language))
+                                .font(.title3.weight(.semibold))
+                                .padding()
+                        }
+                        .accessibilityHidden(true)
                 }
 
-                GroupBox(strings.demoNotesTitle) {
-                    Text(strings.demoNotesBody)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.vertical, 4)
+                readableSection {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(point.title(in: languageStore.language))
+                            .font(.title3.weight(.semibold))
+                            .accessibilityAddTraits(.isHeader)
+                        Text("\(point.year)")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                        Text(point.summary(in: languageStore.language))
+                            .font(.body)
+                            .lineSpacing(3)
+                        Text(strings.retrievalModeStatic)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                readableSection {
+                    GroupBox {
+                        Text(strings.demoNotesBody)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, 4)
+                    } label: {
+                        Text(strings.demoNotesTitle)
+                            .font(.headline)
+                    }
                 }
             }
-            .padding()
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
         }
         .navigationTitle(strings.retrievalTitle)
         .navigationBarTitleDisplayMode(.inline)
@@ -54,5 +73,11 @@ struct RetrievalView: View {
                 }
             }
         }
+    }
+
+    private func readableSection<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .frame(maxWidth: Self.readableContentMaxWidth, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .center)
     }
 }

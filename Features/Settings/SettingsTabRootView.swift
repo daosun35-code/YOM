@@ -40,30 +40,51 @@ struct SettingsTabRootView: View {
 }
 
 struct AboutView: View {
+    private static let readableContentMaxWidth: CGFloat = 680
+
     @EnvironmentObject private var languageStore: LanguageStore
 
     private var strings: AppStrings { AppStrings(language: languageStore.language) }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text(strings.aboutText)
-                    .font(.title2.weight(.semibold))
-                    .accessibilityAddTraits(.isHeader)
+            VStack(spacing: 20) {
+                readableSection {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(strings.aboutText)
+                            .font(.title2.weight(.semibold))
+                            .accessibilityAddTraits(.isHeader)
 
-                Text(strings.aboutBody)
-                    .font(.body)
+                        Text(strings.aboutBody)
+                            .font(.body)
+                            .lineSpacing(3)
+                    }
+                }
 
-                GroupBox(strings.demoNotesTitle) {
-                    Text(strings.demoNotesBody)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.vertical, 4)
+                readableSection {
+                    GroupBox {
+                        Text(strings.demoNotesBody)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, 4)
+                    } label: {
+                        Text(strings.demoNotesTitle)
+                            .font(.headline)
+                    }
                 }
             }
-            .padding()
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
         }
         .navigationTitle(strings.aboutText)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
+    }
+
+    private func readableSection<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        content()
+            .frame(maxWidth: Self.readableContentMaxWidth, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .center)
     }
 }
