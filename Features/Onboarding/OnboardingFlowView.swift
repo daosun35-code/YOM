@@ -102,14 +102,17 @@ struct OnboardingFlowView: View {
     private var languageStep: some View {
         VStack(spacing: 12) {
             ForEach(AppLanguage.allCases) { language in
+                let isSelected = languageStore.language == language
+
                 Button {
                     languageStore.language = language
                 } label: {
                     HStack {
                         Text(language.displayName)
-                            .font(.body.weight(.medium))
+                            .font(.body.weight(isSelected ? .semibold : .medium))
+                            .foregroundStyle(isSelected ? Color.accentColor : Color.primary)
                         Spacer()
-                        if languageStore.language == language {
+                        if isSelected {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundStyle(.tint)
                                 .accessibilityHidden(true)
@@ -119,13 +122,18 @@ struct OnboardingFlowView: View {
                     .frame(maxWidth: .infinity, minHeight: 52)
                     .background(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(Color(.tertiarySystemBackground))
+                            .fill(isSelected ? Color.accentColor.opacity(0.16) : Color(.tertiarySystemBackground))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(isSelected ? Color.accentColor.opacity(0.45) : Color.clear, lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(language.displayName)
-                .accessibilityValue(languageStore.language == language ? strings.selectedStateText : "")
+                .accessibilityValue(isSelected ? strings.selectedStateText : "")
                 .accessibilityAddTraits(.isButton)
+                .animation(stepAnimation, value: languageStore.language)
             }
 
             Button(strings.continueText) {
@@ -148,20 +156,24 @@ struct OnboardingFlowView: View {
                 requestNotificationPermissionAndFinish()
             }
             .buttonStyle(.borderedProminent)
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
+            .accessibilityIdentifier("onboarding_allow_permission")
+            .frame(maxWidth: .infinity, minHeight: 52)
+            .multilineTextAlignment(.center)
+            .lineLimit(2)
+            .minimumScaleFactor(0.85)
             .disabled(isRequestingNotificationPermission)
-            .accessibilityHint(strings.onboardingPermissionOptionalHint)
+            .accessibilityHint("\(strings.onboardingAllowPermissionHint). \(strings.onboardingPermissionOptionalHint).")
 
             Button(strings.skipForNow) {
                 onFinish()
             }
             .buttonStyle(.bordered)
             .accessibilityIdentifier("onboarding_skip")
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
+            .frame(maxWidth: .infinity, minHeight: 52)
+            .multilineTextAlignment(.center)
+            .lineLimit(2)
+            .minimumScaleFactor(0.85)
+            .accessibilityHint(strings.onboardingSkipPermissionHint)
         }
     }
 

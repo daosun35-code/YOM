@@ -77,17 +77,17 @@ struct AppStrings {
 
     var allowPermission: String {
         switch language {
-        case .en: return "Allow Notifications"
-        case .zhHans: return "允许通知"
-        case .yue: return "允許通知"
+        case .en: return "Allow Notifications and Open Map"
+        case .zhHans: return "允许通知并进入地图"
+        case .yue: return "允許通知並進入地圖"
         }
     }
 
     var skipForNow: String {
         switch language {
-        case .en: return "Not Now"
-        case .zhHans: return "暂不"
-        case .yue: return "暫不"
+        case .en: return "Open Map Without Notifications"
+        case .zhHans: return "暂不授权，直接进入地图"
+        case .yue: return "暫不授權，直接進入地圖"
         }
     }
 
@@ -120,6 +120,22 @@ struct AppStrings {
         case .en: return "Optional in first-round app shell"
         case .zhHans: return "首轮壳层中该权限为可选项"
         case .yue: return "首輪殼層中此權限屬可選"
+        }
+    }
+
+    var onboardingAllowPermissionHint: String {
+        switch language {
+        case .en: return "Allow alerts while exploring and continue to the map"
+        case .zhHans: return "允许后可在探索时接收提醒，并继续进入地图"
+        case .yue: return "允許後可喺探索時接收提醒，並繼續進入地圖"
+        }
+    }
+
+    var onboardingSkipPermissionHint: String {
+        switch language {
+        case .en: return "Skip permission for now and continue to the map immediately"
+        case .zhHans: return "暂不授权，立即继续进入地图"
+        case .yue: return "暫不授權，立即繼續進入地圖"
         }
     }
 

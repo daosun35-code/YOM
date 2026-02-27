@@ -154,6 +154,9 @@ struct MapTabRootView: View {
 
     private var strings: AppStrings { AppStrings(language: languageStore.language) }
     private var launchArguments: [String] { ProcessInfo.processInfo.arguments }
+    private var forceRouteFailureForUITests: Bool {
+        launchArguments.contains("UITEST_FORCE_ROUTE_FAILURE")
+    }
 
     private enum MapFeedbackAlert: Identifiable {
         case searchNoResults(query: String)
@@ -302,6 +305,7 @@ struct MapTabRootView: View {
                                 .background(.thinMaterial, in: Circle())
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("map_point_\(point.year)")
                         .accessibilityLabel(point.accessibilityLabel(in: languageStore.language))
                         .accessibilityAddTraits(.isButton)
                     }
@@ -528,6 +532,15 @@ struct MapTabRootView: View {
         let cacheKey = RouteCacheKey(destinationID: destination.id, source: sourceCoordinate)
         let now = Date()
 
+        if forceRouteFailureForUITests {
+            // Keep loading visible briefly so UI tests can validate retry-chain transitions.
+            try? await Task.sleep(nanoseconds: 2_500_000_000)
+            state.activeRoute = nil
+            state.routeStatus = .failed
+            state.isRouteLoading = false
+            return
+        }
+
         if let cached = routeCache[cacheKey], now.timeIntervalSince(cached.createdAt) <= 120 {
             state.activeRoute = cached.route
             state.isRouteLoading = false
@@ -681,6 +694,7 @@ private struct MapPreviewSheetView: View {
                 .frame(maxWidth: .infinity, minHeight: 44)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
+                .accessibilityIdentifier("map_preview_primary_action")
 
                 Button(detailsTitle) {
                     onDetails()
@@ -949,6 +963,13 @@ private final class UserLocationProvider: NSObject, ObservableObject {
 
     func startIfAuthorized() {
         guard permissionState == .authorized else {
+            return
+        }
+
+        if launchArguments.contains("UITEST_FORCE_LOCATION_AUTHORIZED") {
+            if coordinate == nil {
+                coordinate = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
+            }
             return
         }
 

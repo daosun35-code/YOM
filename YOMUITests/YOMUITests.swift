@@ -41,6 +41,36 @@ final class YOMUITests: XCTestCase {
         noResultAlert.buttons["Not Now"].tap()
     }
 
+    func testMapRouteRetryFlowAfterFailure() {
+        let app = makeApp(
+            extraArguments: [
+                "UITEST_FORCE_LOCATION_AUTHORIZED",
+                "UITEST_FORCE_ROUTE_FAILURE"
+            ]
+        )
+        app.launch()
+
+        completeOnboarding(in: app)
+
+        let pointButton = app.buttons["map_point_1935"]
+        XCTAssertTrue(pointButton.waitForExistence(timeout: 8))
+        pointButton.tap()
+
+        let goButton = app.buttons["map_preview_primary_action"]
+        XCTAssertTrue(goButton.waitForExistence(timeout: 5))
+        goButton.tap()
+
+        let retryButton = app.buttons
+            .matching(identifier: "map_route_retry")
+            .matching(NSPredicate(format: "label == %@", "Retry"))
+            .firstMatch
+        XCTAssertTrue(retryButton.waitForExistence(timeout: 8))
+
+        retryButton.tap()
+        XCTAssertTrue(waitForDisappearance(of: retryButton, timeout: 3))
+        XCTAssertTrue(retryButton.waitForExistence(timeout: 8))
+    }
+
     private func makeApp(extraArguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments += [
@@ -65,5 +95,11 @@ final class YOMUITests: XCTestCase {
         skipButton.tap()
 
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 8))
+    }
+
+    private func waitForDisappearance(of element: XCUIElement, timeout: TimeInterval) -> Bool {
+        let predicate = NSPredicate(format: "exists == false")
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
+        return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
     }
 }
