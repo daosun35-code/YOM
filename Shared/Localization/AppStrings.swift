@@ -531,6 +531,30 @@ struct AppStrings {
         }
     }
 
+    var betaResetConfirmationTitle: String {
+        switch language {
+        case .en: return "Return to Onboarding?"
+        case .zhHans: return "确认返回引导页？"
+        case .yue: return "確認返回引導頁？"
+        }
+    }
+
+    var betaResetConfirmationMessage: String {
+        switch language {
+        case .en: return "This will reset onboarding completion and switch to the Map tab."
+        case .zhHans: return "此操作会重置引导完成状态，并切换到地图页。"
+        case .yue: return "此操作會重設引導完成狀態，並切換到地圖頁。"
+        }
+    }
+
+    var betaResetConfirmAction: String {
+        switch language {
+        case .en: return "Reset and Return"
+        case .zhHans: return "重置并返回"
+        case .yue: return "重設並返回"
+        }
+    }
+
     var aboutText: String {
         switch language {
         case .en: return "About"

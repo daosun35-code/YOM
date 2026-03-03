@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsTabRootView: View {
     @EnvironmentObject private var shellState: AppShellState
     @EnvironmentObject private var languageStore: LanguageStore
+    @State private var showsBetaResetConfirmation = false
     private let launchArguments = ProcessInfo.processInfo.arguments
 
     private var strings: AppStrings { AppStrings(language: languageStore.language) }
@@ -28,25 +29,21 @@ struct SettingsTabRootView: View {
                         }
                     }
                     .pickerStyle(.inline)
+                    .labelsHidden()
+                    .accessibilityLabel(strings.languageSection)
                 }
 
                 Section(strings.navigationSection) {
-                    Button {
-                        shellState.settingsPath.append(SettingsRoute.about)
-                    } label: {
+                    NavigationLink(value: SettingsRoute.about) {
                         Label(strings.aboutText, systemImage: "info.circle")
-                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .dsSecondaryCTAStyle()
                     .accessibilityLabel(strings.aboutText)
                 }
 
                 if showsBetaTools {
                     Section(strings.betaSection) {
                         Button(role: .destructive) {
-                            shellState.settingsPath = NavigationPath()
-                            shellState.selectedTab = .map
-                            languageStore.resetOnboardingForBeta()
+                            showsBetaResetConfirmation = true
                         } label: {
                             Label(strings.betaReturnToOnboardingText, systemImage: "arrow.counterclockwise")
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -55,6 +52,18 @@ struct SettingsTabRootView: View {
                         .accessibilityHint(strings.betaReturnToOnboardingHint)
                     }
                 }
+            }
+            .confirmationDialog(
+                strings.betaResetConfirmationTitle,
+                isPresented: $showsBetaResetConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button(strings.betaResetConfirmAction, role: .destructive) {
+                    resetOnboardingStateForBeta()
+                }
+                Button(strings.notNowText, role: .cancel) {}
+            } message: {
+                Text(strings.betaResetConfirmationMessage)
             }
             .navigationTitle(strings.settingsTitle)
             .navigationBarTitleDisplayMode(.inline)
@@ -65,6 +74,12 @@ struct SettingsTabRootView: View {
                 }
             }
         }
+    }
+
+    private func resetOnboardingStateForBeta() {
+        shellState.settingsPath = NavigationPath()
+        shellState.selectedTab = .map
+        languageStore.resetOnboardingForBeta()
     }
 }
 
