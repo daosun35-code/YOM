@@ -149,6 +149,7 @@ struct MapTabRootView: View {
     @State private var routeRetryNonce = 0
     @State private var activeAlert: MapFeedbackAlert?
     @State private var hasAppliedUITestOverrides = false
+    @State private var isSearchInterfaceEnabled = false
 
     private let points = PointOfInterest.samples
 
@@ -248,63 +249,71 @@ struct MapTabRootView: View {
     @ViewBuilder
     private var mapContainer: some View {
         if state.isMapDefaultState {
-            mapCanvas
-                .searchable(
-                    text: $state.searchText,
-                    isPresented: $state.isSearchPresented,
-                    placement: .navigationBarDrawer(displayMode: .automatic),
-                    prompt: Text(strings.searchPrompt)
-                )
-                .submitLabel(.search)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .searchSuggestions {
-                    if searchModel.completions.isEmpty {
-                        Text(strings.searchInputHint)
-                            .dsTextStyle(.caption)
-                            .foregroundStyle(DSColor.textSecondary)
-
-                        if state.recentSearchQueries.isEmpty == false {
-                            Text(strings.searchRecents)
-                                .dsTextStyle(.caption, weight: .semibold)
-                                .foregroundStyle(DSColor.textSecondary)
-                        }
-
-                        ForEach(state.recentSearchQueries, id: \.self) { query in
-                            Text(query)
-                                .searchCompletion(query)
-                        }
-
-                        Text(strings.searchRecommendations)
-                            .dsTextStyle(.caption, weight: .semibold)
-                            .foregroundStyle(DSColor.textSecondary)
-
-                        ForEach(recommendedPoints) { point in
-                            Text(point.title(in: languageStore.language))
-                                .searchCompletion(point.title(in: languageStore.language))
-                        }
-                    } else {
-                        ForEach(Array(searchModel.completions.enumerated()), id: \.offset) { _, completion in
-                            VStack(alignment: .leading, spacing: DSSpacing.space4) {
-                                Text(completion.title)
-                                if completion.subtitle.isEmpty == false {
-                                    Text(completion.subtitle)
-                                        .dsTextStyle(.caption)
-                                        .foregroundStyle(DSColor.textSecondary)
-                                }
-                            }
-                            .searchCompletion(searchCompletionText(for: completion))
-                        }
-                    }
-                }
-                .onSubmit(of: .search) {
-                    Task {
-                        await handleSearchSubmit()
-                    }
-                }
+            if isSearchInterfaceEnabled {
+                mapCanvasWithSearch
+            } else {
+                mapCanvas
+            }
         } else {
             mapCanvas
         }
+    }
+
+    private var mapCanvasWithSearch: some View {
+        mapCanvas
+            .searchable(
+                text: $state.searchText,
+                isPresented: $state.isSearchPresented,
+                placement: .navigationBarDrawer(displayMode: .automatic),
+                prompt: Text(strings.searchPrompt)
+            )
+            .submitLabel(.search)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .searchSuggestions {
+                if searchModel.completions.isEmpty {
+                    Text(strings.searchInputHint)
+                        .dsTextStyle(.caption)
+                        .foregroundStyle(DSColor.textSecondary)
+
+                    if state.recentSearchQueries.isEmpty == false {
+                        Text(strings.searchRecents)
+                            .dsTextStyle(.caption, weight: .semibold)
+                            .foregroundStyle(DSColor.textSecondary)
+                    }
+
+                    ForEach(state.recentSearchQueries, id: \.self) { query in
+                        Text(query)
+                            .searchCompletion(query)
+                    }
+
+                    Text(strings.searchRecommendations)
+                        .dsTextStyle(.caption, weight: .semibold)
+                        .foregroundStyle(DSColor.textSecondary)
+
+                    ForEach(recommendedPoints) { point in
+                        Text(point.title(in: languageStore.language))
+                            .searchCompletion(point.title(in: languageStore.language))
+                    }
+                } else {
+                    ForEach(Array(searchModel.completions.enumerated()), id: \.offset) { _, completion in
+                        VStack(alignment: .leading, spacing: DSSpacing.space4) {
+                            Text(completion.title)
+                            if completion.subtitle.isEmpty == false {
+                                Text(completion.subtitle)
+                                    .dsTextStyle(.caption)
+                                    .foregroundStyle(DSColor.textSecondary)
+                            }
+                        }
+                        .searchCompletion(searchCompletionText(for: completion))
+                    }
+                }
+            }
+            .onSubmit(of: .search) {
+                Task {
+                    await handleSearchSubmit()
+                }
+            }
     }
 
     private var mapCanvas: some View {
@@ -342,24 +351,48 @@ struct MapTabRootView: View {
             }
         }
         .overlay(alignment: .topTrailing) {
-            Button {
-                handleLocateMeAction()
-            } label: {
-                Image(systemName: "location.fill")
-                    .font(DSTypography.iconMedium.weight(.semibold))
-                    .frame(width: DSControl.minTouchTarget, height: DSControl.minTouchTarget)
-                    .background(.ultraThinMaterial, in: Circle())
+            VStack(spacing: DSSpacing.space8) {
+                if state.isMapDefaultState && state.isSearchPresented == false {
+                    Button {
+                        openSearchInterface()
+                    } label: {
+                        Image(systemName: "magnifyingglass")
+                            .font(DSTypography.iconMedium.weight(.semibold))
+                            .frame(width: DSControl.minTouchTarget, height: DSControl.minTouchTarget)
+                            .background(.ultraThinMaterial, in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("map_open_search")
+                    .accessibilityLabel(strings.searchPrompt)
+                }
+
+                Button {
+                    handleLocateMeAction()
+                } label: {
+                    Image(systemName: "location.fill")
+                        .font(DSTypography.iconMedium.weight(.semibold))
+                        .frame(width: DSControl.minTouchTarget, height: DSControl.minTouchTarget)
+                        .background(.ultraThinMaterial, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("map_locate_me")
+                .accessibilityLabel(strings.locateMe)
             }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("map_locate_me")
             .padding(.trailing, DSSpacing.space12)
             .padding(.top, state.navigationPoint == nil ? DSSpacing.space12 : DSControl.floatingActionTopInsetWithBanner)
-            .accessibilityLabel(strings.locateMe)
         }
         .onChange(of: state.searchText) { _, newValue in
             searchModel.updateQuery(newValue)
-            if newValue.isEmpty == false && state.isSearchPresented == false {
-                state.isSearchPresented = true
+        }
+        .onChange(of: state.isSearchPresented) { _, isPresented in
+            if isPresented == false {
+                isSearchInterfaceEnabled = false
+            }
+        }
+        .onChange(of: state.isMapDefaultState) { _, isMapDefaultState in
+            if isMapDefaultState == false {
+                state.isSearchPresented = false
+                isSearchInterfaceEnabled = false
             }
         }
         .task(id: routeRefreshKey) {
@@ -495,6 +528,14 @@ struct MapTabRootView: View {
 
     private func searchCompletionText(for completion: MKLocalSearchCompletion) -> String {
         completion.subtitle.isEmpty ? completion.title : "\(completion.title), \(completion.subtitle)"
+    }
+
+    private func openSearchInterface() {
+        guard state.isMapDefaultState else { return }
+        isSearchInterfaceEnabled = true
+        Task { @MainActor in
+            state.isSearchPresented = true
+        }
     }
 
     private func handleSearchSubmit() async {
