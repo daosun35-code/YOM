@@ -435,6 +435,30 @@ struct AppStrings {
         }
     }
 
+    var betaSection: String {
+        switch language {
+        case .en: return "Beta"
+        case .zhHans: return "Beta"
+        case .yue: return "Beta"
+        }
+    }
+
+    var betaReturnToOnboardingText: String {
+        switch language {
+        case .en: return "Return to Onboarding (Beta Only)"
+        case .zhHans: return "返回引导页（Beta Only）"
+        case .yue: return "返回引導頁（Beta Only）"
+        }
+    }
+
+    var betaReturnToOnboardingHint: String {
+        switch language {
+        case .en: return "Reset onboarding completion and show the onboarding flow again"
+        case .zhHans: return "重置引导完成状态，并重新展示引导流程"
+        case .yue: return "重設引導完成狀態，並重新顯示引導流程"
+        }
+    }
+
     var aboutText: String {
         switch language {
         case .en: return "About"

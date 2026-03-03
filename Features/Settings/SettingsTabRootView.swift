@@ -3,8 +3,20 @@ import SwiftUI
 struct SettingsTabRootView: View {
     @EnvironmentObject private var shellState: AppShellState
     @EnvironmentObject private var languageStore: LanguageStore
+    private let launchArguments = ProcessInfo.processInfo.arguments
 
     private var strings: AppStrings { AppStrings(language: languageStore.language) }
+    private var showsBetaTools: Bool {
+        isBetaBuild && launchArguments.contains("UITEST_RESET_APP_STATE") == false
+    }
+
+    private var isBetaBuild: Bool {
+#if DEBUG
+        return true
+#else
+        return Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
+#endif
+    }
 
     var body: some View {
         NavigationStack(path: $shellState.settingsPath) {
@@ -27,6 +39,21 @@ struct SettingsTabRootView: View {
                     }
                     .dsSecondaryCTAStyle()
                     .accessibilityLabel(strings.aboutText)
+                }
+
+                if showsBetaTools {
+                    Section(strings.betaSection) {
+                        Button(role: .destructive) {
+                            shellState.settingsPath = NavigationPath()
+                            shellState.selectedTab = .map
+                            languageStore.resetOnboardingForBeta()
+                        } label: {
+                            Label(strings.betaReturnToOnboardingText, systemImage: "arrow.counterclockwise")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .accessibilityIdentifier("settings_beta_return_onboarding")
+                        .accessibilityHint(strings.betaReturnToOnboardingHint)
+                    }
                 }
             }
             .navigationTitle(strings.settingsTitle)

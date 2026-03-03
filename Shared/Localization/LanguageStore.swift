@@ -33,6 +33,10 @@ final class LanguageStore: ObservableObject {
         hasCompletedOnboarding = true
     }
 
+    func resetOnboardingForBeta() {
+        hasCompletedOnboarding = false
+    }
+
     private static func defaultLanguage(from preferredLanguages: [String]) -> AppLanguage {
         guard let preferred = preferredLanguages.first?.lowercased() else {
             return .en
