@@ -80,15 +80,19 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(openSearchButton.waitForExistence(timeout: 8))
         openSearchButton.tap()
 
-        let searchField = app.searchFields["Search places"]
-        XCTAssertTrue(searchField.waitForExistence(timeout: 8))
-        searchField.tap()
+        let keyboard = app.keyboards.firstMatch
+        if keyboard.waitForExistence(timeout: 5) == false {
+            let searchBar = app.otherElements["map_search_bar"].firstMatch
+            XCTAssertTrue(searchBar.waitForExistence(timeout: 3))
+            searchBar.tap()
+        }
+        XCTAssertTrue(keyboard.waitForExistence(timeout: 5))
 
         XCTAssertTrue(app.staticTexts["Recommendations"].firstMatch.waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Market Street Corner"].firstMatch.exists)
 
-        searchField.typeText("zzzzzz")
-        searchField.typeText("\n")
+        app.typeText("zzzzzz")
+        app.typeText("\n")
 
         let noResultAlert = app.alerts["No Results Found"]
         XCTAssertTrue(noResultAlert.waitForExistence(timeout: 8))
@@ -99,8 +103,6 @@ final class YOMUITests: XCTestCase {
         let retriedNoResultAlert = app.alerts["No Results Found"]
         if retriedNoResultAlert.waitForExistence(timeout: 2) {
             retriedNoResultAlert.buttons["Not Now"].tap()
-        } else {
-            XCTAssertTrue(searchField.waitForExistence(timeout: 3))
         }
     }
 

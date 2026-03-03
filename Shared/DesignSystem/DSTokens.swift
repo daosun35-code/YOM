@@ -86,4 +86,5 @@ enum DSControl {
     static let floatingActionTopInsetWithBanner: CGFloat = 68
     static let detailHeroHeight: CGFloat = 220
     static let overlayPanelMaxHeight: CGFloat = 280
+    static let searchPanelMaxWidth: CGFloat = 360
 }

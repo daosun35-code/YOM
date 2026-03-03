@@ -149,7 +149,8 @@ struct MapTabRootView: View {
     @State private var routeRetryNonce = 0
     @State private var activeAlert: MapFeedbackAlert?
     @State private var hasAppliedUITestOverrides = false
-    @State private var isSearchInterfaceEnabled = false
+    @FocusState private var isSearchFieldFocused: Bool
+    @Namespace private var searchTransitionNamespace
 
     private let points = PointOfInterest.samples
 
@@ -246,74 +247,8 @@ struct MapTabRootView: View {
         }
     }
 
-    @ViewBuilder
     private var mapContainer: some View {
-        if state.isMapDefaultState {
-            if isSearchInterfaceEnabled {
-                mapCanvasWithSearch
-            } else {
-                mapCanvas
-            }
-        } else {
-            mapCanvas
-        }
-    }
-
-    private var mapCanvasWithSearch: some View {
         mapCanvas
-            .searchable(
-                text: $state.searchText,
-                isPresented: $state.isSearchPresented,
-                placement: .navigationBarDrawer(displayMode: .automatic),
-                prompt: Text(strings.searchPrompt)
-            )
-            .submitLabel(.search)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .searchSuggestions {
-                if searchModel.completions.isEmpty {
-                    Text(strings.searchInputHint)
-                        .dsTextStyle(.caption)
-                        .foregroundStyle(DSColor.textSecondary)
-
-                    if state.recentSearchQueries.isEmpty == false {
-                        Text(strings.searchRecents)
-                            .dsTextStyle(.caption, weight: .semibold)
-                            .foregroundStyle(DSColor.textSecondary)
-                    }
-
-                    ForEach(state.recentSearchQueries, id: \.self) { query in
-                        Text(query)
-                            .searchCompletion(query)
-                    }
-
-                    Text(strings.searchRecommendations)
-                        .dsTextStyle(.caption, weight: .semibold)
-                        .foregroundStyle(DSColor.textSecondary)
-
-                    ForEach(recommendedPoints) { point in
-                        Text(point.title(in: languageStore.language))
-                            .searchCompletion(point.title(in: languageStore.language))
-                    }
-                } else {
-                    ForEach(Array(searchModel.completions.enumerated()), id: \.offset) { _, completion in
-                        VStack(alignment: .leading, spacing: DSSpacing.space4) {
-                            Text(completion.title)
-                            if completion.subtitle.isEmpty == false {
-                                Text(completion.subtitle)
-                                    .dsTextStyle(.caption)
-                                    .foregroundStyle(DSColor.textSecondary)
-                            }
-                        }
-                        .searchCompletion(searchCompletionText(for: completion))
-                    }
-                }
-            }
-            .onSubmit(of: .search) {
-                Task {
-                    await handleSearchSubmit()
-                }
-            }
     }
 
     private var mapCanvas: some View {
@@ -323,18 +258,6 @@ struct MapTabRootView: View {
             if state.navigationPoint != nil {
                 routeOverlay
                     .padding(.top, DSSpacing.space12)
-            }
-
-            if state.isMapDefaultState && state.isSearchPresented {
-                SearchOverlayCard(
-                    language: languageStore.language,
-                    recommendations: filteredRecommendedPoints,
-                    recents: state.recents(from: points),
-                    onSelect: handleSearchSelection
-                )
-                .padding(.horizontal, DSSpacing.space12)
-                .padding(.top, DSSpacing.space12)
-                .transition(.opacity)
             }
         }
         .safeAreaInset(edge: .top) {
@@ -351,19 +274,9 @@ struct MapTabRootView: View {
             }
         }
         .overlay(alignment: .topTrailing) {
-            VStack(spacing: DSSpacing.space8) {
-                if state.isMapDefaultState && state.isSearchPresented == false {
-                    Button {
-                        openSearchInterface()
-                    } label: {
-                        Image(systemName: "magnifyingglass")
-                            .font(DSTypography.iconMedium.weight(.semibold))
-                            .frame(width: DSControl.minTouchTarget, height: DSControl.minTouchTarget)
-                            .background(.ultraThinMaterial, in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("map_open_search")
-                    .accessibilityLabel(strings.searchPrompt)
+            VStack(alignment: .trailing, spacing: DSSpacing.space8) {
+                if state.isMapDefaultState {
+                    searchControls
                 }
 
                 Button {
@@ -386,13 +299,13 @@ struct MapTabRootView: View {
         }
         .onChange(of: state.isSearchPresented) { _, isPresented in
             if isPresented == false {
-                isSearchInterfaceEnabled = false
+                isSearchFieldFocused = false
             }
         }
         .onChange(of: state.isMapDefaultState) { _, isMapDefaultState in
             if isMapDefaultState == false {
                 state.isSearchPresented = false
-                isSearchInterfaceEnabled = false
+                isSearchFieldFocused = false
             }
         }
         .task(id: routeRefreshKey) {
@@ -482,10 +395,128 @@ struct MapTabRootView: View {
         }
     }
 
+    private var searchPanelWidth: CGFloat {
+        min(DSControl.searchPanelMaxWidth, UIScreen.main.bounds.width - DSSpacing.space24)
+    }
+
+    @ViewBuilder
+    private var searchControls: some View {
+        if state.isSearchPresented {
+            VStack(alignment: .trailing, spacing: DSSpacing.space8) {
+                searchBar
+
+                SearchOverlayCard(
+                    language: languageStore.language,
+                    completions: searchModel.completions,
+                    recommendations: filteredRecommendedPoints,
+                    recents: state.recents(from: points),
+                    completionText: { completion in
+                        searchCompletionText(for: completion)
+                    },
+                    onSelectCompletion: handleSearchCompletionSelection,
+                    onSelect: handleSearchSelection
+                )
+                .frame(width: searchPanelWidth, alignment: .trailing)
+                .accessibilityIdentifier("map_search_card")
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+            .transition(.opacity)
+        } else {
+            searchTriggerButton
+                .transition(.scale(scale: 0.92, anchor: .trailing).combined(with: .opacity))
+        }
+    }
+
+    private var searchTriggerButton: some View {
+        Button {
+            openSearchInterface()
+        } label: {
+            Image(systemName: "magnifyingglass")
+                .font(DSTypography.iconMedium.weight(.semibold))
+                .foregroundStyle(DSColor.textPrimary)
+                .matchedGeometryEffect(id: "map_search_icon", in: searchTransitionNamespace)
+                .frame(width: DSControl.minTouchTarget, height: DSControl.minTouchTarget)
+                .background {
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .matchedGeometryEffect(id: "map_search_surface", in: searchTransitionNamespace)
+                }
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("map_open_search")
+        .accessibilityLabel(strings.searchPrompt)
+    }
+
+    private var searchBar: some View {
+        HStack(spacing: DSSpacing.space8) {
+            Image(systemName: "magnifyingglass")
+                .font(DSTypography.iconMedium.weight(.semibold))
+                .foregroundStyle(DSColor.textSecondary)
+                .matchedGeometryEffect(id: "map_search_icon", in: searchTransitionNamespace)
+                .accessibilityHidden(true)
+
+            TextField(strings.searchPrompt, text: $state.searchText)
+                .focused($isSearchFieldFocused)
+                .submitLabel(.search)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .layoutPriority(1)
+                .accessibilityLabel(strings.searchPrompt)
+                .onSubmit {
+                    Task {
+                        await handleSearchSubmit()
+                    }
+                }
+                .accessibilityIdentifier("map_search_field")
+
+            if state.searchText.isEmpty == false {
+                Button {
+                    state.searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .dsTextStyle(.body)
+                        .foregroundStyle(DSColor.textSecondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(strings.clearText)
+            }
+
+            Button {
+                closeSearchInterface()
+            } label: {
+                Image(systemName: "xmark")
+                    .dsTextStyle(.body, weight: .semibold)
+                    .foregroundStyle(DSColor.textSecondary)
+                    .frame(width: DSControl.minTouchTarget, height: DSControl.minTouchTarget)
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("map_close_search")
+            .accessibilityLabel(strings.closeText)
+        }
+        .padding(.leading, DSSpacing.space12)
+        .padding(.trailing, DSSpacing.space4)
+        .frame(width: searchPanelWidth, height: DSControl.minTouchTarget, alignment: .leading)
+        .background {
+            RoundedRectangle(cornerRadius: DSRadius.r16, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .matchedGeometryEffect(id: "map_search_surface", in: searchTransitionNamespace)
+        }
+        .shadow(color: DSColor.borderSubtle.opacity(DSOpacity.overlayShadow), radius: DSRadius.r8, y: DSSpacing.space4)
+        .accessibilityIdentifier("map_search_bar")
+    }
+
     private func handleSearchSelection(_ point: PointOfInterest) {
         state.searchText = point.title(in: languageStore.language)
         withAnimation(shellAnimation) {
             state.selectPoint(point)
+        }
+    }
+
+    private func handleSearchCompletionSelection(_ completion: MKLocalSearchCompletion) {
+        state.searchText = searchCompletionText(for: completion)
+        Task {
+            await handleSearchSubmit()
         }
     }
 
@@ -532,9 +563,19 @@ struct MapTabRootView: View {
 
     private func openSearchInterface() {
         guard state.isMapDefaultState else { return }
-        isSearchInterfaceEnabled = true
-        Task { @MainActor in
+        withAnimation(shellAnimation) {
             state.isSearchPresented = true
+        }
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 120_000_000)
+            isSearchFieldFocused = true
+        }
+    }
+
+    private func closeSearchInterface() {
+        isSearchFieldFocused = false
+        withAnimation(shellAnimation) {
+            state.isSearchPresented = false
         }
     }
 
@@ -938,8 +979,11 @@ private struct NavigationDetailSheet: View {
 
 private struct SearchOverlayCard: View {
     let language: AppLanguage
+    let completions: [MKLocalSearchCompletion]
     let recommendations: [PointOfInterest]
     let recents: [PointOfInterest]
+    let completionText: (MKLocalSearchCompletion) -> String
+    let onSelectCompletion: (MKLocalSearchCompletion) -> Void
     let onSelect: (PointOfInterest) -> Void
 
     private var strings: AppStrings { AppStrings(language: language) }
@@ -947,11 +991,19 @@ private struct SearchOverlayCard: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DSSpacing.space16) {
-                if recommendations.isEmpty == false {
-                    section(title: strings.searchRecommendations, items: recommendations)
-                }
+                if completions.isEmpty {
+                    Text(strings.searchInputHint)
+                        .dsTextStyle(.caption)
+                        .foregroundStyle(DSColor.textSecondary)
 
-                recentsSection
+                    if recommendations.isEmpty == false {
+                        section(title: strings.searchRecommendations, items: recommendations)
+                    }
+
+                    recentsSection
+                } else {
+                    completionSection
+                }
             }
             .padding(DSSpacing.space12)
         }
@@ -992,6 +1044,42 @@ private struct SearchOverlayCard: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(point.accessibilityLabel(in: language))
                 .accessibilityHint(strings.detailsText)
+            }
+        }
+    }
+
+    private var completionSection: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.space8) {
+            Text(strings.searchPrompt)
+                .dsTextStyle(.caption, weight: .semibold)
+                .foregroundStyle(DSColor.textSecondary)
+
+            ForEach(Array(completions.enumerated()), id: \.offset) { _, completion in
+                Button {
+                    onSelectCompletion(completion)
+                } label: {
+                    HStack(alignment: .top, spacing: DSSpacing.space8) {
+                        VStack(alignment: .leading, spacing: DSSpacing.space4) {
+                            Text(completion.title)
+                                .dsTextStyle(.body)
+                                .foregroundStyle(DSColor.textPrimary)
+                            if completion.subtitle.isEmpty == false {
+                                Text(completion.subtitle)
+                                    .dsTextStyle(.caption)
+                                    .foregroundStyle(DSColor.textSecondary)
+                            }
+                        }
+                        Spacer()
+                        Image(systemName: "arrow.up.right")
+                            .dsTextStyle(.caption)
+                            .foregroundStyle(DSColor.textSecondary)
+                            .accessibilityHidden(true)
+                    }
+                    .padding(.vertical, DSSpacing.space4)
+                    .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget, alignment: .leading)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(completionText(completion))
             }
         }
     }

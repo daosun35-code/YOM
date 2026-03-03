@@ -499,6 +499,14 @@ struct AppStrings {
         }
     }
 
+    var clearText: String {
+        switch language {
+        case .en: return "Clear"
+        case .zhHans: return "清除"
+        case .yue: return "清除"
+        }
+    }
+
     var demoNotesTitle: String {
         switch language {
         case .en: return "Shell behaviors"
