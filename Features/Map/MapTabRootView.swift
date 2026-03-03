@@ -345,27 +345,10 @@ struct MapTabRootView: View {
             Button {
                 handleLocateMeAction()
             } label: {
-                if state.navigationPoint == nil {
-                    ViewThatFits(in: .horizontal) {
-                        Label(strings.locateMe, systemImage: "location.fill")
-                            .dsTextStyle(.body, weight: .semibold)
-                            .foregroundStyle(DSColor.textPrimary)
-                            .labelStyle(.titleAndIcon)
-                            .padding(.horizontal, DSSpacing.space16)
-                            .frame(height: DSControl.minTouchTarget)
-                            .background(.ultraThinMaterial, in: Capsule())
-
-                        Image(systemName: "location.fill")
-                            .font(DSTypography.iconMedium.weight(.semibold))
-                            .frame(width: DSControl.minTouchTarget, height: DSControl.minTouchTarget)
-                            .background(.ultraThinMaterial, in: Circle())
-                    }
-                } else {
-                    Image(systemName: "location.fill")
-                        .font(DSTypography.iconMedium.weight(.semibold))
-                        .frame(width: DSControl.minTouchTarget, height: DSControl.minTouchTarget)
-                        .background(.ultraThinMaterial, in: Circle())
-                }
+                Image(systemName: "location.fill")
+                    .font(DSTypography.iconMedium.weight(.semibold))
+                    .frame(width: DSControl.minTouchTarget, height: DSControl.minTouchTarget)
+                    .background(.ultraThinMaterial, in: Circle())
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("map_locate_me")
