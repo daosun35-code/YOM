@@ -1,8 +1,6 @@
 import SwiftUI
 
 struct RetrievalView: View {
-    private static let readableContentMaxWidth: CGFloat = 680
-
     @EnvironmentObject private var languageStore: LanguageStore
 
     let point: PointOfInterest
@@ -13,51 +11,54 @@ struct RetrievalView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: DSSpacing.space24) {
                 readableSection {
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(Color(.secondarySystemBackground))
-                        .frame(height: 220)
+                    RoundedRectangle(cornerRadius: DSRadius.r16, style: .continuous)
+                        .fill(DSColor.surfaceSecondary)
+                        .frame(height: DSControl.detailHeroHeight)
                         .overlay(alignment: .bottomLeading) {
                             Text(point.title(in: languageStore.language))
-                                .font(.title3.weight(.semibold))
-                                .padding()
+                                .dsTextStyle(.title, weight: .semibold)
+                                .foregroundStyle(DSColor.textPrimary)
+                                .padding(DSSpacing.space16)
                         }
                         .accessibilityHidden(true)
                 }
 
                 readableSection {
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: DSSpacing.space12) {
                         Text(point.title(in: languageStore.language))
-                            .font(.title3.weight(.semibold))
+                            .dsTextStyle(.title, weight: .semibold)
+                            .foregroundStyle(DSColor.textPrimary)
                             .accessibilityAddTraits(.isHeader)
                         Text("\(point.year)")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
+                            .dsTextStyle(.caption, weight: .semibold)
+                            .foregroundStyle(DSColor.textSecondary)
                         Text(point.summary(in: languageStore.language))
-                            .font(.body)
-                            .lineSpacing(3)
+                            .dsTextStyle(.body)
+                            .foregroundStyle(DSColor.textPrimary)
+                            .lineSpacing(DSLineSpacing.body)
                         Text(strings.retrievalModeStatic)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .dsTextStyle(.caption)
+                            .foregroundStyle(DSColor.textSecondary)
                     }
                 }
 
                 readableSection {
                     GroupBox {
                         Text(strings.demoNotesBody)
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .dsTextStyle(.caption)
+                            .foregroundStyle(DSColor.textSecondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.vertical, 4)
+                            .padding(.vertical, DSSpacing.space4)
                     } label: {
                         Text(strings.demoNotesTitle)
-                            .font(.headline)
+                            .dsTextStyle(.headline)
                     }
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            .padding(.horizontal, DSSpacing.space24)
+            .padding(.vertical, DSSpacing.space16)
         }
         .navigationTitle(strings.retrievalTitle)
         .navigationBarTitleDisplayMode(.inline)
@@ -77,7 +78,7 @@ struct RetrievalView: View {
 
     private func readableSection<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
-            .frame(maxWidth: Self.readableContentMaxWidth, alignment: .leading)
+            .frame(maxWidth: DSLayout.readableContentMaxWidth, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .center)
     }
 }

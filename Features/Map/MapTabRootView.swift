@@ -157,6 +157,12 @@ struct MapTabRootView: View {
     private var forceRouteFailureForUITests: Bool {
         launchArguments.contains("UITEST_FORCE_ROUTE_FAILURE")
     }
+    private var forceReduceMotionForUITests: Bool {
+        launchArguments.contains("UITEST_FORCE_REDUCE_MOTION")
+    }
+    private var forceStaticMapSnapshotForUITests: Bool {
+        launchArguments.contains("UITEST_FORCE_STATIC_MAP_SNAPSHOT")
+    }
     private var forceSearchNoResultsOnSubmitForUITests: Bool {
         launchArguments.contains("UITEST_FORCE_SEARCH_NO_RESULTS_ON_SUBMIT")
     }
@@ -255,13 +261,13 @@ struct MapTabRootView: View {
                 .searchSuggestions {
                     if searchModel.completions.isEmpty {
                         Text(strings.searchInputHint)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .dsTextStyle(.caption)
+                            .foregroundStyle(DSColor.textSecondary)
 
                         if state.recentSearchQueries.isEmpty == false {
                             Text(strings.searchRecents)
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
+                                .dsTextStyle(.caption, weight: .semibold)
+                                .foregroundStyle(DSColor.textSecondary)
                         }
 
                         ForEach(state.recentSearchQueries, id: \.self) { query in
@@ -270,8 +276,8 @@ struct MapTabRootView: View {
                         }
 
                         Text(strings.searchRecommendations)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
+                            .dsTextStyle(.caption, weight: .semibold)
+                            .foregroundStyle(DSColor.textSecondary)
 
                         ForEach(recommendedPoints) { point in
                             Text(point.title(in: languageStore.language))
@@ -279,12 +285,12 @@ struct MapTabRootView: View {
                         }
                     } else {
                         ForEach(Array(searchModel.completions.enumerated()), id: \.offset) { _, completion in
-                            VStack(alignment: .leading, spacing: 2) {
+                            VStack(alignment: .leading, spacing: DSSpacing.space4) {
                                 Text(completion.title)
                                 if completion.subtitle.isEmpty == false {
                                     Text(completion.subtitle)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                        .dsTextStyle(.caption)
+                                        .foregroundStyle(DSColor.textSecondary)
                                 }
                             }
                             .searchCompletion(searchCompletionText(for: completion))
@@ -303,51 +309,11 @@ struct MapTabRootView: View {
 
     private var mapCanvas: some View {
         ZStack(alignment: .top) {
-            Map(position: $state.cameraPosition) {
-                if let route = state.activeRoute {
-                    MapPolyline(route.polyline)
-                        .stroke(
-                            .blue,
-                            style: StrokeStyle(lineWidth: 6, lineCap: .round, lineJoin: .round)
-                        )
-                }
-
-                ForEach(points) { point in
-                    Annotation(point.title(in: languageStore.language), coordinate: point.coordinate) {
-                        Button {
-                            withAnimation(shellAnimation) {
-                                state.selectPoint(point)
-                            }
-                        } label: {
-                            Image(systemName: state.previewPoint?.id == point.id ? "mappin.circle.fill" : "mappin.circle")
-                                .font(.system(size: 28))
-                                .foregroundStyle(state.previewPoint?.id == point.id ? Color.red : Color.accentColor)
-                                .padding(4)
-                                .background(.thinMaterial, in: Circle())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityIdentifier("map_point_\(point.year)")
-                        .accessibilityLabel(point.accessibilityLabel(in: languageStore.language))
-                        .accessibilityAddTraits(.isButton)
-                    }
-                }
-
-                if let searchedPlace = state.searchedPlace {
-                    Annotation(searchedPlace.annotationTitle, coordinate: searchedPlace.coordinate) {
-                        Image(systemName: "mappin.and.ellipse.circle.fill")
-                            .font(.system(size: 28))
-                            .foregroundStyle(.tint)
-                            .padding(4)
-                            .background(.thinMaterial, in: Circle())
-                            .accessibilityLabel(searchedPlace.annotationTitle)
-                    }
-                }
-            }
-            .ignoresSafeArea(edges: .bottom)
+            mapBackgroundLayer
 
             if state.navigationPoint != nil {
                 routeOverlay
-                    .padding(.top, 12)
+                    .padding(.top, DSSpacing.space12)
             }
 
             if state.isMapDefaultState && state.isSearchPresented {
@@ -357,8 +323,8 @@ struct MapTabRootView: View {
                     recents: state.recents(from: points),
                     onSelect: handleSearchSelection
                 )
-                .padding(.horizontal, 12)
-                .padding(.top, 12)
+                .padding(.horizontal, DSSpacing.space12)
+                .padding(.top, DSSpacing.space12)
                 .transition(.opacity)
             }
         }
@@ -370,8 +336,8 @@ struct MapTabRootView: View {
                     onOpenDetail: { state.openNavigationDetail() },
                     onEnd: { state.endNavigation() }
                 )
-                .padding(.horizontal, 12)
-                .padding(.top, 4)
+                .padding(.horizontal, DSSpacing.space12)
+                .padding(.top, DSSpacing.space4)
                 .transition(.opacity)
             }
         }
@@ -382,28 +348,29 @@ struct MapTabRootView: View {
                 if state.navigationPoint == nil {
                     ViewThatFits(in: .horizontal) {
                         Label(strings.locateMe, systemImage: "location.fill")
-                            .font(.subheadline.weight(.semibold))
+                            .dsTextStyle(.body, weight: .semibold)
+                            .foregroundStyle(DSColor.textPrimary)
                             .labelStyle(.titleAndIcon)
-                            .padding(.horizontal, 14)
-                            .frame(height: 44)
+                            .padding(.horizontal, DSSpacing.space16)
+                            .frame(height: DSControl.minTouchTarget)
                             .background(.ultraThinMaterial, in: Capsule())
 
                         Image(systemName: "location.fill")
-                            .font(.system(size: 18, weight: .semibold))
-                            .frame(width: 44, height: 44)
+                            .font(DSTypography.iconMedium.weight(.semibold))
+                            .frame(width: DSControl.minTouchTarget, height: DSControl.minTouchTarget)
                             .background(.ultraThinMaterial, in: Circle())
                     }
                 } else {
                     Image(systemName: "location.fill")
-                        .font(.system(size: 18, weight: .semibold))
-                        .frame(width: 44, height: 44)
+                        .font(DSTypography.iconMedium.weight(.semibold))
+                        .frame(width: DSControl.minTouchTarget, height: DSControl.minTouchTarget)
                         .background(.ultraThinMaterial, in: Circle())
                 }
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("map_locate_me")
-            .padding(.trailing, 12)
-            .padding(.top, state.navigationPoint == nil ? 12 : 68)
+            .padding(.trailing, DSSpacing.space12)
+            .padding(.top, state.navigationPoint == nil ? DSSpacing.space12 : DSControl.floatingActionTopInsetWithBanner)
             .accessibilityLabel(strings.locateMe)
         }
         .onChange(of: state.searchText) { _, newValue in
@@ -424,6 +391,67 @@ struct MapTabRootView: View {
             applyUITestOverridesIfNeeded()
         }
         .animation(shellAnimation, value: state.isSearchPresented)
+    }
+
+    @ViewBuilder
+    private var mapBackgroundLayer: some View {
+        if forceStaticMapSnapshotForUITests {
+            DSColor.surfaceSecondary
+                .ignoresSafeArea(edges: .bottom)
+                .overlay(alignment: .topLeading) {
+                    VStack(alignment: .leading, spacing: DSSpacing.space4) {
+                        Text(strings.mapTitle)
+                            .dsTextStyle(.headline, weight: .semibold)
+                        Text(strings.searchInputHint)
+                            .dsTextStyle(.caption)
+                    }
+                    .foregroundStyle(DSColor.textSecondary)
+                    .padding(.top, DSControl.navigationBannerHeight + DSSpacing.space16)
+                    .padding(.leading, DSSpacing.space12)
+                }
+        } else {
+            Map(position: $state.cameraPosition) {
+                if let route = state.activeRoute {
+                    MapPolyline(route.polyline)
+                        .stroke(
+                            DSColor.accentPrimary,
+                            style: StrokeStyle(lineWidth: DSBorder.bw2 * 3, lineCap: .round, lineJoin: .round)
+                        )
+                }
+
+                ForEach(points) { point in
+                    Annotation(point.title(in: languageStore.language), coordinate: point.coordinate) {
+                        Button {
+                            withAnimation(shellAnimation) {
+                                state.selectPoint(point)
+                            }
+                        } label: {
+                            Image(systemName: state.previewPoint?.id == point.id ? "mappin.circle.fill" : "mappin.circle")
+                                .font(DSTypography.iconLarge.weight(.semibold))
+                                .foregroundStyle(state.previewPoint?.id == point.id ? DSColor.statusError : DSColor.accentPrimary)
+                                .padding(DSSpacing.space4)
+                                .background(.thinMaterial, in: Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("map_point_\(point.year)")
+                        .accessibilityLabel(point.accessibilityLabel(in: languageStore.language))
+                        .accessibilityAddTraits(.isButton)
+                    }
+                }
+
+                if let searchedPlace = state.searchedPlace {
+                    Annotation(searchedPlace.annotationTitle, coordinate: searchedPlace.coordinate) {
+                        Image(systemName: "mappin.and.ellipse.circle.fill")
+                            .font(DSTypography.iconLarge.weight(.semibold))
+                            .foregroundStyle(DSColor.accentPrimary)
+                            .padding(DSSpacing.space4)
+                            .background(.thinMaterial, in: Circle())
+                            .accessibilityLabel(searchedPlace.annotationTitle)
+                    }
+                }
+            }
+            .ignoresSafeArea(edges: .bottom)
+        }
     }
 
     private var recommendedPoints: [PointOfInterest] {
@@ -514,27 +542,28 @@ struct MapTabRootView: View {
     }
 
     private var routeOverlay: some View {
-        RoundedRectangle(cornerRadius: 16, style: .continuous)
+        RoundedRectangle(cornerRadius: DSRadius.r16, style: .continuous)
             .fill(.thinMaterial)
-            .frame(height: 72)
+            .frame(height: DSControl.navigationBannerHeight)
             .overlay {
-                HStack(spacing: 12) {
+                HStack(spacing: DSSpacing.space12) {
                     Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
-                        .font(.title3)
+                        .dsTextStyle(.body, weight: .semibold)
                         .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: DSSpacing.space4) {
                         Text(strings.navigationActive)
-                            .font(.subheadline.weight(.semibold))
+                            .dsTextStyle(.body, weight: .semibold)
+                            .foregroundStyle(DSColor.textPrimary)
                         if let point = state.navigationPoint {
                             Text(point.title(in: languageStore.language))
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
+                                .dsTextStyle(.caption)
+                                .foregroundStyle(DSColor.textSecondary)
                                 .lineLimit(1)
                         }
                         if let route = state.activeRoute {
                             Text(routeMetricsText(for: route))
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
+                                .dsTextStyle(.caption)
+                                .foregroundStyle(DSColor.textSecondary)
                                 .lineLimit(1)
                         } else {
                             routeStatusFeedback
@@ -542,15 +571,15 @@ struct MapTabRootView: View {
                     }
                     Spacer()
                 }
-                .padding(.horizontal, 14)
+                .padding(.horizontal, DSSpacing.space16)
             }
-            .padding(.horizontal, 12)
+            .padding(.horizontal, DSSpacing.space12)
             .accessibilityElement(children: .combine)
             .accessibilityLabel(strings.navigationActive)
     }
 
     private var shellAnimation: Animation {
-        reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.35, dampingFraction: 0.88)
+        DSMotion.routeTransition(reduceMotion: reduceMotion || forceReduceMotionForUITests)
     }
 
     private var routeRefreshKey: String {
@@ -652,12 +681,12 @@ struct MapTabRootView: View {
     private var routeStatusFeedback: some View {
         switch state.routeStatus {
         case .loading:
-            HStack(spacing: 6) {
+            HStack(spacing: DSSpacing.space8) {
                 ProgressView()
                     .controlSize(.small)
                 Text(strings.routeLoading)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .dsTextStyle(.caption)
+                    .foregroundStyle(DSColor.textSecondary)
                     .lineLimit(1)
             }
         case .unavailable:
@@ -670,17 +699,17 @@ struct MapTabRootView: View {
     }
 
     private func routeIssueFeedbackText(_ message: String) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DSSpacing.space8) {
             Text(message)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                .dsTextStyle(.caption)
+                .foregroundStyle(DSColor.textSecondary)
                 .lineLimit(1)
 
             Button(strings.retryText) {
                 retryRoute()
             }
             .buttonStyle(.plain)
-            .font(.caption2.weight(.semibold))
+            .dsTextStyle(.caption, weight: .semibold)
             .accessibilityIdentifier("map_route_retry")
         }
     }
@@ -724,25 +753,26 @@ private struct MapPreviewSheetView: View {
     let onDetails: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: DSSpacing.space16) {
             Text(point.title(in: language))
-                .font(.title3.weight(.semibold))
+                .dsTextStyle(.title, weight: .semibold)
+                .foregroundStyle(DSColor.textPrimary)
                 .accessibilityAddTraits(.isHeader)
 
             Text("\(point.year) · \(point.distanceText(in: language))")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .dsTextStyle(.body)
+                .foregroundStyle(DSColor.textSecondary)
 
             Text(point.summary(in: language))
-                .font(.body)
+                .dsTextStyle(.body)
+                .foregroundStyle(DSColor.textPrimary)
 
-            HStack(spacing: 12) {
+            HStack(spacing: DSSpacing.space12) {
                 Button(primaryActionTitle) {
                     onPrimaryAction()
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .frame(maxWidth: .infinity, minHeight: 44)
+                .dsPrimaryCTAStyle()
+                .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .accessibilityIdentifier("map_preview_primary_action")
@@ -750,22 +780,21 @@ private struct MapPreviewSheetView: View {
                 Button(detailsTitle) {
                     onDetails()
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .frame(maxWidth: .infinity, minHeight: 44)
+                .dsSecondaryCTAStyle()
+                .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             }
 
             if isChangingDestination {
                 Text(changeDestinationHint)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .dsTextStyle(.caption)
+                    .foregroundStyle(DSColor.textSecondary)
             }
 
             Spacer(minLength: 0)
         }
-        .padding(20)
+        .padding(DSSpacing.space24)
     }
 }
 
@@ -780,24 +809,27 @@ private struct NavigationPillView: View {
     private var strings: AppStrings { AppStrings(language: language) }
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DSSpacing.space12) {
             Button {
                 onOpenDetail()
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: DSSpacing.space8) {
                     Image(systemName: "location.north.line.fill")
+                        .foregroundStyle(DSColor.textPrimary)
                         .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 1) {
+                    VStack(alignment: .leading, spacing: DSSpacing.space4) {
                         Text(strings.navigationActive)
-                            .font(.caption.weight(.semibold))
+                            .dsTextStyle(.caption, weight: .semibold)
+                            .foregroundStyle(DSColor.textSecondary)
                         Text(point.title(in: language))
-                            .font(.subheadline)
+                            .dsTextStyle(.body)
+                            .foregroundStyle(DSColor.textPrimary)
                             .lineLimit(1)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
+                .padding(.horizontal, DSSpacing.space12)
+                .padding(.vertical, DSSpacing.space12)
                 .background(.ultraThinMaterial, in: Capsule())
             }
             .buttonStyle(.plain)
@@ -807,9 +839,8 @@ private struct NavigationPillView: View {
             Button(strings.endNavigation) {
                 isEndNavigationDialogPresented = true
             }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .frame(minWidth: 44, minHeight: 44)
+            .dsSecondaryCTAStyle()
+            .frame(minWidth: DSControl.minTouchTarget, minHeight: DSControl.minTouchTarget)
             .accessibilityIdentifier("map_end_navigation")
             .confirmationDialog(
                 strings.endNavigationConfirmTitle,
@@ -844,8 +875,11 @@ private struct NavigationDetailSheet: View {
                 Section(strings.navigationActive) {
                     if let point {
                         Text(point.title(in: language))
+                            .dsTextStyle(.body, weight: .semibold)
+                            .foregroundStyle(DSColor.textPrimary)
                         Text(point.summary(in: language))
-                            .foregroundStyle(.secondary)
+                            .dsTextStyle(.caption)
+                            .foregroundStyle(DSColor.textSecondary)
                     }
                 }
 
@@ -888,48 +922,48 @@ private struct SearchOverlayCard: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: DSSpacing.space16) {
                 if recommendations.isEmpty == false {
                     section(title: strings.searchRecommendations, items: recommendations)
                 }
 
                 recentsSection
             }
-            .padding(12)
+            .padding(DSSpacing.space12)
         }
-        .frame(maxWidth: .infinity, maxHeight: 280, alignment: .top)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .shadow(color: .black.opacity(0.08), radius: 8, y: 4)
+        .frame(maxWidth: .infinity, maxHeight: DSControl.overlayPanelMaxHeight, alignment: .top)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: DSRadius.r16, style: .continuous))
+        .shadow(color: DSColor.borderSubtle.opacity(DSOpacity.overlayShadow), radius: DSRadius.r8, y: DSSpacing.space4)
     }
 
     @ViewBuilder
     private func section(title: String, items: [PointOfInterest]) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DSSpacing.space8) {
             Text(title)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .dsTextStyle(.caption, weight: .semibold)
+                .foregroundStyle(DSColor.textSecondary)
 
             ForEach(items) { point in
                 Button {
                     onSelect(point)
                 } label: {
                     HStack {
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: DSSpacing.space4) {
                             Text(point.title(in: language))
-                                .font(.body)
-                                .foregroundStyle(.primary)
+                                .dsTextStyle(.body)
+                                .foregroundStyle(DSColor.textPrimary)
                             Text("\(point.year) · \(point.distanceText(in: language))")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .dsTextStyle(.caption)
+                                .foregroundStyle(DSColor.textSecondary)
                         }
                         Spacer()
                         Image(systemName: "arrow.up.left")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .dsTextStyle(.caption)
+                            .foregroundStyle(DSColor.textSecondary)
                             .accessibilityHidden(true)
                     }
-                    .padding(.vertical, 4)
-                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                    .padding(.vertical, DSSpacing.space4)
+                    .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget, alignment: .leading)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(point.accessibilityLabel(in: language))
@@ -939,38 +973,38 @@ private struct SearchOverlayCard: View {
     }
 
     private var recentsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DSSpacing.space8) {
             Text(strings.searchRecents)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .dsTextStyle(.caption, weight: .semibold)
+                .foregroundStyle(DSColor.textSecondary)
 
             if recents.isEmpty {
                 Text(strings.searchNoRecents)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                    .dsTextStyle(.caption)
+                    .foregroundStyle(DSColor.textSecondary)
+                    .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget, alignment: .leading)
             } else {
                 ForEach(recents) { point in
                     Button {
                         onSelect(point)
                     } label: {
                         HStack {
-                            VStack(alignment: .leading, spacing: 2) {
+                            VStack(alignment: .leading, spacing: DSSpacing.space4) {
                                 Text(point.title(in: language))
-                                    .font(.body)
-                                    .foregroundStyle(.primary)
+                                    .dsTextStyle(.body)
+                                    .foregroundStyle(DSColor.textPrimary)
                                 Text("\(point.year) · \(point.distanceText(in: language))")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .dsTextStyle(.caption)
+                                    .foregroundStyle(DSColor.textSecondary)
                             }
                             Spacer()
                             Image(systemName: "clock.arrow.circlepath")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .dsTextStyle(.caption)
+                                .foregroundStyle(DSColor.textSecondary)
                                 .accessibilityHidden(true)
                         }
-                        .padding(.vertical, 4)
-                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                        .padding(.vertical, DSSpacing.space4)
+                        .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget, alignment: .leading)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(point.accessibilityLabel(in: language))

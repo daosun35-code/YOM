@@ -11,6 +11,13 @@ if [[ -z "${SIM_UDID}" ]]; then
 fi
 
 echo "Using simulator: ${SIM_UDID}"
+
+if ! xcodebuild -project YOM.xcodeproj -scheme YOM -destination "id=${SIM_UDID}" -showBuildSettings >/dev/null 2>&1; then
+  echo "xcodebuild cannot resolve simulator destination id=${SIM_UDID}."
+  echo "Check Xcode Components and install the required iOS Simulator platform/runtime (for Xcode 26.3, install iOS 26.2)."
+  exit 1
+fi
+
 for run in 1 2 3; do
   echo "=== UI regression run ${run}/3 ==="
   xcrun simctl shutdown "${SIM_UDID}" >/dev/null 2>&1 || true
@@ -18,6 +25,7 @@ for run in 1 2 3; do
   xcodebuild \
     -project YOM.xcodeproj \
     -scheme YOM \
+    -sdk iphonesimulator \
     -destination "id=${SIM_UDID}" \
     -only-testing:YOMUITests/YOMUITests \
     test

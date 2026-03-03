@@ -4,6 +4,7 @@ struct AppRootView: View {
     @EnvironmentObject private var shellState: AppShellState
     @EnvironmentObject private var languageStore: LanguageStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private let launchArguments = ProcessInfo.processInfo.arguments
 
     private var strings: AppStrings { AppStrings(language: languageStore.language) }
 
@@ -37,6 +38,6 @@ struct AppRootView: View {
     }
 
     private var shellAnimation: Animation {
-        reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.35, dampingFraction: 0.9)
+        DSMotion.shell(reduceMotion: reduceMotion || launchArguments.contains("UITEST_FORCE_REDUCE_MOTION"))
     }
 }

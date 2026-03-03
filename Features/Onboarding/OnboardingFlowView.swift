@@ -9,6 +9,7 @@ struct OnboardingFlowView: View {
 
     @EnvironmentObject private var languageStore: LanguageStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private let launchArguments = ProcessInfo.processInfo.arguments
 
     let onFinish: () -> Void
 
@@ -20,29 +21,31 @@ struct OnboardingFlowView: View {
     var body: some View {
         ZStack {
             LinearGradient(
-                colors: [Color(.systemBackground), Color(.secondarySystemBackground)],
+                colors: [DSColor.surfacePrimary, DSColor.surfaceSecondary],
                 startPoint: .top,
                 endPoint: .bottom
             )
             .ignoresSafeArea()
 
-            VStack(spacing: 20) {
-                Spacer(minLength: 20)
+            VStack(spacing: DSSpacing.space24) {
+                Spacer(minLength: DSSpacing.space24)
 
                 Text(strings.appTitle)
-                    .font(.system(size: 38, weight: .bold, design: .rounded))
+                    .font(DSTypography.brandDisplay)
+                    .foregroundStyle(DSColor.textPrimary)
                     .accessibilityAddTraits(.isHeader)
 
                 Text(stepTitle)
-                    .font(.title2.weight(.semibold))
+                    .dsTextStyle(.title, weight: .semibold)
+                    .foregroundStyle(DSColor.textPrimary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
 
                 Text(stepBody)
-                    .font(.body)
-                    .foregroundStyle(.secondary)
+                    .dsTextStyle(.body)
+                    .foregroundStyle(DSColor.textSecondary)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, DSSpacing.space24)
 
                 Group {
                     switch step {
@@ -52,22 +55,22 @@ struct OnboardingFlowView: View {
                         permissionStep
                     }
                 }
-                .frame(maxWidth: 520)
-                .padding(.horizontal, 20)
+                .frame(maxWidth: DSLayout.onboardingContentMaxWidth)
+                .padding(.horizontal, DSSpacing.space24)
 
                 Spacer()
 
-                HStack(spacing: 8) {
+                HStack(spacing: DSSpacing.space8) {
                     Circle()
-                        .fill(step == .language ? Color.accentColor : Color.secondary.opacity(0.3))
-                        .frame(width: 8, height: 8)
+                        .fill(step == .language ? DSColor.accentPrimary : DSColor.borderSubtle.opacity(DSOpacity.subtleBorder))
+                        .frame(width: DSSpacing.space8, height: DSSpacing.space8)
                     Circle()
-                        .fill(step == .permission ? Color.accentColor : Color.secondary.opacity(0.3))
-                        .frame(width: 8, height: 8)
+                        .fill(step == .permission ? DSColor.accentPrimary : DSColor.borderSubtle.opacity(DSOpacity.subtleBorder))
+                        .frame(width: DSSpacing.space8, height: DSSpacing.space8)
                 }
                 .accessibilityLabel(progressLabel)
 
-                Spacer(minLength: 12)
+                Spacer(minLength: DSSpacing.space12)
             }
         }
     }
@@ -100,7 +103,7 @@ struct OnboardingFlowView: View {
     }
 
     private var languageStep: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DSSpacing.space12) {
             ForEach(AppLanguage.allCases) { language in
                 let isSelected = languageStore.language == language
 
@@ -109,25 +112,19 @@ struct OnboardingFlowView: View {
                 } label: {
                     HStack {
                         Text(language.displayName)
-                            .font(.body.weight(isSelected ? .semibold : .medium))
-                            .foregroundStyle(isSelected ? Color.accentColor : Color.primary)
+                            .dsTextStyle(.body, weight: isSelected ? .semibold : .medium)
+                            .foregroundStyle(isSelected ? DSColor.accentPrimary : DSColor.textPrimary)
                         Spacer()
                         if isSelected {
                             Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(.tint)
+                                .foregroundStyle(DSColor.accentPrimary)
                                 .accessibilityHidden(true)
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .frame(maxWidth: .infinity, minHeight: 52)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(isSelected ? Color.accentColor.opacity(0.16) : Color(.tertiarySystemBackground))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(isSelected ? Color.accentColor.opacity(0.45) : Color.clear, lineWidth: 1)
-                    )
+                    .padding(.horizontal, DSSpacing.space16)
+                    .frame(maxWidth: .infinity, minHeight: DSControl.largeButtonHeight)
+                    .padding(.vertical, DSSpacing.space4)
+                    .dsSurfaceCard(isSelected: isSelected)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(language.displayName)
@@ -141,23 +138,23 @@ struct OnboardingFlowView: View {
                     step = .permission
                 }
             }
-            .buttonStyle(.borderedProminent)
+            .dsPrimaryCTAStyle()
             .accessibilityIdentifier("onboarding_continue")
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .padding(.top, 4)
+            .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget)
+            .padding(.top, DSSpacing.space4)
             .lineLimit(1)
             .minimumScaleFactor(0.8)
         }
     }
 
     private var permissionStep: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DSSpacing.space12) {
             Button(strings.allowPermission) {
                 requestNotificationPermissionAndFinish()
             }
-            .buttonStyle(.borderedProminent)
+            .dsPrimaryCTAStyle()
             .accessibilityIdentifier("onboarding_allow_permission")
-            .frame(maxWidth: .infinity, minHeight: 52)
+            .frame(maxWidth: .infinity, minHeight: DSControl.largeButtonHeight)
             .multilineTextAlignment(.center)
             .lineLimit(2)
             .minimumScaleFactor(0.85)
@@ -167,9 +164,9 @@ struct OnboardingFlowView: View {
             Button(strings.skipForNow) {
                 onFinish()
             }
-            .buttonStyle(.bordered)
+            .dsSecondaryCTAStyle()
             .accessibilityIdentifier("onboarding_skip")
-            .frame(maxWidth: .infinity, minHeight: 52)
+            .frame(maxWidth: .infinity, minHeight: DSControl.largeButtonHeight)
             .multilineTextAlignment(.center)
             .lineLimit(2)
             .minimumScaleFactor(0.85)
@@ -178,7 +175,7 @@ struct OnboardingFlowView: View {
     }
 
     private var stepAnimation: Animation {
-        reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.35, dampingFraction: 0.9)
+        DSMotion.shell(reduceMotion: reduceMotion || launchArguments.contains("UITEST_FORCE_REDUCE_MOTION"))
     }
 
     private func requestNotificationPermissionAndFinish() {

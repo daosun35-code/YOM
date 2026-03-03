@@ -4,10 +4,10 @@ import SwiftUI
 struct YOMApp: App {
     @StateObject private var shellState = AppShellState()
     @StateObject private var languageStore = LanguageStore()
+    private let launchArguments = ProcessInfo.processInfo.arguments
 
     init() {
-        let args = ProcessInfo.processInfo.arguments
-        guard args.contains("UITEST_RESET_APP_STATE"),
+        guard launchArguments.contains("UITEST_RESET_APP_STATE"),
               let bundleID = Bundle.main.bundleIdentifier else {
             return
         }
@@ -22,6 +22,10 @@ struct YOMApp: App {
                 .environmentObject(shellState)
                 .environmentObject(languageStore)
                 .environment(\.locale, languageStore.language.locale)
+                .transformEnvironment(\.dynamicTypeSize) { value in
+                    guard launchArguments.contains("UITEST_FORCE_DYNAMIC_TYPE_ACCESSIBILITY_XXXL") else { return }
+                    value = .accessibility5
+                }
         }
     }
 }
