@@ -182,6 +182,30 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Retrieval"].waitForExistence(timeout: 5))
     }
 
+    func testArchiveSubmenuSwitchesBetweenExploredAndFavorites() {
+        let app = makeApp()
+        app.launch()
+
+        completeOnboarding(in: app)
+
+        let archiveTab = app.tabBars.buttons["Archive"]
+        XCTAssertTrue(archiveTab.waitForExistence(timeout: 5))
+        archiveTab.tap()
+
+        let submenuPicker = app.segmentedControls["archive_submenu_picker"]
+        XCTAssertTrue(submenuPicker.waitForExistence(timeout: 5))
+
+        let exploredOnlyItem = app.buttons["archive_item_1947"]
+        XCTAssertTrue(exploredOnlyItem.waitForExistence(timeout: 5))
+
+        let favoritesSegment = submenuPicker.buttons["Favorites"].firstMatch
+        XCTAssertTrue(favoritesSegment.waitForExistence(timeout: 5))
+        favoritesSegment.tap()
+
+        XCTAssertTrue(app.buttons["archive_item_1935"].waitForExistence(timeout: 5))
+        XCTAssertTrue(waitForDisappearance(of: exploredOnlyItem, timeout: 5))
+    }
+
     func testSnapshotBaselineOnboardingPage() {
         let app = makeApp()
         app.launch()

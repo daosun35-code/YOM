@@ -387,6 +387,84 @@ struct AppStrings {
         }
     }
 
+    var archiveSubmenuTitle: String {
+        switch language {
+        case .en: return "Archive Filter"
+        case .zhHans: return "档案筛选"
+        case .yue: return "檔案篩選"
+        }
+    }
+
+    var archiveSubmenuExplored: String {
+        switch language {
+        case .en: return "Explored"
+        case .zhHans: return "已探索"
+        case .yue: return "已探索"
+        }
+    }
+
+    var archiveSubmenuFavorites: String {
+        switch language {
+        case .en: return "Favorites"
+        case .zhHans: return "收藏"
+        case .yue: return "收藏"
+        }
+    }
+
+    var archiveExploredSectionTitle: String {
+        switch language {
+        case .en: return "Explored Timeline"
+        case .zhHans: return "已探索时间线"
+        case .yue: return "已探索時間線"
+        }
+    }
+
+    var archiveFavoritesSectionTitle: String {
+        switch language {
+        case .en: return "Saved Favorites"
+        case .zhHans: return "已收藏"
+        case .yue: return "已收藏"
+        }
+    }
+
+    var archiveFavoriteTag: String {
+        switch language {
+        case .en: return "Favorite"
+        case .zhHans: return "已收藏"
+        case .yue: return "已收藏"
+        }
+    }
+
+    var archiveEmptyStateTitle: String {
+        switch language {
+        case .en: return "No favorites yet"
+        case .zhHans: return "暂无收藏"
+        case .yue: return "暫無收藏"
+        }
+    }
+
+    var archiveEmptyStateBody: String {
+        switch language {
+        case .en: return "Save meaningful moments to quickly revisit them."
+        case .zhHans: return "把重要记忆加入收藏后，可在这里快速回看。"
+        case .yue: return "將重要記憶加入收藏後，可以喺呢度快速重溫。"
+        }
+    }
+
+    func archiveSubmenuSummary(count: Int, isFavorites: Bool) -> String {
+        switch language {
+        case .en:
+            if isFavorites {
+                return "\(count) favorite \(count == 1 ? "item" : "items")"
+            }
+            return "\(count) explored \(count == 1 ? "entry" : "entries")"
+        case .zhHans:
+            return isFavorites ? "共 \(count) 条收藏" : "共 \(count) 条已探索记录"
+        case .yue:
+            return isFavorites ? "共 \(count) 條收藏" : "共 \(count) 條已探索紀錄"
+        }
+    }
+
     var archiveOpenRetrievalText: String {
         switch language {
         case .en: return "Open Retrieval"
