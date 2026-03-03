@@ -186,8 +186,7 @@ struct MapTabRootView: View {
     var body: some View {
         NavigationStack(path: $shellState.mapPath) {
             mapContainer
-                .navigationTitle(strings.mapTitle)
-                .navigationBarTitleDisplayMode(.inline)
+                .toolbar(.hidden, for: .navigationBar)
                 .sheet(item: $state.previewPoint) { point in
                     MapPreviewSheetView(
                         point: point,
@@ -292,7 +291,7 @@ struct MapTabRootView: View {
                 .accessibilityLabel(strings.locateMe)
             }
             .padding(.trailing, DSSpacing.space12)
-            .padding(.top, state.navigationPoint == nil ? DSSpacing.space12 : DSControl.floatingActionTopInsetWithBanner)
+            .padding(.top, state.navigationPoint == nil ? .zero : DSControl.floatingActionTopInsetWithBanner)
         }
         .onChange(of: state.searchText) { _, newValue in
             searchModel.updateQuery(newValue)
