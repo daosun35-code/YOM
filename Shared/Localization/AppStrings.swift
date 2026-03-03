@@ -451,17 +451,11 @@ struct AppStrings {
         }
     }
 
-    func archiveSubmenuSummary(count: Int, isFavorites: Bool) -> String {
+    func archiveSectionTitle(base: String, count: Int) -> String {
         switch language {
-        case .en:
-            if isFavorites {
-                return "\(count) favorite \(count == 1 ? "item" : "items")"
-            }
-            return "\(count) explored \(count == 1 ? "entry" : "entries")"
-        case .zhHans:
-            return isFavorites ? "共 \(count) 条收藏" : "共 \(count) 条已探索记录"
-        case .yue:
-            return isFavorites ? "共 \(count) 條收藏" : "共 \(count) 條已探索紀錄"
+        case .en: return "\(base) · \(count)"
+        case .zhHans: return "\(base)（\(count)）"
+        case .yue: return "\(base)（\(count)）"
         }
     }
 

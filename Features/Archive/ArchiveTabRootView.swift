@@ -36,22 +36,86 @@ struct ArchiveTabRootView: View {
             return strings.archiveFavoritesSectionTitle
         }
     }
+    private var visibleSectionHeader: String {
+        strings.archiveSectionTitle(base: visibleSectionTitle, count: visiblePoints.count)
+    }
 
     private var strings: AppStrings { AppStrings(language: languageStore.language) }
 
     var body: some View {
         NavigationStack(path: $shellState.archivePath) {
-            VStack(spacing: 0) {
-                archiveSubmenuHeader
-
-                List {
-                    Section(visibleSectionTitle) {
-                        if visiblePoints.isEmpty {
-                            ContentUnavailableView(
-                                strings.archiveEmptyStateTitle,
-                                systemImage: "star.slash",
-                                description: Text(strings.archiveEmptyStateBody)
+            List {
+                Section(visibleSectionHeader) {
+                    if visiblePoints.isEmpty {
+                        ContentUnavailableView(
+                            strings.archiveEmptyStateTitle,
+                            systemImage: "star.slash",
+                            description: Text(strings.archiveEmptyStateBody)
+                        )
+                        .listRowInsets(
+                            EdgeInsets(
+                                top: DSSpacing.space8,
+                                leading: DSSpacing.space16,
+                                bottom: DSSpacing.space8,
+                                trailing: DSSpacing.space16
                             )
+                        )
+                        .listRowSeparator(.hidden)
+                    } else {
+                        ForEach(visiblePoints) { point in
+                            Button {
+                                shellState.archivePath.append(ArchiveRoute.retrieval(point.id))
+                            } label: {
+                                VStack(alignment: .leading, spacing: DSSpacing.space12) {
+                                    HStack(spacing: DSSpacing.space12) {
+                                        RoundedRectangle(cornerRadius: DSRadius.r12, style: .continuous)
+                                            .fill(DSColor.surfaceSecondary)
+                                            .frame(width: DSControl.listThumbnailSize, height: DSControl.listThumbnailSize)
+                                            .overlay {
+                                                Text("\(point.year)")
+                                                    .dsTextStyle(.caption, weight: .semibold)
+                                            }
+                                            .accessibilityHidden(true)
+
+                                        VStack(alignment: .leading, spacing: DSSpacing.space4) {
+                                            Text(point.title(in: languageStore.language))
+                                                .dsTextStyle(.body, weight: .medium)
+                                                .foregroundStyle(DSColor.textPrimary)
+                                            Text(point.summary(in: languageStore.language))
+                                                .dsTextStyle(.caption)
+                                                .foregroundStyle(DSColor.textSecondary)
+                                                .lineLimit(2)
+                                            if favoriteYears.contains(point.year) {
+                                                Label(strings.archiveFavoriteTag, systemImage: "star.fill")
+                                                    .dsTextStyle(.caption, weight: .semibold)
+                                                    .foregroundStyle(DSColor.statusWarning)
+                                            }
+                                        }
+
+                                        Spacer(minLength: DSSpacing.space8)
+                                        Image(systemName: "chevron.right")
+                                            .dsTextStyle(.caption, weight: .semibold)
+                                            .foregroundStyle(DSColor.textSecondary)
+                                            .accessibilityHidden(true)
+                                    }
+                                    .frame(minHeight: DSControl.listItemMinHeight)
+
+                                    HStack(spacing: DSSpacing.space8) {
+                                        Text(strings.archiveOpenRetrievalText)
+                                            .dsTextStyle(.caption, weight: .semibold)
+                                        Image(systemName: "arrow.right.circle.fill")
+                                            .dsTextStyle(.caption)
+                                            .accessibilityHidden(true)
+                                    }
+                                    .foregroundStyle(DSColor.accentPrimary)
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                }
+                                .padding(DSSpacing.space12)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .dsSurfaceCard()
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
                             .listRowInsets(
                                 EdgeInsets(
                                     top: DSSpacing.space8,
@@ -61,79 +125,17 @@ struct ArchiveTabRootView: View {
                                 )
                             )
                             .listRowSeparator(.hidden)
-                        } else {
-                            ForEach(visiblePoints) { point in
-                                Button {
-                                    shellState.archivePath.append(ArchiveRoute.retrieval(point.id))
-                                } label: {
-                                    VStack(alignment: .leading, spacing: DSSpacing.space12) {
-                                        HStack(spacing: DSSpacing.space12) {
-                                            RoundedRectangle(cornerRadius: DSRadius.r12, style: .continuous)
-                                                .fill(DSColor.surfaceSecondary)
-                                                .frame(width: DSControl.listThumbnailSize, height: DSControl.listThumbnailSize)
-                                                .overlay {
-                                                    Text("\(point.year)")
-                                                        .dsTextStyle(.caption, weight: .semibold)
-                                                }
-                                                .accessibilityHidden(true)
-
-                                            VStack(alignment: .leading, spacing: DSSpacing.space4) {
-                                                Text(point.title(in: languageStore.language))
-                                                    .dsTextStyle(.body, weight: .medium)
-                                                    .foregroundStyle(DSColor.textPrimary)
-                                                Text(point.summary(in: languageStore.language))
-                                                    .dsTextStyle(.caption)
-                                                    .foregroundStyle(DSColor.textSecondary)
-                                                    .lineLimit(2)
-                                                if favoriteYears.contains(point.year) {
-                                                    Label(strings.archiveFavoriteTag, systemImage: "star.fill")
-                                                        .dsTextStyle(.caption, weight: .semibold)
-                                                        .foregroundStyle(DSColor.statusWarning)
-                                                }
-                                            }
-
-                                            Spacer(minLength: DSSpacing.space8)
-                                            Image(systemName: "chevron.right")
-                                                .dsTextStyle(.caption, weight: .semibold)
-                                                .foregroundStyle(DSColor.textSecondary)
-                                                .accessibilityHidden(true)
-                                        }
-                                        .frame(minHeight: DSControl.listItemMinHeight)
-
-                                        HStack(spacing: DSSpacing.space8) {
-                                            Text(strings.archiveOpenRetrievalText)
-                                                .dsTextStyle(.caption, weight: .semibold)
-                                            Image(systemName: "arrow.right.circle.fill")
-                                                .dsTextStyle(.caption)
-                                                .accessibilityHidden(true)
-                                        }
-                                        .foregroundStyle(DSColor.accentPrimary)
-                                        .frame(maxWidth: .infinity, alignment: .trailing)
-                                    }
-                                    .padding(DSSpacing.space12)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .dsSurfaceCard()
-                                    .contentShape(Rectangle())
-                                }
-                                .buttonStyle(.plain)
-                                .listRowInsets(
-                                    EdgeInsets(
-                                        top: DSSpacing.space8,
-                                        leading: DSSpacing.space16,
-                                        bottom: DSSpacing.space8,
-                                        trailing: DSSpacing.space16
-                                    )
-                                )
-                                .listRowSeparator(.hidden)
-                                .accessibilityIdentifier("archive_item_\(point.year)")
-                                .accessibilityLabel(point.accessibilityLabel(in: languageStore.language))
-                                .accessibilityHint(strings.archiveOpenRetrievalHint)
-                            }
+                            .accessibilityIdentifier("archive_item_\(point.year)")
+                            .accessibilityLabel(point.accessibilityLabel(in: languageStore.language))
+                            .accessibilityHint(strings.archiveOpenRetrievalHint)
                         }
                     }
                 }
-                .listStyle(.plain)
-                .animation(.easeInOut(duration: DSMotion.durationFast), value: selectedSubmenu)
+            }
+            .listStyle(.plain)
+            .animation(.easeInOut(duration: DSMotion.durationFast), value: selectedSubmenu)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                archiveSubmenuBar
             }
             .navigationTitle(strings.archiveTitle)
             .navigationBarTitleDisplayMode(.inline)
@@ -154,37 +156,23 @@ struct ArchiveTabRootView: View {
         }
     }
 
-    private var archiveSubmenuHeader: some View {
-        VStack(alignment: .leading, spacing: DSSpacing.space8) {
-            Picker(strings.archiveSubmenuTitle, selection: $selectedSubmenu) {
-                Text(strings.archiveSubmenuExplored)
-                    .tag(ArchiveSubmenu.explored)
-                Text(strings.archiveSubmenuFavorites)
-                    .tag(ArchiveSubmenu.favorites)
-            }
-            .pickerStyle(.segmented)
-            .accessibilityIdentifier("archive_submenu_picker")
-            .accessibilityValue(
-                selectedSubmenu == .explored
-                    ? strings.archiveSubmenuExplored
-                    : strings.archiveSubmenuFavorites
-            )
-
-            Text(strings.archiveSubmenuSummary(
-                count: visiblePoints.count,
-                isFavorites: selectedSubmenu == .favorites
-            ))
-            .dsTextStyle(.caption)
-            .foregroundStyle(DSColor.textSecondary)
+    private var archiveSubmenuBar: some View {
+        Picker(strings.archiveSubmenuTitle, selection: $selectedSubmenu) {
+            Text(strings.archiveSubmenuExplored)
+                .tag(ArchiveSubmenu.explored)
+            Text(strings.archiveSubmenuFavorites)
+                .tag(ArchiveSubmenu.favorites)
         }
+        .pickerStyle(.segmented)
+        .accessibilityIdentifier("archive_submenu_picker")
+        .accessibilityValue(
+            selectedSubmenu == .explored
+                ? strings.archiveSubmenuExplored
+                : strings.archiveSubmenuFavorites
+        )
         .padding(.horizontal, DSSpacing.space16)
         .padding(.top, DSSpacing.space8)
-        .padding(.bottom, DSSpacing.space12)
+        .padding(.bottom, DSSpacing.space8)
         .background(DSColor.surfacePrimary)
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(DSColor.borderSubtle.opacity(DSOpacity.subtleBorder))
-                .frame(height: DSBorder.bw1)
-        }
     }
 }
