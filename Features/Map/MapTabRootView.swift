@@ -168,6 +168,11 @@ struct MapTabRootView: View {
     private var forceSearchNoResultsOnSubmitForUITests: Bool {
         launchArguments.contains("UITEST_FORCE_SEARCH_NO_RESULTS_ON_SUBMIT")
     }
+    private var searchFocusDelayNanoseconds: UInt64 {
+        let shouldReduceMotion = reduceMotion || forceReduceMotionForUITests
+        let delay = (shouldReduceMotion ? DSMotion.durationFast : DSMotion.durationNormal) + 0.05
+        return UInt64(delay * 1_000_000_000)
+    }
 
     private enum MapFeedbackAlert: Identifiable {
         case searchNoResults(query: String)
@@ -303,7 +308,9 @@ struct MapTabRootView: View {
         }
         .onChange(of: state.isMapDefaultState) { _, isMapDefaultState in
             if isMapDefaultState == false {
-                state.isSearchPresented = false
+                withAnimation(shellAnimation) {
+                    state.isSearchPresented = false
+                }
                 isSearchFieldFocused = false
             }
         }
@@ -318,7 +325,6 @@ struct MapTabRootView: View {
             syncLocationUpdates()
             applyUITestOverridesIfNeeded()
         }
-        .animation(shellAnimation, value: state.isSearchPresented)
     }
 
     @ViewBuilder
@@ -566,7 +572,8 @@ struct MapTabRootView: View {
             state.isSearchPresented = true
         }
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 120_000_000)
+            try? await Task.sleep(nanoseconds: searchFocusDelayNanoseconds)
+            guard state.isSearchPresented else { return }
             isSearchFieldFocused = true
         }
     }
