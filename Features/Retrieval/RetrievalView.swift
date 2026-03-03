@@ -13,16 +13,17 @@ struct RetrievalView: View {
         ScrollView {
             VStack(spacing: DSSpacing.space24) {
                 readableSection {
-                    RoundedRectangle(cornerRadius: DSRadius.r16, style: .continuous)
-                        .fill(DSColor.surfaceSecondary)
-                        .frame(height: DSControl.detailHeroHeight)
-                        .overlay(alignment: .bottomLeading) {
-                            Text(point.title(in: languageStore.language))
-                                .dsTextStyle(.title, weight: .semibold)
-                                .foregroundStyle(DSColor.textPrimary)
-                                .padding(DSSpacing.space16)
-                        }
-                        .accessibilityHidden(true)
+                    VStack {
+                        Spacer(minLength: 0)
+                        Text(point.title(in: languageStore.language))
+                            .dsTextStyle(.title, weight: .semibold)
+                            .foregroundStyle(DSColor.textPrimary)
+                            .padding(DSSpacing.space16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(height: DSControl.detailHeroHeight)
+                    .dsSurfaceCard()
+                    .accessibilityHidden(true)
                 }
 
                 readableSection {

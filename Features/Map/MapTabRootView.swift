@@ -415,7 +415,7 @@ struct MapTabRootView: View {
                     MapPolyline(route.polyline)
                         .stroke(
                             DSColor.accentPrimary,
-                            style: StrokeStyle(lineWidth: DSBorder.bw2 * 3, lineCap: .round, lineJoin: .round)
+                            style: StrokeStyle(lineWidth: DSBorder.routeLine, lineCap: .round, lineJoin: .round)
                         )
                 }
 

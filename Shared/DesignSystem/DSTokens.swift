@@ -13,7 +13,7 @@ enum DSColor {
     static let accentOnPrimary = Color(uiColor: .systemBackground)
 
     static let borderSubtle = Color(uiColor: .separator)
-    static let borderStrong = Color.accentColor.opacity(0.45)
+    static let borderStrong = Color.accentColor.opacity(DSOpacity.controlDisabled)
 
     static let statusSuccess = Color(uiColor: .systemGreen)
     static let statusWarning = Color(uiColor: .systemOrange)
@@ -38,6 +38,7 @@ enum DSRadius {
 enum DSBorder {
     static let bw1: CGFloat = 1
     static let bw2: CGFloat = 2
+    static let routeLine: CGFloat = bw2 * 3
 }
 
 enum DSLineSpacing {
@@ -46,7 +47,12 @@ enum DSLineSpacing {
 
 enum DSOpacity {
     static let subtleBorder: Double = 0.55
-    static let overlayShadow: Double = 0.45
+    static let controlDisabled: Double = 0.45
+    static let primaryPressed: Double = 0.82
+    static let secondaryPressed: Double = 0.9
+    static let secondaryBorderEnabled: Double = 0.7
+    static let secondaryBorderDisabled: Double = 0.4
+    static let overlayShadow: Double = controlDisabled
 }
 
 enum DSMotion {

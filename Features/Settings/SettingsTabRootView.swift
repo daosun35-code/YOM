@@ -23,7 +23,9 @@ struct SettingsTabRootView: View {
                         shellState.settingsPath.append(SettingsRoute.about)
                     } label: {
                         Label(strings.aboutText, systemImage: "info.circle")
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
+                    .dsSecondaryCTAStyle()
                     .accessibilityLabel(strings.aboutText)
                 }
             }

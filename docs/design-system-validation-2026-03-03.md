@@ -20,16 +20,16 @@
 
 ### Metric 2: token coverage (11.5.2)
 - Definition: `tokenized_style_refs / (tokenized_style_refs + hardcoded_style_points)`
-- `tokenized_style_refs` (`DSColor/DSSpacing/DSRadius/DSBorder/DSTypography/dsTextStyle/ds*Style`): `194`
+- `tokenized_style_refs` (`DSColor/DSSpacing/DSRadius/DSBorder/DSTypography/dsTextStyle/ds*Style`): `205`
 - `hardcoded_style_points`: `0`
-- Current value: `100%` (`194 / (194 + 0)`)
+- Current value: `100%` (`205 / (205 + 0)`)
 - Trend target: continuous increase.
 
 ### Metric 3: reusable style coverage component count (11.5.3)
 - Definition: count and page coverage of reusable style API usage (`dsPrimaryCTAStyle` / `dsSecondaryCTAStyle` / `dsSurfaceCard`).
-- Current call sites: `7`
-- Current core-page coverage: `2 / 5` (`Onboarding`, `Map`)
-- Not yet covered: `Archive`, `Settings`, `Retrieval`
+- Current call sites: `10`
+- Current core-page coverage: `5 / 5` (`Onboarding`, `Map`, `Archive`, `Settings`, `Retrieval`)
+- Not yet covered: `None`
 - Trend target: main user-flow pages all connected.
 
 ## 2) Regression Baseline Inventory (11.3)

@@ -39,7 +39,7 @@ struct OnboardingFlowView: View {
                     .dsTextStyle(.title, weight: .semibold)
                     .foregroundStyle(DSColor.textPrimary)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal)
+                    .padding(.horizontal, DSSpacing.space16)
 
                 Text(stepBody)
                     .dsTextStyle(.body)

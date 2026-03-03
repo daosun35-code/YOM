@@ -67,14 +67,7 @@ struct ArchiveTabRootView: View {
                             }
                             .padding(DSSpacing.space12)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(
-                                RoundedRectangle(cornerRadius: DSRadius.r16, style: .continuous)
-                                    .fill(DSColor.surfaceElevated)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: DSRadius.r16, style: .continuous)
-                                    .stroke(DSColor.borderSubtle.opacity(DSOpacity.subtleBorder), lineWidth: DSBorder.bw1)
-                            )
+                            .dsSurfaceCard()
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)

@@ -12,7 +12,11 @@ struct DSPrimaryCTAButtonStyle: ButtonStyle {
             .background(
                 RoundedRectangle(cornerRadius: DSRadius.r12, style: .continuous)
                     .fill(DSColor.accentPrimary)
-                    .opacity(isEnabled ? (configuration.isPressed ? 0.82 : 1) : 0.45)
+                    .opacity(
+                        isEnabled
+                            ? (configuration.isPressed ? DSOpacity.primaryPressed : 1)
+                            : DSOpacity.controlDisabled
+                    )
             )
     }
 }
@@ -32,9 +36,14 @@ struct DSSecondaryCTAButtonStyle: ButtonStyle {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DSRadius.r12, style: .continuous)
-                    .stroke(DSColor.borderSubtle.opacity(isEnabled ? 0.7 : 0.4), lineWidth: DSBorder.bw1)
+                    .stroke(
+                        DSColor.borderSubtle.opacity(
+                            isEnabled ? DSOpacity.secondaryBorderEnabled : DSOpacity.secondaryBorderDisabled
+                        ),
+                        lineWidth: DSBorder.bw1
+                    )
             )
-            .opacity(configuration.isPressed ? 0.9 : 1)
+            .opacity(configuration.isPressed ? DSOpacity.secondaryPressed : 1)
     }
 }
 
@@ -49,7 +58,10 @@ struct DSSurfaceCardModifier: ViewModifier {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DSRadius.r16, style: .continuous)
-                    .stroke(isSelected ? DSColor.borderStrong : DSColor.borderSubtle.opacity(0.55), lineWidth: DSBorder.bw1)
+                    .stroke(
+                        isSelected ? DSColor.borderStrong : DSColor.borderSubtle.opacity(DSOpacity.subtleBorder),
+                        lineWidth: DSBorder.bw1
+                    )
             )
     }
 }

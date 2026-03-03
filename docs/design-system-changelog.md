@@ -19,9 +19,20 @@
 
 ### Changed
 - Migrated `Features/Onboarding`, `Features/Map`, `Features/Archive`, `Features/Settings`, `Features/Retrieval` to consume `Shared/DesignSystem` tokens/styles.
+- Expanded opacity semantics in `Shared/DesignSystem/DSTokens.swift` and removed magic opacity decimals from style consumers:
+  - Added `DSOpacity.controlDisabled`, `primaryPressed`, `secondaryPressed`, `secondaryBorderEnabled`, `secondaryBorderDisabled`
+  - Updated `DSColor.borderStrong` to consume `DSOpacity.controlDisabled`
+  - Added `DSBorder.routeLine` and replaced page-layer `DSBorder.bw2 * 3`
+- Replaced implicit default padding with explicit token consumption:
+  - `OnboardingFlowView`: `.padding(.horizontal)` -> `.padding(.horizontal, DSSpacing.space16)`
+- Connected reusable style APIs on remaining core pages:
+  - `ArchiveTabRootView`: `dsSurfaceCard()`
+  - `SettingsTabRootView`: `dsSecondaryCTAStyle()`
+  - `RetrievalView`: `dsSurfaceCard()`
 - Added CI design-system guard:
   - Workflow: `.github/workflows/design-system-guard.yml`
   - Script: `scripts/design_system_guard.sh`
+  - Rule extensions: implicit default axis padding ban, DSBorder arithmetic-with-literal ban in `Features/`, and decimal opacity literal ban in `Shared/DesignSystem/`
 - Removed page-scoped naming from control tokens and replaced with semantic role names:
   - `archiveThumbnailSize` -> `listThumbnailSize`
   - `archiveCardMinHeight` -> `listItemMinHeight`
