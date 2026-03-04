@@ -2,7 +2,7 @@
 
 > 目的：沉淀“Map 预览 Sheet 在不同状态下排版错位/压底”的可检索规范，用于后续对话快速判断是否出现同类问题。  
 > 审计日期：2026-03-04（America/New_York）  
-> 适用范围：`Features/Map/MapTabRootView.swift`、`YOMUITests/YOMUITests.swift`。
+> 适用范围：`Features/Map/MapTabRootView.swift`、`Shared/DesignSystem/DSStyles.swift`、`Features/Onboarding/OnboardingFlowView.swift`、`YOMUITests/YOMUITests.swift`、`specs/000-app-shell-routine/spec.md`、`specs/000-app-shell-routine/acceptance.feature`、`docs/layout-skeleton.md`。
 
 ## 0. 检索标签（建议原样复用）
 
@@ -98,6 +98,12 @@ rg -n "isChangingDestination|changeDestinationHint" Features/Map/MapTabRootView.
 
 # D. 检索是否有“紧凑态排版稳定性”自动化覆盖
 rg -n "testMapPinPreviewUsesOneThirdDetent|preview|sheet" YOMUITests/YOMUITests.swift
+
+# E. 检索主按钮样式扩散（窄胶囊观感是否外溢）
+rg -n "DSPrimaryCTAButtonStyle|dsPrimaryCTAStyle\\(" Shared/DesignSystem Features
+
+# F. 检索 one-third 约束是否被测试与文档固化
+rg -n "testMapPinPreviewUsesOneThirdDetent|fraction\\(0\\.33\\)|one-third|1/3" YOMUITests specs docs
 ```
 
 ## 6. 判定规则（审计口径）
@@ -114,6 +120,8 @@ rg -n "testMapPinPreviewUsesOneThirdDetent|preview|sheet" YOMUITests/YOMUITests.
 2. 紧凑态动作减负：只保留主 CTA，把次级操作收敛到上拉后或更多操作入口。
 3. 预览内容容器具备可滚动兜底，确保在中文与大字体下动作可达。
 4. 为两种状态分别建立 UI 回归断言，避免“默认态通过、导航态回归”。
+5. 修正 `DSPrimaryCTAButtonStyle` 的横向填充策略，避免主按钮在 `maxWidth` 下仍呈窄胶囊观感。
+6. 清理 UI 测试与规格中对 `one-third / 0.33` 的硬性绑定，改为“布局稳定性 + 交互可达性”口径。
 
 ## 8. 验收标准（DoD）
 
@@ -121,6 +129,8 @@ rg -n "testMapPinPreviewUsesOneThirdDetent|preview|sheet" YOMUITests/YOMUITests.
 2. 主 CTA 与次级操作间距稳定，不出现异常空白断层。  
 3. 关键触控目标保持 `>= 44x44`。  
 4. UI 自动化至少覆盖 1 条“紧凑态排版稳定性”断言。  
+5. Onboarding 与 Map 的主 CTA 不再出现明显窄胶囊观感。  
+6. 不再存在“one-third 固定高度”作为唯一验收条件。  
 
 ## 9. 当前基线记录（2026-03-04）
 
@@ -128,3 +138,62 @@ rg -n "testMapPinPreviewUsesOneThirdDetent|preview|sheet" YOMUITests/YOMUITests.
 2. 已观察到“次级动作行贴近 Tab Bar”的排版风险。  
 3. 已观察到主 CTA 的“窄胶囊观感”，与主操作视觉权重不匹配。  
 4. 本 Spec 建立后，后续窗口可直接按第 0/5/6 节进行关键词检索与同类判定。  
+
+## 10. 二次排查新增问题（2026-03-04）
+
+### PS-EXT-001 主按钮样式问题跨页面扩散
+- 现象：`DSPrimaryCTAButtonStyle` 的窄胶囊观感不仅出现在 Map 预览，也会影响 Onboarding 主按钮视觉权重。
+- 锚点：`Shared/DesignSystem/DSStyles.swift`、`Features/Onboarding/OnboardingFlowView.swift`、`Features/Map/MapTabRootView.swift`。
+
+### PS-EXT-002 UI 测试仍固化 one-third 验收
+- 现象：`testMapPinPreviewUsesOneThirdDetent` 把 `0.24~0.45` 高度比例作为通过条件，会阻碍“自适应 detent”整改落地。
+- 锚点：`YOMUITests/YOMUITests.swift`。
+
+### PS-EXT-003 上游规格仍固化 one-third 语义
+- 现象：App Shell 基线 spec/acceptance 与布局文档仍把 one-third 作为规范表达，和本轮整改方向冲突。
+- 锚点：`specs/000-app-shell-routine/spec.md`、`specs/000-app-shell-routine/acceptance.feature`、`docs/layout-skeleton.md`。
+
+### PS-EXT-004（低优先）顶部 quick retry 文案存在单行挤压风险
+- 现象：快速重试条当前 `lineLimit(1)`，在长文案语言下有截断与密度过高风险。
+- 锚点：`Features/Map/MapTabRootView.swift`（`routeQuickRetryBanner`）。
+
+## 11. 分步任务清单（最小颗粒度，供后续会话接力）
+
+| ID | 任务 | 触达文件 | 前置 | 完成定义（DoD） |
+|---|---|---|---|---|
+| PS-T001 | 解除预览 Sheet 的固定 `0.33` 依赖，改为内容感知 detent 策略（保留可上拉） | `Features/Map/MapTabRootView.swift` | 无 | 预览态不再强制固定 `0.33`；两种状态下动作区可达 |
+| PS-T002 | 紧凑态动作减负 + 内容滚动兜底（避免贴底/断层） | `Features/Map/MapTabRootView.swift`、`Shared/Localization/AppStrings.swift` | PS-T001 | PS-LAYOUT-001/002 均不出现次级动作压底；大字体下可滚动触达 |
+| PS-T003 | 修复 `DSPrimaryCTAButtonStyle` 横向填充策略，并验证 Map/Onboarding 视觉一致性 | `Shared/DesignSystem/DSStyles.swift`、`Features/Onboarding/OnboardingFlowView.swift`、`Features/Map/MapTabRootView.swift` | 无 | 主 CTA 不再呈窄胶囊；不破坏最小触控尺寸 |
+| PS-T004 | 更新 UI 测试：移除/替换 one-third 固化断言，改为“排版稳定性 + 可达性”断言 | `YOMUITests/YOMUITests.swift` | PS-T001、PS-T002 | 预览布局稳定性回归可自动化；不再依赖固定高度比例 |
+| PS-T005 | 对齐上游规范：移除 one-third 硬约束，改写为自适应底部卡策略 | `specs/000-app-shell-routine/spec.md`、`specs/000-app-shell-routine/acceptance.feature`、`docs/layout-skeleton.md` | PS-T001、PS-T004 | 文档与实现、测试口径一致，不再冲突 |
+| PS-T006 | （可选增强）将 UI 回归脚本接入 CI，形成 PR 门禁或定时回归 | `.github/workflows/*`、`scripts/run_ui_regression_3x.sh` | PS-T004 | UI 回归可自动触发并留痕，不再仅依赖本地手跑 |
+
+## 12. 执行顺序建议
+
+1. 先做能力解锁：`PS-T001`。  
+2. 再做核心体验修复：`PS-T002`。  
+3. 并行收敛跨页面样式根因：`PS-T003`。  
+4. 再做自动化口径迁移：`PS-T004`。  
+5. 最后做文档基线对齐：`PS-T005`。  
+6. 条件允许时补齐 CI 门禁：`PS-T006`。  
+
+## 13. 每步统一验收模板
+
+1. 功能：本步目标行为可稳定复现，且不回退主流程（Map 预览/导航/详情链路）。  
+2. 视觉：主次层级清晰，不出现贴底、断层、窄胶囊主按钮等显著失衡。  
+3. 可访问性：关键入口保持 `>= 44x44`，大字体与 Reduce Motion 路径可用。  
+4. 回归：`YOMUITests` 至少包含 1 条与本步直接相关的自动化断言。  
+
+## 14. 给后续会话可直接复制的执行指令
+
+### 窗口 A（PS-T001）
+“按 `预览Sheet紧凑高度排版错位spec.md` 的 `PS-T001` 执行，只改允许文件，回传：detent 策略变更点 + 验收结果。”
+
+### 窗口 B（PS-T002 + PS-T003）
+“按 `PS-T002` 与 `PS-T003` 执行，优先解决‘贴底/断层’与‘主按钮窄胶囊’，回传：前后 UI 差异和风险。”
+
+### 窗口 C（PS-T004）
+“按 `PS-T004` 执行，替换 one-third 固化断言为排版稳定性断言，回传：新增/删除测试清单。”
+
+### 窗口 D（PS-T005 + PS-T006）
+“按 `PS-T005`（必做）与 `PS-T006`（可选）执行，回传：文档对齐清单与 CI 接入结果。”
