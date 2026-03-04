@@ -342,7 +342,7 @@ struct MapTabRootView: View {
                 .accessibilityLabel(strings.locateMe)
             }
             .padding(.trailing, DSSpacing.space12)
-            .padding(.top, DSSpacing.space8)
+            .padding(.top, floatingControlsTopInset)
         }
         .onChange(of: state.searchText) { _, newValue in
             searchModel.updateQuery(newValue)
@@ -458,6 +458,13 @@ struct MapTabRootView: View {
 
     private var searchPanelWidth: CGFloat {
         min(DSControl.searchPanelMaxWidth, UIScreen.main.bounds.width - DSSpacing.space24)
+    }
+
+    private var floatingControlsTopInset: CGFloat {
+        if state.navigationPoint == nil {
+            return DSSpacing.space8
+        }
+        return DSSpacing.space8 + DSControl.floatingActionTopInsetWithBanner
     }
 
     @ViewBuilder

@@ -201,7 +201,14 @@ final class YOMUITests: XCTestCase {
         XCTAssertFalse(routeOverlay.exists)
         XCTAssertEqual(topStatusContainers.count, 1)
         XCTAssertTrue(locateButton.waitForExistence(timeout: 8))
+        XCTAssertTrue(navigationPill.isHittable)
         XCTAssertTrue(locateButton.isHittable)
+
+        let overlapRect = navigationPill.frame.intersection(locateButton.frame)
+        XCTAssertTrue(
+            overlapRect.isNull || overlapRect.isEmpty,
+            "Navigation pill and locate button should not overlap. pill=\(navigationPill.frame), locate=\(locateButton.frame)"
+        )
     }
 
     func testMapRouteRetryFlowAfterFailure() {
