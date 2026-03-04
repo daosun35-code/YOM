@@ -134,7 +134,7 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(waitForDisappearance(of: endButton, timeout: 5))
     }
 
-    func testNavigationShowsDuplicateTopStatusContainersBaseline() {
+    func testNavigationShowsSingleTopStatusContainerBaseline() {
         let app = makeApp(extraArguments: ["UITEST_FORCE_NAVIGATION_ACTIVE"])
         app.launch()
 
@@ -146,9 +146,23 @@ final class YOMUITests: XCTestCase {
         let navigationPill = app.descendants(matching: .any)
             .matching(identifier: "map_top_navigation_pill_container")
             .firstMatch
+        let topStatusContainers = app.descendants(matching: .any)
+            .matching(
+                NSPredicate(
+                    format: "identifier IN %@",
+                    [
+                        "map_top_route_overlay_container",
+                        "map_top_navigation_pill_container"
+                    ]
+                )
+            )
+        let locateButton = app.buttons["map_locate_me"]
 
-        XCTAssertTrue(routeOverlay.waitForExistence(timeout: 8))
         XCTAssertTrue(navigationPill.waitForExistence(timeout: 8))
+        XCTAssertFalse(routeOverlay.exists)
+        XCTAssertEqual(topStatusContainers.count, 1)
+        XCTAssertTrue(locateButton.waitForExistence(timeout: 8))
+        XCTAssertTrue(locateButton.isHittable)
     }
 
     func testMapRouteRetryFlowAfterFailure() {

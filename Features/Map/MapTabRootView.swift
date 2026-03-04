@@ -304,7 +304,7 @@ struct MapTabRootView: View {
                 .accessibilityLabel(strings.locateMe)
             }
             .padding(.trailing, DSSpacing.space12)
-            .padding(.top, state.navigationPoint == nil ? .zero : DSControl.floatingActionTopInsetWithBanner)
+            .padding(.top, DSSpacing.space8)
         }
         .onChange(of: state.searchText) { _, newValue in
             searchModel.updateQuery(newValue)
