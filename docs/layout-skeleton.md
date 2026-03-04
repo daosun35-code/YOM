@@ -19,7 +19,7 @@ Exactly **one** of three mutually exclusive states at any time:
 | State | Purpose |
 |-------|---------|
 | Tab bar | Global navigation |
-| Half card | Point preview |
+| One-third card | Point preview |
 | Full card | Content retrieval |
 
 - **Long-term visual goal (non-blocking for first shell spec):** transitions may later animate as a single container morph.
@@ -32,7 +32,7 @@ Exactly **one** of three mutually exclusive states at any time:
 |--------|-----------|-----------|-------------|-----------|------------|
 | Onboarding ×2 | Solid surface | Centered (dots, logo, buttons) | — | Hidden | Standard |
 | Map Default | Full-bleed map | Pins, user position | Search + locate buttons | Tab bar | Standard |
-| Map Preview | Map (recentered) | Selected pin | Search + locate | Half card | Standard |
+| Map Preview | Map (recentered) | Selected pin | Search + locate | One-third card | Standard |
 | Map Navigation | Map + route | Route overlay | Nav pill; buttons conditional | Tab bar | Standard |
 | AR | Camera feed | Guide prompt | Back, badge, player | Hidden | Light-on-dark |
 | Retrieval | Map background | (inside full card) | — | Full card | Standard |

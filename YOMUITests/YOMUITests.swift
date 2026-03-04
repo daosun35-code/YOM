@@ -164,6 +164,33 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(retryButton.waitForExistence(timeout: 8))
     }
 
+    func testMapPinPreviewUsesOneThirdDetent() {
+        let app = makeApp(
+            extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_PREVIEW_POINT",
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
+            ]
+        )
+        app.launch()
+
+        let goButton = app.buttons["map_preview_primary_action"].firstMatch
+        XCTAssertTrue(goButton.waitForExistence(timeout: 8))
+
+        let previewTitle = app.staticTexts["Market Street Corner"].firstMatch
+        XCTAssertTrue(previewTitle.waitForExistence(timeout: 5))
+
+        let window = app.windows.firstMatch
+        XCTAssertTrue(window.waitForExistence(timeout: 5))
+
+        let estimatedSheetTop = max(0, previewTitle.frame.minY - 24)
+        let estimatedSheetHeight = max(1, window.frame.maxY - estimatedSheetTop)
+        let heightRatio = estimatedSheetHeight / max(window.frame.height, 1)
+        XCTAssertGreaterThan(heightRatio, 0.24)
+        XCTAssertLessThan(heightRatio, 0.45)
+        XCTAssertTrue(app.buttons["map_locate_me"].firstMatch.isHittable)
+    }
+
     func testArchiveCardShowsOpenActionAndNavigatesToRetrieval() {
         let app = makeApp()
         app.launch()

@@ -149,6 +149,7 @@ struct MapTabRootView: View {
     @State private var routeRetryNonce = 0
     @State private var activeAlert: MapFeedbackAlert?
     @State private var hasAppliedUITestOverrides = false
+    @State private var previewSheetDetent: PresentationDetent = .fraction(0.33)
     @FocusState private var isSearchFieldFocused: Bool
     @Namespace private var searchTransitionNamespace
 
@@ -167,6 +168,15 @@ struct MapTabRootView: View {
     }
     private var forceSearchNoResultsOnSubmitForUITests: Bool {
         launchArguments.contains("UITEST_FORCE_SEARCH_NO_RESULTS_ON_SUBMIT")
+    }
+    private var forcePreviewPointForUITests: Bool {
+        launchArguments.contains("UITEST_FORCE_PREVIEW_POINT")
+    }
+    private var previewSheetCompactDetent: PresentationDetent {
+        .fraction(0.33)
+    }
+    private var previewSheetDetents: Set<PresentationDetent> {
+        [previewSheetCompactDetent, .large]
     }
     private var searchFocusDelayNanoseconds: UInt64 {
         let shouldReduceMotion = reduceMotion || forceReduceMotionForUITests
@@ -207,7 +217,10 @@ struct MapTabRootView: View {
                             state.showDetails()
                         }
                     )
-                    .presentationDetents([.medium])
+                    .presentationDetents(previewSheetDetents, selection: $previewSheetDetent)
+                    .presentationBackgroundInteraction(.enabled(upThrough: previewSheetCompactDetent))
+                    .presentationContentInteraction(.scrolls)
+                    .presentationCornerRadius(DSRadius.r16 + DSSpacing.space8)
                     .presentationDragIndicator(.visible)
                 }
                 .sheet(isPresented: $state.isNavigationDetailPresented) {
@@ -324,6 +337,10 @@ struct MapTabRootView: View {
         .onChange(of: languageStore.hasCompletedOnboarding) { _, _ in
             syncLocationUpdates()
             applyUITestOverridesIfNeeded()
+        }
+        .onChange(of: state.previewPoint?.id) { _, pointID in
+            guard pointID != nil else { return }
+            previewSheetDetent = previewSheetCompactDetent
         }
     }
 
@@ -809,11 +826,19 @@ struct MapTabRootView: View {
             state.navigationPoint = point
             state.previewPoint = nil
             state.routeStatus = .ready
+            return
+        }
+
+        if forcePreviewPointForUITests,
+           let point = points.first {
+            state.selectPoint(point)
         }
     }
 }
 
 private struct MapPreviewSheetView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let point: PointOfInterest
     let language: AppLanguage
     let isChangingDestination: Bool
@@ -823,49 +848,113 @@ private struct MapPreviewSheetView: View {
     let onPrimaryAction: () -> Void
     let onDetails: () -> Void
 
+    private var summaryLineLimit: Int {
+        dynamicTypeSize.isAccessibilitySize ? 4 : 2
+    }
+
+    private var usesVerticalActions: Bool {
+        dynamicTypeSize.isAccessibilitySize
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: DSSpacing.space16) {
-            Text(point.title(in: language))
-                .dsTextStyle(.title, weight: .semibold)
-                .foregroundStyle(DSColor.textPrimary)
-                .accessibilityAddTraits(.isHeader)
+            VStack(alignment: .leading, spacing: DSSpacing.space12) {
+                Text(point.title(in: language))
+                    .dsTextStyle(.title, weight: .semibold)
+                    .foregroundStyle(DSColor.textPrimary)
+                    .lineLimit(2)
+                    .accessibilityAddTraits(.isHeader)
 
-            Text("\(point.year) · \(point.distanceText(in: language))")
-                .dsTextStyle(.body)
-                .foregroundStyle(DSColor.textSecondary)
+                HStack(spacing: DSSpacing.space8) {
+                    PreviewMetadataChip(systemName: "calendar", text: String(point.year))
+                    PreviewMetadataChip(systemName: "location.fill", text: point.distanceText(in: language))
+                }
+            }
 
             Text(point.summary(in: language))
                 .dsTextStyle(.body)
                 .foregroundStyle(DSColor.textPrimary)
+                .lineLimit(summaryLineLimit)
 
-            HStack(spacing: DSSpacing.space12) {
-                Button(primaryActionTitle) {
-                    onPrimaryAction()
-                }
-                .dsPrimaryCTAStyle()
-                .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .accessibilityIdentifier("map_preview_primary_action")
+            Divider()
 
-                Button(detailsTitle) {
-                    onDetails()
-                }
-                .dsSecondaryCTAStyle()
-                .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-            }
+            actionSection
 
             if isChangingDestination {
                 Text(changeDestinationHint)
                     .dsTextStyle(.caption)
                     .foregroundStyle(DSColor.textSecondary)
             }
-
-            Spacer(minLength: 0)
         }
-        .padding(DSSpacing.space24)
+        .padding(.horizontal, DSSpacing.space24)
+        .padding(.top, DSSpacing.space16)
+        .padding(.bottom, DSSpacing.space24)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var actionSection: some View {
+        if usesVerticalActions {
+            VStack(spacing: DSSpacing.space12) {
+                primaryActionButton
+                secondaryActionButton
+            }
+        } else {
+            HStack(spacing: DSSpacing.space12) {
+                primaryActionButton
+                secondaryActionButton
+            }
+        }
+    }
+
+    private var primaryActionButton: some View {
+        Button(primaryActionTitle) {
+            onPrimaryAction()
+        }
+        .dsPrimaryCTAStyle()
+        .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget)
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .accessibilityIdentifier("map_preview_primary_action")
+    }
+
+    private var secondaryActionButton: some View {
+        Button(detailsTitle) {
+            onDetails()
+        }
+        .dsSecondaryCTAStyle()
+        .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget)
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+    }
+}
+
+private struct PreviewMetadataChip: View {
+    let systemName: String
+    let text: String
+
+    var body: some View {
+        HStack(spacing: DSSpacing.space4) {
+            Image(systemName: systemName)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(DSColor.textSecondary)
+                .accessibilityHidden(true)
+
+            Text(text)
+                .dsTextStyle(.caption, weight: .semibold)
+                .foregroundStyle(DSColor.textSecondary)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, DSSpacing.space8)
+        .padding(.vertical, DSSpacing.space4)
+        .background(
+            Capsule(style: .continuous)
+                .fill(DSColor.surfaceSecondary)
+        )
+        .overlay(
+            Capsule(style: .continuous)
+                .stroke(DSColor.borderSubtle.opacity(DSOpacity.subtleBorder), lineWidth: DSBorder.bw1)
+        )
     }
 }
 

@@ -25,10 +25,10 @@ Feature: App Shell Routine
     When the user switches back to the Settings tab
     Then the "About" subpage is still actively visible
 
-  Scenario: Point preview expands via half-card sheet
+  Scenario: Point preview expands via one-third preview sheet
     Given the user is on the Map default view
     When the user taps a specific map pin
-    Then a preview sheet is presented at half height
+    Then a preview sheet is presented at one-third height
     And the map dynamically recenters to the selected pin
 
   Scenario: Map search basic behavior flow

@@ -25,8 +25,10 @@ final class LanguageStore: ObservableObject {
         self.defaults = defaults
 
         let savedLanguage = defaults.string(forKey: Keys.language)
+        let launchArguments = ProcessInfo.processInfo.arguments
+        let shouldBypassOnboarding = launchArguments.contains("UITEST_BYPASS_ONBOARDING")
         self.language = AppLanguage(rawValue: savedLanguage ?? "") ?? Self.defaultLanguage(from: Locale.preferredLanguages)
-        self.hasCompletedOnboarding = defaults.bool(forKey: Keys.onboardingCompleted)
+        self.hasCompletedOnboarding = shouldBypassOnboarding || defaults.bool(forKey: Keys.onboardingCompleted)
     }
 
     func completeOnboarding() {
