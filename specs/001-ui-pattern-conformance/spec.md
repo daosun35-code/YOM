@@ -151,3 +151,4 @@
 - 2026-03-04：Step 2 完成。主层新增失败态 quick retry，详情页保留 retry，二者统一触发 `retryRoute()`；回归锚点：`testMapRouteRetryFlowAfterFailure`。
 - 2026-03-04：Step 3 完成。清理 `routeOverlay` 下线遗留与无消费状态，`Details`/重试文案语义与行为一致，详情页标题层级去重；回归锚点：`testPreviewDetailsOpensMapSheetWithoutImmediateRetrieval`、`testEndNavigationRequiresConfirmation`。
 - 2026-03-04：Step 4 完成。`docs/app-routine.md` 与分层 spec 已按当前实现对齐，并补充回归与快照使用说明，可直接复用于后续窗口交接。
+- 2026-03-04：新增分层 spec《`预览Sheet紧凑高度排版错位spec.md`》，用于检索“固定 1/3 detent 导致动作区贴底/错位”的同类问题。
