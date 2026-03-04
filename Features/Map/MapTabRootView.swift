@@ -17,7 +17,6 @@ final class MapScreenState: ObservableObject {
     @Published var searchedPlace: SearchPlace?
     @Published var navigationPoint: PointOfInterest?
     @Published var activeRoute: MKRoute?
-    @Published var isRouteLoading = false
     @Published var routeStatus: RouteStatus = .idle
     @Published var retrievalPoint: PointOfInterest?
     @Published var previewDetailPoint: PointOfInterest?
@@ -97,7 +96,6 @@ final class MapScreenState: ObservableObject {
     func endNavigation() {
         navigationPoint = nil
         activeRoute = nil
-        isRouteLoading = false
         routeStatus = .idle
         isNavigationDetailPresented = false
     }
@@ -736,44 +734,6 @@ struct MapTabRootView: View {
         }
     }
 
-    private var routeOverlay: some View {
-        RoundedRectangle(cornerRadius: DSRadius.r16, style: .continuous)
-            .fill(.thinMaterial)
-            .frame(height: DSControl.navigationBannerHeight)
-            .overlay {
-                HStack(spacing: DSSpacing.space12) {
-                    Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
-                        .dsTextStyle(.body, weight: .semibold)
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: DSSpacing.space4) {
-                        Text(strings.navigationActive)
-                            .dsTextStyle(.body, weight: .semibold)
-                            .foregroundStyle(DSColor.textPrimary)
-                        if let point = state.navigationPoint {
-                            Text(point.title(in: languageStore.language))
-                                .dsTextStyle(.caption)
-                                .foregroundStyle(DSColor.textSecondary)
-                                .lineLimit(1)
-                        }
-                        if let route = state.activeRoute {
-                            Text(routeMetricsText(for: route))
-                                .dsTextStyle(.caption)
-                                .foregroundStyle(DSColor.textSecondary)
-                                .lineLimit(1)
-                        } else {
-                            routeStatusFeedback
-                        }
-                    }
-                    Spacer()
-                }
-                .padding(.horizontal, DSSpacing.space16)
-            }
-            .padding(.horizontal, DSSpacing.space12)
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(strings.navigationActive)
-            .accessibilityIdentifier("map_top_route_overlay_container")
-    }
-
     private var shellAnimation: Animation {
         DSMotion.routeTransition(reduceMotion: reduceMotion || forceReduceMotionForUITests)
     }
@@ -788,12 +748,10 @@ struct MapTabRootView: View {
     private func refreshRouteIfNeeded() async {
         guard let destination = state.navigationPoint else {
             state.activeRoute = nil
-            state.isRouteLoading = false
             state.routeStatus = .idle
             return
         }
 
-        state.isRouteLoading = true
         state.routeStatus = .loading
         let sourceCoordinate = locationProvider.coordinate ?? state.routeSourceFallback
         let cacheKey = RouteCacheKey(destinationID: destination.id, source: sourceCoordinate)
@@ -804,19 +762,16 @@ struct MapTabRootView: View {
             try? await Task.sleep(nanoseconds: 2_500_000_000)
             state.activeRoute = nil
             state.routeStatus = .failed
-            state.isRouteLoading = false
             return
         }
 
         if let cached = routeCache[cacheKey], now.timeIntervalSince(cached.createdAt) <= 120 {
             state.activeRoute = cached.route
-            state.isRouteLoading = false
             state.routeStatus = .ready
             return
         }
 
         if lastRouteAttemptKey == cacheKey, now.timeIntervalSince(lastRouteAttemptAt) < 3 {
-            state.isRouteLoading = false
             return
         }
 
@@ -850,8 +805,6 @@ struct MapTabRootView: View {
             state.activeRoute = nil
             state.routeStatus = .failed
         }
-
-        state.isRouteLoading = false
     }
 
     private func routeMetricsText(for route: MKRoute) -> String {
@@ -873,47 +826,9 @@ struct MapTabRootView: View {
         return "\(distanceText) · \(etaText)"
     }
 
-    @ViewBuilder
-    private var routeStatusFeedback: some View {
-        switch state.routeStatus {
-        case .loading:
-            HStack(spacing: DSSpacing.space8) {
-                ProgressView()
-                    .controlSize(.small)
-                Text(strings.routeLoading)
-                    .dsTextStyle(.caption)
-                    .foregroundStyle(DSColor.textSecondary)
-                    .lineLimit(1)
-            }
-        case .unavailable:
-            routeIssueFeedbackText(strings.routeUnavailable)
-        case .failed:
-            routeIssueFeedbackText(strings.routeFailedRetry)
-        case .idle, .ready:
-            EmptyView()
-        }
-    }
-
-    private func routeIssueFeedbackText(_ message: String) -> some View {
-        HStack(spacing: DSSpacing.space8) {
-            Text(message)
-                .dsTextStyle(.caption)
-                .foregroundStyle(DSColor.textSecondary)
-                .lineLimit(1)
-
-            Button(strings.retryText) {
-                retryRoute()
-            }
-            .buttonStyle(.plain)
-            .dsTextStyle(.caption, weight: .semibold)
-            .accessibilityIdentifier("map_route_retry")
-        }
-    }
-
     private func retryRoute() {
         guard state.navigationPoint != nil else { return }
         state.activeRoute = nil
-        state.isRouteLoading = true
         state.routeStatus = .loading
         lastRouteAttemptKey = nil
         lastRouteAttemptAt = .distantPast
@@ -1144,7 +1059,7 @@ private struct MapPreviewDetailSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                Section(strings.detailsText) {
+                Section {
                     Text(point.title(in: language))
                         .dsTextStyle(.body, weight: .semibold)
                         .foregroundStyle(DSColor.textPrimary)

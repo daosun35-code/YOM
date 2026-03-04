@@ -349,9 +349,9 @@ struct AppStrings {
 
     var routeFailedRetry: String {
         switch language {
-        case .en: return "Route update failed, retrying when location changes"
-        case .zhHans: return "路线更新失败，定位变化后将重试"
-        case .yue: return "路線更新失敗，定位變化後會重試"
+        case .en: return "Route update failed. Tap Retry to try again."
+        case .zhHans: return "路线更新失败，请点击“重试”。"
+        case .yue: return "路線更新失敗，請點擊「重試」。"
         }
     }
 
