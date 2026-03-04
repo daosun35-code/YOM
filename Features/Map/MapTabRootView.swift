@@ -253,6 +253,8 @@ struct MapTabRootView: View {
                 .sheet(isPresented: $state.isNavigationDetailPresented) {
                     NavigationDetailSheet(
                         point: state.navigationPoint,
+                        route: state.activeRoute,
+                        routeStatus: state.routeStatus,
                         language: languageStore.language,
                         onEnd: { state.endNavigation() }
                     )
@@ -1058,25 +1060,34 @@ private struct MapPreviewDetailSheet: View {
 }
 
 private struct NavigationDetailSheet: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var isEndNavigationDialogPresented = false
 
     let point: PointOfInterest?
+    let route: MKRoute?
+    let routeStatus: MapScreenState.RouteStatus
     let language: AppLanguage
     let onEnd: () -> Void
 
     private var strings: AppStrings { AppStrings(language: language) }
+    private let missingRouteValuePlaceholder = "--"
+    private var pointTitleLineLimit: Int {
+        dynamicTypeSize.isAccessibilitySize ? 3 : 2
+    }
+    private var pointSummaryLineLimit: Int {
+        dynamicTypeSize.isAccessibilitySize ? 3 : 2
+    }
 
     var body: some View {
         NavigationStack {
             List {
                 Section(strings.navigationActive) {
-                    if let point {
-                        Text(point.title(in: language))
-                            .dsTextStyle(.body, weight: .semibold)
-                            .foregroundStyle(DSColor.textPrimary)
-                        Text(point.summary(in: language))
-                            .dsTextStyle(.caption)
-                            .foregroundStyle(DSColor.textSecondary)
+                    navigationTaskInfoSection
+                }
+
+                if point != nil {
+                    Section {
+                        placeSummarySection
                     }
                 }
 
@@ -1105,6 +1116,121 @@ private struct NavigationDetailSheet: View {
             } message: {
                 Text(strings.endNavigationConfirmBody)
             }
+        }
+    }
+
+    private var navigationTaskInfoSection: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.space12) {
+            Text(strings.navigationTaskInfoTitle)
+                .dsTextStyle(.caption, weight: .semibold)
+                .foregroundStyle(DSColor.textSecondary)
+
+            NavigationTaskInfoRow(
+                title: strings.navigationTaskETALabel,
+                value: routeETAText,
+                systemName: "clock",
+                valueIdentifier: "map_navigation_task_eta_value"
+            )
+            .accessibilityIdentifier("map_navigation_task_eta_row")
+
+            NavigationTaskInfoRow(
+                title: strings.navigationTaskDistanceLabel,
+                value: routeDistanceText,
+                systemName: "ruler",
+                valueIdentifier: "map_navigation_task_distance_value"
+            )
+            .accessibilityIdentifier("map_navigation_task_distance_row")
+
+            NavigationTaskInfoRow(
+                title: strings.navigationTaskStatusLabel,
+                value: routeStatusText,
+                systemName: "dot.radiowaves.left.and.right",
+                valueIdentifier: "map_navigation_task_status_value"
+            )
+            .accessibilityIdentifier("map_navigation_task_status_row")
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("map_navigation_task_info_section")
+    }
+
+    private var routeDistanceText: String {
+        guard let route else { return missingRouteValuePlaceholder }
+        let measurementFormatter = MeasurementFormatter()
+        measurementFormatter.unitStyle = .short
+        measurementFormatter.unitOptions = .naturalScale
+        measurementFormatter.locale = language.locale
+        return measurementFormatter.string(
+            from: Measurement(value: route.distance, unit: UnitLength.meters)
+        )
+    }
+
+    private var routeETAText: String {
+        guard let route else { return missingRouteValuePlaceholder }
+        let etaFormatter = DateComponentsFormatter()
+        etaFormatter.unitsStyle = .short
+        etaFormatter.allowedUnits = route.expectedTravelTime >= 3600 ? [.hour, .minute] : [.minute]
+        return etaFormatter.string(from: route.expectedTravelTime) ?? missingRouteValuePlaceholder
+    }
+
+    private var routeStatusText: String {
+        switch routeStatus {
+        case .idle:
+            strings.navigationTaskStatusPending
+        case .loading:
+            strings.routeLoading
+        case .ready:
+            strings.navigationTaskStatusReady
+        case .unavailable:
+            strings.routeUnavailable
+        case .failed:
+            strings.routeFailedRetry
+        }
+    }
+
+    @ViewBuilder
+    private var placeSummarySection: some View {
+        if let point {
+            Text(point.title(in: language))
+                .dsTextStyle(.body, weight: .semibold)
+                .foregroundStyle(DSColor.textPrimary)
+                .lineLimit(pointTitleLineLimit)
+                .accessibilityIdentifier("map_navigation_detail_point_title")
+            Text(point.summary(in: language))
+                .dsTextStyle(.caption)
+                .foregroundStyle(DSColor.textSecondary)
+                .lineLimit(pointSummaryLineLimit)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("map_navigation_detail_point_summary")
+        }
+    }
+}
+
+private struct NavigationTaskInfoRow: View {
+    let title: String
+    let value: String
+    let systemName: String
+    let valueIdentifier: String
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: DSSpacing.space8) {
+            Label {
+                Text(title)
+                    .dsTextStyle(.caption, weight: .semibold)
+                    .foregroundStyle(DSColor.textSecondary)
+            } icon: {
+                Image(systemName: systemName)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(DSColor.textSecondary)
+                    .accessibilityHidden(true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Text(value)
+                .dsTextStyle(.caption, weight: .semibold)
+                .foregroundStyle(DSColor.textPrimary)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+                .accessibilityIdentifier(valueIdentifier)
         }
     }
 }

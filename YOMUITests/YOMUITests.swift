@@ -140,6 +140,39 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(waitForDisappearance(of: navigationPill, timeout: 5))
     }
 
+    func testNavigationDetailShowsTaskInfoBeforePointSummary() {
+        let app = makeApp(extraArguments: ["UITEST_FORCE_NAVIGATION_ACTIVE"])
+        app.launch()
+
+        completeOnboarding(in: app)
+
+        let navigationPill = app.descendants(matching: .any)
+            .matching(identifier: "map_top_navigation_pill_container")
+            .firstMatch
+        XCTAssertTrue(navigationPill.waitForExistence(timeout: 8))
+        navigationPill.tap()
+
+        let taskInfoSection = app.otherElements["map_navigation_task_info_section"].firstMatch
+        XCTAssertTrue(taskInfoSection.waitForExistence(timeout: 5))
+
+        let etaRow = app.descendants(matching: .any)
+            .matching(identifier: "map_navigation_task_eta_row")
+            .firstMatch
+        let distanceRow = app.descendants(matching: .any)
+            .matching(identifier: "map_navigation_task_distance_row")
+            .firstMatch
+        let statusRow = app.descendants(matching: .any)
+            .matching(identifier: "map_navigation_task_status_row")
+            .firstMatch
+        XCTAssertTrue(etaRow.waitForExistence(timeout: 5))
+        XCTAssertTrue(distanceRow.waitForExistence(timeout: 5))
+        XCTAssertTrue(statusRow.waitForExistence(timeout: 5))
+
+        let pointSummary = app.staticTexts["map_navigation_detail_point_summary"].firstMatch
+        XCTAssertTrue(pointSummary.waitForExistence(timeout: 5))
+        XCTAssertLessThan(taskInfoSection.frame.minY, pointSummary.frame.minY)
+    }
+
     func testNavigationShowsSingleTopStatusContainerBaseline() {
         let app = makeApp(extraArguments: ["UITEST_FORCE_NAVIGATION_ACTIVE"])
         app.launch()

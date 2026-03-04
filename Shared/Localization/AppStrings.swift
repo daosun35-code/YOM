@@ -251,6 +251,54 @@ struct AppStrings {
         }
     }
 
+    var navigationTaskInfoTitle: String {
+        switch language {
+        case .en: return "Navigation Task"
+        case .zhHans: return "导航任务信息"
+        case .yue: return "導航任務資訊"
+        }
+    }
+
+    var navigationTaskETALabel: String {
+        switch language {
+        case .en: return "ETA"
+        case .zhHans: return "预计到达"
+        case .yue: return "預計到達"
+        }
+    }
+
+    var navigationTaskDistanceLabel: String {
+        switch language {
+        case .en: return "Distance"
+        case .zhHans: return "距离"
+        case .yue: return "距離"
+        }
+    }
+
+    var navigationTaskStatusLabel: String {
+        switch language {
+        case .en: return "Status"
+        case .zhHans: return "状态"
+        case .yue: return "狀態"
+        }
+    }
+
+    var navigationTaskStatusReady: String {
+        switch language {
+        case .en: return "Ready"
+        case .zhHans: return "已就绪"
+        case .yue: return "已就緒"
+        }
+    }
+
+    var navigationTaskStatusPending: String {
+        switch language {
+        case .en: return "Pending"
+        case .zhHans: return "待开始"
+        case .yue: return "待開始"
+        }
+    }
+
     var endNavigation: String {
         switch language {
         case .en: return "End"

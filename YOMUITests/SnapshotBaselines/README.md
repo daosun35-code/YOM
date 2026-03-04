@@ -10,6 +10,14 @@ This directory stores baseline screenshots required by `YOMUITests` for the five
 
 If you see `*.placeholder.png` files, they are invalid seed placeholders and are intentionally ignored by tests. Regenerate real `*.png` baselines before running snapshot assertions.
 
+## Map baseline scope (ND-T019)
+
+- `map.png` is captured from `testSnapshotBaselineMapPage`.
+- This baseline represents the default map shell state after onboarding (`UITEST_FORCE_STATIC_MAP_SNAPSHOT` + no active navigation sheet).
+- Navigation-detail hierarchy changes from ND-T017/ND-T018 are validated by dedicated UI tests instead of this baseline:
+  - `testNavigationDetailShowsTaskInfoBeforePointSummary`
+  - `testEndNavigationRequiresConfirmation`
+
 ## Record / refresh baselines
 
 Preferred: run the helper script, which auto-picks an available `iPhone 17` simulator by UDID:
@@ -38,3 +46,18 @@ UITEST_RECORD_BASELINES=1 xcodebuild \
 ```
 
 If you must pin by OS name, use a runtime that is actually installed and visible to `xcodebuild -showdestinations` on your machine.
+
+## Record-mode fallback
+
+If shell environment variables are not propagated to the UI test process on your machine, use the local record-mode marker:
+
+```bash
+touch YOMUITests/SnapshotBaselines/.record-mode
+xcodebuild \
+  -project YOM.xcodeproj \
+  -scheme YOM \
+  -destination "id=${SIM_UDID}" \
+  -only-testing:YOMUITests/YOMUITests/testSnapshotBaselineMapPage \
+  test
+rm YOMUITests/SnapshotBaselines/.record-mode
+```
