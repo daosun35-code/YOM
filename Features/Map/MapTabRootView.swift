@@ -20,11 +20,13 @@ final class MapScreenState: ObservableObject {
     @Published var isRouteLoading = false
     @Published var routeStatus: RouteStatus = .idle
     @Published var retrievalPoint: PointOfInterest?
+    @Published var previewDetailPoint: PointOfInterest?
     @Published var isNavigationDetailPresented = false
     @Published var searchText = ""
     @Published var isSearchPresented = false
     @Published private(set) var recentPointIDs: [UUID] = []
     @Published private(set) var recentSearchQueries: [String] = []
+    private var pendingRetrievalPointFromPreviewDetail: PointOfInterest?
 
     private let defaultRegion = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
@@ -88,8 +90,8 @@ final class MapScreenState: ObservableObject {
 
     func showDetails() {
         guard let point = previewPoint else { return }
-        retrievalPoint = point
         previewPoint = nil
+        previewDetailPoint = point
     }
 
     func endNavigation() {
@@ -107,6 +109,18 @@ final class MapScreenState: ObservableObject {
 
     func closeRetrieval() {
         retrievalPoint = nil
+    }
+
+    func openRetrievalFromPreviewDetail() {
+        guard let point = previewDetailPoint else { return }
+        pendingRetrievalPointFromPreviewDetail = point
+        previewDetailPoint = nil
+    }
+
+    func presentPendingRetrievalIfNeeded() {
+        guard let point = pendingRetrievalPointFromPreviewDetail else { return }
+        pendingRetrievalPointFromPreviewDetail = nil
+        retrievalPoint = point
     }
 
     func recents(from points: [PointOfInterest]) -> [PointOfInterest] {
@@ -223,6 +237,19 @@ struct MapTabRootView: View {
                     .presentationCornerRadius(DSRadius.r16 + DSSpacing.space8)
                     .presentationDragIndicator(.visible)
                 }
+                .sheet(item: $state.previewDetailPoint, onDismiss: {
+                    state.presentPendingRetrievalIfNeeded()
+                }) { point in
+                    MapPreviewDetailSheet(
+                        point: point,
+                        language: languageStore.language,
+                        onOpenRetrieval: {
+                            state.openRetrievalFromPreviewDetail()
+                        }
+                    )
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+                }
                 .sheet(isPresented: $state.isNavigationDetailPresented) {
                     NavigationDetailSheet(
                         point: state.navigationPoint,
@@ -277,8 +304,7 @@ struct MapTabRootView: View {
                 NavigationPillView(
                     point: navPoint,
                     language: languageStore.language,
-                    onOpenDetail: { state.openNavigationDetail() },
-                    onEnd: { state.endNavigation() }
+                    onOpenDetail: { state.openNavigationDetail() }
                 )
                 .padding(.horizontal, DSSpacing.space12)
                 .padding(.top, DSSpacing.space4)
@@ -922,6 +948,7 @@ private struct MapPreviewSheetView: View {
         .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget)
         .lineLimit(1)
         .minimumScaleFactor(0.8)
+        .accessibilityIdentifier("map_preview_secondary_details")
     }
 }
 
@@ -955,64 +982,72 @@ private struct PreviewMetadataChip: View {
 }
 
 private struct NavigationPillView: View {
-    @State private var isEndNavigationDialogPresented = false
-
     let point: PointOfInterest
     let language: AppLanguage
     let onOpenDetail: () -> Void
-    let onEnd: () -> Void
 
     private var strings: AppStrings { AppStrings(language: language) }
 
     var body: some View {
-        HStack(spacing: DSSpacing.space12) {
-            Button {
-                onOpenDetail()
-            } label: {
-                HStack(spacing: DSSpacing.space8) {
-                    Image(systemName: "location.north.line.fill")
+        Button {
+            onOpenDetail()
+        } label: {
+            HStack(spacing: DSSpacing.space8) {
+                Image(systemName: "location.north.line.fill")
+                    .foregroundStyle(DSColor.textPrimary)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: DSSpacing.space4) {
+                    Text(strings.navigationActive)
+                        .dsTextStyle(.caption, weight: .semibold)
+                        .foregroundStyle(DSColor.textSecondary)
+                    Text(point.title(in: language))
+                        .dsTextStyle(.body)
                         .foregroundStyle(DSColor.textPrimary)
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: DSSpacing.space4) {
-                        Text(strings.navigationActive)
-                            .dsTextStyle(.caption, weight: .semibold)
-                            .foregroundStyle(DSColor.textSecondary)
-                        Text(point.title(in: language))
-                            .dsTextStyle(.body)
-                            .foregroundStyle(DSColor.textPrimary)
-                            .lineLimit(1)
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.horizontal, DSSpacing.space12)
+            .padding(.vertical, DSSpacing.space12)
+            .background(.ultraThinMaterial, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(strings.navigationActive), \(point.title(in: language))")
+        .accessibilityHint(strings.openNavigationDetailsHint)
+        .accessibilityIdentifier("map_top_navigation_pill_container")
+    }
+}
+
+private struct MapPreviewDetailSheet: View {
+    let point: PointOfInterest
+    let language: AppLanguage
+    let onOpenRetrieval: () -> Void
+
+    private var strings: AppStrings { AppStrings(language: language) }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section(strings.detailsText) {
+                    Text(point.title(in: language))
+                        .dsTextStyle(.body, weight: .semibold)
+                        .foregroundStyle(DSColor.textPrimary)
+                    Text(point.summary(in: language))
+                        .dsTextStyle(.caption)
+                        .foregroundStyle(DSColor.textSecondary)
+                }
+
+                Section {
+                    Button(strings.archiveOpenRetrievalText) {
+                        onOpenRetrieval()
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityIdentifier("map_preview_detail_open_retrieval")
+                    .accessibilityHint(strings.archiveOpenRetrievalHint)
                 }
-                .padding(.horizontal, DSSpacing.space12)
-                .padding(.vertical, DSSpacing.space12)
-                .background(.ultraThinMaterial, in: Capsule())
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("\(strings.navigationActive), \(point.title(in: language))")
-            .accessibilityHint(strings.openNavigationDetailsHint)
-            .accessibilityIdentifier("map_top_navigation_pill_container")
-
-            Button(strings.endNavigation) {
-                isEndNavigationDialogPresented = true
-            }
-            .dsSecondaryCTAStyle()
-            .frame(minWidth: DSControl.minTouchTarget, minHeight: DSControl.minTouchTarget)
-            .accessibilityIdentifier("map_end_navigation")
-            .confirmationDialog(
-                strings.endNavigationConfirmTitle,
-                isPresented: $isEndNavigationDialogPresented,
-                titleVisibility: .visible
-            ) {
-                Button(strings.endNavigationConfirmAction, role: .destructive) {
-                    onEnd()
-                }
-                .accessibilityIdentifier("map_confirm_end_navigation")
-
-                Button(strings.notNowText, role: .cancel) {}
-            } message: {
-                Text(strings.endNavigationConfirmBody)
-            }
+            .accessibilityIdentifier("map_preview_detail_sheet")
+            .navigationTitle(strings.detailsText)
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }

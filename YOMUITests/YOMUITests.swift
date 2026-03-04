@@ -222,6 +222,48 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(app.buttons["map_locate_me"].firstMatch.isHittable)
     }
 
+    func testPreviewDetailsOpensMapSheetWithoutImmediateRetrieval() {
+        let app = makeApp(
+            extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_PREVIEW_POINT",
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
+            ]
+        )
+        app.launch()
+
+        let detailsButton = app.buttons["map_preview_secondary_details"].firstMatch
+        XCTAssertTrue(detailsButton.waitForExistence(timeout: 8))
+        detailsButton.tap()
+
+        let detailTitle = app.navigationBars["Details"].firstMatch
+        XCTAssertTrue(detailTitle.waitForExistence(timeout: 5))
+        let openRetrievalButton = app.buttons["map_preview_detail_open_retrieval"].firstMatch
+        XCTAssertTrue(openRetrievalButton.waitForExistence(timeout: 5))
+        XCTAssertFalse(app.navigationBars["Retrieval"].waitForExistence(timeout: 1))
+    }
+
+    func testPreviewDetailsOpenRetrievalRequiresExplicitSecondStep() {
+        let app = makeApp(
+            extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_PREVIEW_POINT",
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
+            ]
+        )
+        app.launch()
+
+        let detailsButton = app.buttons["map_preview_secondary_details"].firstMatch
+        XCTAssertTrue(detailsButton.waitForExistence(timeout: 8))
+        detailsButton.tap()
+
+        let openRetrievalButton = app.buttons["map_preview_detail_open_retrieval"].firstMatch
+        XCTAssertTrue(openRetrievalButton.waitForExistence(timeout: 5))
+        openRetrievalButton.tap()
+
+        XCTAssertTrue(app.navigationBars["Retrieval"].waitForExistence(timeout: 8))
+    }
+
     func testArchiveCardShowsOpenActionAndNavigatesToRetrieval() {
         let app = makeApp()
         app.launch()
