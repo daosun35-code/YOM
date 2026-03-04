@@ -112,12 +112,18 @@ final class YOMUITests: XCTestCase {
 
         completeOnboarding(in: app)
 
-        let endButton = app.buttons["map_end_navigation"]
-        XCTAssertTrue(endButton.waitForExistence(timeout: 8))
+        let navigationPill = app.descendants(matching: .any)
+            .matching(identifier: "map_top_navigation_pill_container")
+            .firstMatch
+        XCTAssertTrue(navigationPill.waitForExistence(timeout: 8))
+        navigationPill.tap()
 
+        let endButton = app.buttons["map_end_navigation_in_sheet"].firstMatch
+        XCTAssertTrue(endButton.waitForExistence(timeout: 5))
         endButton.tap()
+
         let confirmButton = app.buttons
-            .matching(identifier: "map_confirm_end_navigation")
+            .matching(identifier: "map_confirm_end_navigation_in_sheet")
             .firstMatch
         let confirmButtonByTitle = app.buttons["End Navigation"].firstMatch
         let firstDialogShown =
@@ -131,7 +137,7 @@ final class YOMUITests: XCTestCase {
             confirmButtonByTitle.tap()
         }
 
-        XCTAssertTrue(waitForDisappearance(of: endButton, timeout: 5))
+        XCTAssertTrue(waitForDisappearance(of: navigationPill, timeout: 5))
     }
 
     func testNavigationShowsSingleTopStatusContainerBaseline() {
@@ -236,8 +242,8 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(detailsButton.waitForExistence(timeout: 8))
         detailsButton.tap()
 
-        let detailTitle = app.navigationBars["Details"].firstMatch
-        XCTAssertTrue(detailTitle.waitForExistence(timeout: 5))
+        let detailNavigationBar = app.navigationBars.firstMatch
+        XCTAssertTrue(detailNavigationBar.waitForExistence(timeout: 5))
         let openRetrievalButton = app.buttons["map_preview_detail_open_retrieval"].firstMatch
         XCTAssertTrue(openRetrievalButton.waitForExistence(timeout: 5))
         XCTAssertFalse(app.navigationBars["Retrieval"].waitForExistence(timeout: 1))
@@ -408,12 +414,18 @@ final class YOMUITests: XCTestCase {
 
         completeOnboarding(in: app)
 
-        let endButton = app.buttons["map_end_navigation"]
-        XCTAssertTrue(endButton.waitForExistence(timeout: 8))
+        let navigationPill = app.descendants(matching: .any)
+            .matching(identifier: "map_top_navigation_pill_container")
+            .firstMatch
+        XCTAssertTrue(navigationPill.waitForExistence(timeout: 8))
+        navigationPill.tap()
 
+        let endButton = app.buttons["map_end_navigation_in_sheet"].firstMatch
+        XCTAssertTrue(endButton.waitForExistence(timeout: 5))
         endButton.tap()
+
         let confirmButton = app.buttons
-            .matching(identifier: "map_confirm_end_navigation")
+            .matching(identifier: "map_confirm_end_navigation_in_sheet")
             .firstMatch
         let confirmButtonByTitle = app.buttons["End Navigation"].firstMatch
         let confirmationVisible =
@@ -428,7 +440,7 @@ final class YOMUITests: XCTestCase {
             confirmButtonByTitle.tap()
         }
 
-        XCTAssertTrue(waitForDisappearance(of: endButton, timeout: 5))
+        XCTAssertTrue(waitForDisappearance(of: navigationPill, timeout: 5))
     }
 
     private func makeApp(extraArguments: [String] = [], extraEnvironment: [String: String] = [:]) -> XCUIApplication {

@@ -221,17 +221,17 @@ struct AppStrings {
 
     var detailsText: String {
         switch language {
-        case .en: return "Details"
-        case .zhHans: return "详情"
-        case .yue: return "詳情"
+        case .en: return "View Details"
+        case .zhHans: return "查看详情"
+        case .yue: return "查看詳情"
         }
     }
 
     var openNavigationDetailsHint: String {
         switch language {
-        case .en: return "Open navigation details"
-        case .zhHans: return "打开导航详情"
-        case .yue: return "打開導航詳情"
+        case .en: return "Open details first, then continue with the next action."
+        case .zhHans: return "先查看详情，再继续后续操作。"
+        case .yue: return "先查看詳情，再繼續後續操作。"
         }
     }
 

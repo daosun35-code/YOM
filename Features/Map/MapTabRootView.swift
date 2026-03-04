@@ -941,13 +941,18 @@ private struct MapPreviewSheetView: View {
     }
 
     private var secondaryActionButton: some View {
-        Button(detailsTitle) {
+        Button {
             onDetails()
+        } label: {
+            Text(detailsTitle)
+                .dsTextStyle(.caption, weight: .semibold)
+                .foregroundStyle(DSColor.textSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget)
+                .contentShape(Rectangle())
         }
-        .dsSecondaryCTAStyle()
-        .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget)
-        .lineLimit(1)
-        .minimumScaleFactor(0.8)
+        .buttonStyle(.plain)
         .accessibilityIdentifier("map_preview_secondary_details")
     }
 }
