@@ -271,11 +271,6 @@ struct MapTabRootView: View {
     private var mapCanvas: some View {
         ZStack(alignment: .top) {
             mapBackgroundLayer
-
-            if state.navigationPoint != nil {
-                routeOverlay
-                    .padding(.top, DSSpacing.space12)
-            }
         }
         .safeAreaInset(edge: .top) {
             if let navPoint = state.navigationPoint {
