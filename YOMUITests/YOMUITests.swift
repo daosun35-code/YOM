@@ -134,6 +134,23 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(waitForDisappearance(of: endButton, timeout: 5))
     }
 
+    func testNavigationShowsDuplicateTopStatusContainersBaseline() {
+        let app = makeApp(extraArguments: ["UITEST_FORCE_NAVIGATION_ACTIVE"])
+        app.launch()
+
+        completeOnboarding(in: app)
+
+        let routeOverlay = app.descendants(matching: .any)
+            .matching(identifier: "map_top_route_overlay_container")
+            .firstMatch
+        let navigationPill = app.descendants(matching: .any)
+            .matching(identifier: "map_top_navigation_pill_container")
+            .firstMatch
+
+        XCTAssertTrue(routeOverlay.waitForExistence(timeout: 8))
+        XCTAssertTrue(navigationPill.waitForExistence(timeout: 8))
+    }
+
     func testMapRouteRetryFlowAfterFailure() {
         let app = makeApp(
             extraArguments: [

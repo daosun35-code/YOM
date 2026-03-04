@@ -664,6 +664,7 @@ struct MapTabRootView: View {
             .padding(.horizontal, DSSpacing.space12)
             .accessibilityElement(children: .combine)
             .accessibilityLabel(strings.navigationActive)
+            .accessibilityIdentifier("map_top_route_overlay_container")
     }
 
     private var shellAnimation: Animation {
@@ -995,6 +996,7 @@ private struct NavigationPillView: View {
             .buttonStyle(.plain)
             .accessibilityLabel("\(strings.navigationActive), \(point.title(in: language))")
             .accessibilityHint(strings.openNavigationDetailsHint)
+            .accessibilityIdentifier("map_top_navigation_pill_container")
 
             Button(strings.endNavigation) {
                 isEndNavigationDialogPresented = true
