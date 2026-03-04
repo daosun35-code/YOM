@@ -234,17 +234,27 @@ final class YOMUITests: XCTestCase {
             .matching(identifier: "map_top_navigation_pill_container")
             .firstMatch
         XCTAssertTrue(navigationPill.waitForExistence(timeout: 8))
+
+        let quickRetryButton = app.descendants(matching: .any)
+            .matching(identifier: "map_route_retry_quick")
+            .firstMatch
+        XCTAssertTrue(quickRetryButton.waitForExistence(timeout: 8))
+
+        quickRetryButton.tap()
+        XCTAssertTrue(waitForDisappearance(of: quickRetryButton, timeout: 3))
+        XCTAssertTrue(quickRetryButton.waitForExistence(timeout: 8))
+
         navigationPill.tap()
 
-        let retryButton = app.buttons
+        let detailRetryButton = app.buttons
             .matching(identifier: "map_route_retry")
             .matching(NSPredicate(format: "label == %@", "Retry"))
             .firstMatch
-        XCTAssertTrue(retryButton.waitForExistence(timeout: 8))
+        XCTAssertTrue(detailRetryButton.waitForExistence(timeout: 5))
 
-        retryButton.tap()
-        XCTAssertTrue(waitForDisappearance(of: retryButton, timeout: 3))
-        XCTAssertTrue(retryButton.waitForExistence(timeout: 8))
+        detailRetryButton.tap()
+        XCTAssertTrue(waitForDisappearance(of: detailRetryButton, timeout: 3))
+        XCTAssertTrue(detailRetryButton.waitForExistence(timeout: 8))
     }
 
     func testMapPinPreviewUsesOneThirdDetent() {

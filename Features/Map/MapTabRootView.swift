@@ -313,11 +313,17 @@ struct MapTabRootView: View {
         .accessibilityIdentifier("map_interaction_surface")
         .safeAreaInset(edge: .top) {
             if let navPoint = state.navigationPoint {
-                NavigationPillView(
-                    point: navPoint,
-                    language: languageStore.language,
-                    onOpenDetail: { state.openNavigationDetail() }
-                )
+                VStack(spacing: DSSpacing.space8) {
+                    NavigationPillView(
+                        point: navPoint,
+                        language: languageStore.language,
+                        onOpenDetail: { state.openNavigationDetail() }
+                    )
+
+                    if shouldShowQuickRouteRetry {
+                        routeQuickRetryBanner
+                    }
+                }
                 .padding(.horizontal, DSSpacing.space12)
                 .padding(.top, DSSpacing.space4)
                 .transition(.opacity)
@@ -465,6 +471,54 @@ struct MapTabRootView: View {
             return DSSpacing.space8
         }
         return DSSpacing.space8 + DSControl.floatingActionTopInsetWithBanner
+    }
+
+    private var shouldShowQuickRouteRetry: Bool {
+        guard state.navigationPoint != nil else { return false }
+        switch state.routeStatus {
+        case .failed, .unavailable:
+            return true
+        case .idle, .loading, .ready:
+            return false
+        }
+    }
+
+    private var quickRouteRetryMessage: String {
+        switch state.routeStatus {
+        case .unavailable:
+            return strings.routeUnavailable
+        case .failed:
+            return strings.routeFailedRetry
+        case .idle, .loading, .ready:
+            return ""
+        }
+    }
+
+    private var routeQuickRetryBanner: some View {
+        Button {
+            retryRoute()
+        } label: {
+            HStack(spacing: DSSpacing.space8) {
+                Text(quickRouteRetryMessage)
+                    .dsTextStyle(.caption)
+                    .foregroundStyle(DSColor.textSecondary)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text(strings.retryText)
+                    .dsTextStyle(.caption, weight: .semibold)
+                    .foregroundStyle(DSColor.textPrimary)
+                    .padding(.horizontal, DSSpacing.space8)
+                    .padding(.vertical, DSSpacing.space4)
+                    .background(.ultraThinMaterial, in: Capsule())
+            }
+            .padding(.leading, DSSpacing.space12)
+            .padding(.trailing, DSSpacing.space8)
+            .frame(minHeight: DSControl.minTouchTarget)
+            .background(.thinMaterial, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("map_route_retry_quick")
     }
 
     @ViewBuilder
@@ -857,6 +911,10 @@ struct MapTabRootView: View {
     }
 
     private func retryRoute() {
+        guard state.navigationPoint != nil else { return }
+        state.activeRoute = nil
+        state.isRouteLoading = true
+        state.routeStatus = .loading
         lastRouteAttemptKey = nil
         lastRouteAttemptAt = .distantPast
         routeRetryNonce += 1
