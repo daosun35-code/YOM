@@ -224,11 +224,17 @@ struct MapTabRootView: View {
                         primaryActionTitle: state.navigationPoint == nil ? strings.goText : strings.changeDestination,
                         changeDestinationHint: strings.changeDestinationHint,
                         detailsTitle: strings.detailsText,
+                        closeTitle: strings.closeText,
                         onPrimaryAction: {
                             handleNavigationAction()
                         },
                         onDetails: {
                             state.showDetails()
+                        },
+                        onClose: {
+                            withAnimation(shellAnimation) {
+                                state.dismissPreview()
+                            }
                         }
                     )
                     .presentationDetents(previewSheetDetents, selection: $previewSheetDetent)
@@ -256,6 +262,7 @@ struct MapTabRootView: View {
                         route: state.activeRoute,
                         routeStatus: state.routeStatus,
                         language: languageStore.language,
+                        onRetry: { retryRoute() },
                         onEnd: { state.endNavigation() }
                     )
                     .presentationDetents([.medium])
@@ -301,6 +308,9 @@ struct MapTabRootView: View {
         ZStack(alignment: .top) {
             mapBackgroundLayer
         }
+        .contentShape(Rectangle())
+        .gesture(mapPreviewDismissGesture, including: .gesture)
+        .accessibilityIdentifier("map_interaction_surface")
         .safeAreaInset(edge: .top) {
             if let navPoint = state.navigationPoint {
                 NavigationPillView(
@@ -364,6 +374,12 @@ struct MapTabRootView: View {
         .onChange(of: state.previewPoint?.id) { _, pointID in
             guard pointID != nil else { return }
             previewSheetDetent = previewSheetCompactDetent
+        }
+    }
+
+    private var mapPreviewDismissGesture: some Gesture {
+        TapGesture().onEnded {
+            handleMapBackgroundTap()
         }
     }
 
@@ -625,6 +641,13 @@ struct MapTabRootView: View {
         }
     }
 
+    private func handleMapBackgroundTap() {
+        guard state.previewPoint != nil else { return }
+        withAnimation(shellAnimation) {
+            state.dismissPreview()
+        }
+    }
+
     private func handleSearchSubmit() async {
         let keyword = state.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard keyword.isEmpty == false else { return }
@@ -869,8 +892,10 @@ private struct MapPreviewSheetView: View {
     let primaryActionTitle: String
     let changeDestinationHint: String
     let detailsTitle: String
+    let closeTitle: String
     let onPrimaryAction: () -> Void
     let onDetails: () -> Void
+    let onClose: () -> Void
 
     private var summaryLineLimit: Int {
         dynamicTypeSize.isAccessibilitySize ? 4 : 2
@@ -918,15 +943,18 @@ private struct MapPreviewSheetView: View {
 
     @ViewBuilder
     private var actionSection: some View {
-        if usesVerticalActions {
-            VStack(spacing: DSSpacing.space12) {
-                primaryActionButton
-                secondaryActionButton
-            }
-        } else {
-            HStack(spacing: DSSpacing.space12) {
-                primaryActionButton
-                secondaryActionButton
+        VStack(spacing: DSSpacing.space12) {
+            primaryActionButton
+            if usesVerticalActions {
+                VStack(spacing: DSSpacing.space8) {
+                    secondaryActionButton
+                    closeActionButton
+                }
+            } else {
+                HStack(spacing: DSSpacing.space12) {
+                    secondaryActionButton
+                    closeActionButton
+                }
             }
         }
     }
@@ -956,6 +984,22 @@ private struct MapPreviewSheetView: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("map_preview_secondary_details")
+    }
+
+    private var closeActionButton: some View {
+        Button {
+            onClose()
+        } label: {
+            Text(closeTitle)
+                .dsTextStyle(.caption, weight: .semibold)
+                .foregroundStyle(DSColor.textSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("map_preview_close_action")
     }
 }
 
@@ -1067,6 +1111,7 @@ private struct NavigationDetailSheet: View {
     let route: MKRoute?
     let routeStatus: MapScreenState.RouteStatus
     let language: AppLanguage
+    let onRetry: () -> Void
     let onEnd: () -> Void
 
     private var strings: AppStrings { AppStrings(language: language) }
@@ -1083,6 +1128,19 @@ private struct NavigationDetailSheet: View {
             List {
                 Section(strings.navigationActive) {
                     navigationTaskInfoSection
+                }
+
+                if let routeIssueMessage {
+                    Section(strings.navigationTaskStatusLabel) {
+                        Text(routeIssueMessage)
+                            .dsTextStyle(.caption)
+                            .foregroundStyle(DSColor.textSecondary)
+
+                        Button(strings.retryText) {
+                            onRetry()
+                        }
+                        .accessibilityIdentifier("map_route_retry")
+                    }
                 }
 
                 if point != nil {
@@ -1184,6 +1242,17 @@ private struct NavigationDetailSheet: View {
             strings.routeUnavailable
         case .failed:
             strings.routeFailedRetry
+        }
+    }
+
+    private var routeIssueMessage: String? {
+        switch routeStatus {
+        case .failed:
+            strings.routeFailedRetry
+        case .unavailable:
+            strings.routeUnavailable
+        case .idle, .loading, .ready:
+            nil
         }
     }
 

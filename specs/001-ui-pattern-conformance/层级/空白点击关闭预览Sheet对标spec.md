@@ -65,14 +65,17 @@
 2. 已有关闭状态函数：`dismissPreview()` 会将 `previewPoint = nil`。  
 锚点：`Features/Map/MapTabRootView.swift`
 
-### 4.2 缺口（当前 App 还没用到的地方）
+### 4.2 差异状态（2026-03-04 已收敛）
 
-1. **GAP-MD-001（Map 预览空白点击关闭未接线）**  
-`dismissPreview()` 当前未被 UI 事件调用；未见“点击地图空白 -> dismissPreview”闭环。
-2. **GAP-MD-002（预览 Sheet 开启背景交互但未定义空白点击策略）**  
-预览 Sheet 使用 `.presentationBackgroundInteraction(.enabled(upThrough: ...))`，当前实现未显式定义“背景点击时关闭还是透传”策略。
-3. **GAP-MD-003（测试缺口）**  
-`YOMUITests` 目前有“点 pin 打开预览”“点详情进入详情 Sheet”等测试，但没有“点击空白关闭预览”的断言用例。
+1. **GAP-MD-001 已修复（Map 预览空白点击关闭已接线）**  
+`dismissPreview()` 已由地图空白点击手势触发，形成“点击空白 -> dismissPreview”闭环。  
+锚点：`Features/Map/MapTabRootView.swift`
+2. **GAP-MD-002 已修复（背景交互策略已补充）**  
+预览 Sheet 保持 `.presentationBackgroundInteraction(.enabled(...))`，并显式补充“地图空白点击关闭”策略。  
+锚点：`Features/Map/MapTabRootView.swift`
+3. **GAP-MD-003 已修复（测试缺口已补齐）**  
+新增 UI Test 覆盖“打开预览 -> 点击空白 -> 预览消失”链路。  
+锚点：`YOMUITests/YOMUITests.swift`
 
 ## 5. 快速检索清单（给后续对话直接复用）
 
@@ -100,3 +103,15 @@ rg -n "Tap outside|tap outside|Dismiss|dismiss preview" docs specs
 3. 可访问性：不影响现有主 CTA（`Go/Change Destination`）和详情入口可达性。
 4. 回归：新增 UI Test 覆盖“打开预览 -> 点击空白 -> 预览消失”链路。
 
+
+## 执行结果（2026-03-04）
+
+按本 spec 执行后，Map 预览关闭链路已对齐：
+
+1. `dismissPreview` 已接线到地图空白点击。  
+2. 预览卡已补显式 `Close` 入口（满足 MAP-DISMISS-004）。  
+3. 新增 UI Test：`testPreviewTapOutsideDismissesSheet`。  
+4. 新增 UI Test：`testPreviewCloseActionDismissesSheet`。  
+5. `app-routine.md` 中 “tap outside” 与实现已一致。  
+
+补充：路由失败后的 `Retry` 入口迁移与测试路径调整，已记录在 `导航详情分步整改spec.md`（ND-T020 / ND-T021）。

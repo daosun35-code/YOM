@@ -37,6 +37,13 @@
 - 代码锚点：
   - `NavigationDetailSheet` `Section(strings.navigationActive)`：约 1035-1044 行
 
+### ND-B006 路由失败后重试入口失联
+- 现象：`routeOverlay` 下线后，`map_route_retry` 仍挂在该容器分支，导航失败时主界面无可见重试入口。
+- 代码锚点：
+  - `routeOverlay` 已不在 `mapCanvas` 渲染链路：`Features/Map/MapTabRootView.swift`
+  - `routeIssueFeedbackText` 内 `map_route_retry`：`Features/Map/MapTabRootView.swift`
+  - 失败测试：`testMapRouteRetryFlowAfterFailure`，`YOMUITests/YOMUITests.swift`
+
 ## 2. 目标样貌（最终态）
 
 1. 顶部只保留一个导航主状态容器，不再双层表达同一语义。  
@@ -44,6 +51,7 @@
 3. `End Navigation` 收敛到详情层（或其更多操作区），不作为主层常驻动作。  
 4. 预览卡只保留一个强主 CTA；`Details` 降为弱次级动作。  
 5. 导航详情内容以导航任务信息优先，地点叙述次之。  
+6. 路由失败/不可用时，重试入口在 `NavigationDetailSheet` 可见且可操作（不依赖已下线容器）。  
 
 ## 3. 拆分原则（执行约束）
 
@@ -75,6 +83,8 @@
 | ND-T017 | 在 `NavigationDetailSheet` 增加导航任务信息区（ETA/距离/状态）并置顶 | `Features/Map/MapTabRootView.swift` | ND-T003 | 详情页首屏优先展示导航信息 |
 | ND-T018 | 将地点 summary 区降到次级 section，并保持可读性与行数约束 | `Features/Map/MapTabRootView.swift` | ND-T017 | 信息层级变为“导航优先，地点次之” |
 | ND-T019 | 更新 Map 快照基线与快照测试说明 | `YOMUITests/SnapshotBaselines/*`, `YOMUITests/SnapshotBaselines/README.md` | ND-T018 | Map 基线与新结构一致 |
+| ND-T020 | 将 route 失败重试入口迁移到 `NavigationDetailSheet`，保留 `map_route_retry` 标识 | `Features/Map/MapTabRootView.swift` | ND-T003 | 导航失败时在详情 Sheet（中等 detent 首屏）可见 Retry |
+| ND-T021 | 更新 `testMapRouteRetryFlowAfterFailure` 为 `Go -> 打开详情 -> Retry` 路径 | `YOMUITests/YOMUITests.swift` | ND-T020 | 失败重试链路测试稳定通过 |
 
 ## 5. 每步通用验收模板
 
@@ -88,10 +98,16 @@
 1. 先做结构去重：`ND-T001` 到 `ND-T005`。  
 2. 再做详情流转改造：`ND-T006` 到 `ND-T011`。  
 3. 再做危险动作降权：`ND-T012` 到 `ND-T014`。  
-4. 最后做视觉语义收口：`ND-T015` 到 `ND-T019`。  
+4. 再做失败恢复入口迁移：`ND-T020` 到 `ND-T021`。  
+5. 最后做视觉语义收口：`ND-T015` 到 `ND-T019`。  
 
 ## 7. 非目标（本轮不做）
 
 1. 不引入 UIKit 自定义导航容器。  
 2. 不重做地图渲染与路线算法。  
 3. 不重写 Archive/Settings 页面，仅处理本 Spec 涉及路径。  
+
+## 8. 落地记录（2026-03-04）
+
+1. ND-T020 已落地：`map_route_retry` 迁移到 `NavigationDetailSheet`，并按 `routeStatus == .failed/.unavailable` 显示。  
+2. ND-T021 已落地：`testMapRouteRetryFlowAfterFailure` 更新为“先进入导航详情，再点击 Retry”。  

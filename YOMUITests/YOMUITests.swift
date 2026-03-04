@@ -223,6 +223,12 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(goButton.waitForExistence(timeout: 5))
         goButton.tap()
 
+        let navigationPill = app.descendants(matching: .any)
+            .matching(identifier: "map_top_navigation_pill_container")
+            .firstMatch
+        XCTAssertTrue(navigationPill.waitForExistence(timeout: 8))
+        navigationPill.tap()
+
         let retryButton = app.buttons
             .matching(identifier: "map_route_retry")
             .matching(NSPredicate(format: "label == %@", "Retry"))
@@ -259,6 +265,48 @@ final class YOMUITests: XCTestCase {
         XCTAssertGreaterThan(heightRatio, 0.24)
         XCTAssertLessThan(heightRatio, 0.45)
         XCTAssertTrue(app.buttons["map_locate_me"].firstMatch.isHittable)
+    }
+
+    func testPreviewTapOutsideDismissesSheet() {
+        let app = makeApp(
+            extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_PREVIEW_POINT",
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
+            ]
+        )
+        app.launch()
+
+        let goButton = app.buttons["map_preview_primary_action"].firstMatch
+        XCTAssertTrue(goButton.waitForExistence(timeout: 8))
+
+        let window = app.windows.firstMatch
+        XCTAssertTrue(window.waitForExistence(timeout: 5))
+
+        let outsideCoordinate = window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08))
+        outsideCoordinate.tap()
+
+        XCTAssertTrue(waitForDisappearance(of: goButton, timeout: 5))
+    }
+
+    func testPreviewCloseActionDismissesSheet() {
+        let app = makeApp(
+            extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_PREVIEW_POINT",
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
+            ]
+        )
+        app.launch()
+
+        let goButton = app.buttons["map_preview_primary_action"].firstMatch
+        XCTAssertTrue(goButton.waitForExistence(timeout: 8))
+
+        let closeButton = app.buttons["map_preview_close_action"].firstMatch
+        XCTAssertTrue(closeButton.waitForExistence(timeout: 5))
+        closeButton.tap()
+
+        XCTAssertTrue(waitForDisappearance(of: goButton, timeout: 5))
     }
 
     func testPreviewDetailsOpensMapSheetWithoutImmediateRetrieval() {
