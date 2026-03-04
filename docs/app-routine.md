@@ -21,12 +21,13 @@ Switching preserves each tab's internal state; active indicator slides on tap.
 
 | State | Enter | Exit |
 |-------|-------|------|
-| **Default** | Launch / dismiss preview | — |
-| **Preview** | Tap map pin | Tap outside / navigate |
-| **Navigation** | Tap "Go" | Arrival CTA / confirm end |
+| **Default** | Launch / dismiss preview / dismiss detail sheet | — |
+| **Preview** | Tap map pin / search result | Tap outside / close / navigate / view details |
+| **Navigation** | Tap "Go" / "Change Destination" | Arrival CTA / confirm end |
 
-- **Default → Preview**: card rises from bottom; map recenters pin. Card offers "Go" and "Details".
-- **Preview → Navigation**: card dismisses; compact pill at top; route overlay. Pill expands to turn-by-turn detail on tap. Tapping another pin during navigation shows "Change Destination".
+- **Default → Preview**: card rises from bottom; map recenters pin. Card offers "Go" and "View Details".
+- **Preview → Navigation**: card dismisses; compact navigation pill appears at top. If route status is failed/unavailable, a quick retry banner appears under the pill. Tapping the pill opens the navigation detail sheet (task metrics, retry, end navigation). Tapping another pin during navigation shows "Change Destination".
+- **Preview → Detail Sheet**: tapping "View Details" opens an in-map sheet first (medium/large detent). Retrieval opens only after tapping "Open Retrieval" in that sheet.
 - **Arrival**: adaptive CTA — AR points: "Immerse" + "Retrieve"; others: "Retrieve" only. Proximity triple-pulse haptic.
 
 ## 4. Search
@@ -39,7 +40,7 @@ Result tap → map centers + preview card. Dismiss: cancel / tap outside / swipe
 | Page | Entry | Exit | Tab Bar |
 |------|-------|------|---------|
 | AR | Arrival CTA / retrieval "Immerse" | Back | No |
-| Retrieval | "Details" / "Retrieve" / archive card | Pop to root | No |
+| Retrieval | Detail sheet "Open Retrieval" / Arrival CTA "Retrieve" / archive card | Pop to root | No |
 | Photo Gallery | Tap photo in retrieval | Close | No |
 | Settings | Tab | Tab switch | Yes |
 | About | Settings → About | Back | No |
@@ -53,6 +54,7 @@ Result tap → map centers + preview card. Dismiss: cancel / tap outside / swipe
 |----------|----------|
 | Network offline | Toast; cached content accessible |
 | Location unavailable | Position hidden; navigation disabled |
+| Route failed / unavailable | Top quick retry banner + navigation detail retry (same retry action) |
 | Camera unavailable | Prompt + auto-return |
 | Content loading | Skeleton placeholder |
 | Content / audio failure | Retry; degrades to static mode |
@@ -63,9 +65,11 @@ Result tap → map centers + preview card. Dismiss: cancel / tap outside / swipe
 ```
 Launch → [First: Language → Permission →] Map
 Tabs: Archive ↔ Map ↔ Settings
-Map pin → Preview → Go → Navigation → Arrival CTA
-  ├─ Immerse → AR (push)    └─ Retrieve → Retrieval (push)
-  └─ Details → Retrieval (push) → Photo (hero)
+Map pin → Preview → Go/Change Destination → Navigation (top pill)
+  ├─ Tap pill → Navigation Detail Sheet → Retry / End Navigation
+  ├─ Arrival CTA: Immerse → AR (push)
+  └─ Arrival CTA: Retrieve → Retrieval (push)
+Map pin → Preview → View Details → Map Detail Sheet → Open Retrieval → Retrieval (push) → Photo (hero)
 Settings → About (push)
 Archive → Card → Retrieval (push)
 ```

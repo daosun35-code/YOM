@@ -147,3 +147,7 @@
 ## 7. 执行记录
 
 - 2026-03-04：总控 spec 建立，待四步分窗口执行。
+- 2026-03-04：Step 1 完成。导航胶囊与 `map_locate_me` 解除重叠，导航态双元素可点击；回归锚点：`testNavigationShowsSingleTopStatusContainerBaseline`。
+- 2026-03-04：Step 2 完成。主层新增失败态 quick retry，详情页保留 retry，二者统一触发 `retryRoute()`；回归锚点：`testMapRouteRetryFlowAfterFailure`。
+- 2026-03-04：Step 3 完成。清理 `routeOverlay` 下线遗留与无消费状态，`Details`/重试文案语义与行为一致，详情页标题层级去重；回归锚点：`testPreviewDetailsOpensMapSheetWithoutImmediateRetrieval`、`testEndNavigationRequiresConfirmation`。
+- 2026-03-04：Step 4 完成。`docs/app-routine.md` 与分层 spec 已按当前实现对齐，并补充回归与快照使用说明，可直接复用于后续窗口交接。

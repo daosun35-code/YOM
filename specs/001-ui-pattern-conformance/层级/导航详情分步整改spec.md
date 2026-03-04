@@ -4,7 +4,7 @@
 > 适用范围：`Features/Map/MapTabRootView.swift`、`Shared/Localization/AppStrings.swift`、`YOMUITests/YOMUITests.swift`。  
 > 关键词：`navigation detail` `map sheet hierarchy` `destructive action weight` `single top status`.
 
-## 1. 问题基线（当前代码）
+## 1. 问题基线（历史审计快照）
 
 ### ND-B001 顶部信息层重复
 - 现象：导航中同时出现 `routeOverlay` 与 `NavigationPillView`，都表达“导航进行中”。
@@ -111,3 +111,27 @@
 
 1. ND-T020 已落地：`map_route_retry` 迁移到 `NavigationDetailSheet`，并按 `routeStatus == .failed/.unavailable` 显示。  
 2. ND-T021 已落地：`testMapRouteRetryFlowAfterFailure` 更新为“先进入导航详情，再点击 Retry”。  
+
+## 9. Step 4 对齐收口（2026-03-04）
+
+### 9.1 文档对齐结果
+
+1. `docs/app-routine.md` 已移除 `route overlay` 常驻描述，改为“顶部单导航胶囊 + 失败时 quick retry 条”。  
+2. `Details` 链路已明确为二级进入：`Preview -> View Details -> Map Detail Sheet -> Open Retrieval -> Retrieval`。  
+3. 导航失败恢复路径文档已改为“主层 quick retry 与详情页 retry 同一重试动作”。  
+
+### 9.2 当前实现验收映射
+
+| 对标目标 | 当前实现 | 回归证据 |
+|---|---|---|
+| 顶部单状态容器、无遮挡 | 导航中仅保留 `map_top_navigation_pill_container`，并校验与 `map_locate_me` 不重叠 | `testNavigationShowsSingleTopStatusContainerBaseline` |
+| Details 不再一跳进入 Retrieval | 先开地图内详情 Sheet，再由 `Open Retrieval` 进入 Retrieval | `testPreviewDetailsOpensMapSheetWithoutImmediateRetrieval`、`testPreviewDetailsOpenRetrievalRequiresExplicitSecondStep` |
+| End Navigation 仅在详情层触发 | 顶部胶囊只负责打开详情；结束导航需在详情页确认 | `testEndNavigationRequiresConfirmation` |
+| 导航详情信息层级优先导航任务 | ETA/距离/状态区置顶，地点摘要后置 | `testNavigationDetailShowsTaskInfoBeforePointSummary` |
+| 失败恢复一跳可触达 + 详情可重试 | 主层 `map_route_retry_quick` 与详情 `map_route_retry` 均可触发重试 | `testMapRouteRetryFlowAfterFailure` |
+
+### 9.3 快照基线说明（ND-T019）
+
+1. `YOMUITests/SnapshotBaselines/map.png` 仍定义为“默认地图壳层”基线，不覆盖导航详情 Sheet。  
+2. 导航详情层级与交互变化由 9.2 中专用 UI 用例覆盖。  
+3. 基线刷新命令、record-mode 兜底流程以 `YOMUITests/SnapshotBaselines/README.md` 为准。  
