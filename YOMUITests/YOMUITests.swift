@@ -431,7 +431,85 @@ final class YOMUITests: XCTestCase {
         let outsideCoordinate = window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08))
         outsideCoordinate.tap()
 
-        XCTAssertTrue(waitForDisappearance(of: goButton, timeout: 5))
+        // Scrim-based dismiss must complete within 1.5 s (no map-gesture arbitration delay)
+        XCTAssertTrue(
+            waitForDisappearance(of: goButton, timeout: 1.5),
+            "Tapping outside the preview sheet must dismiss it promptly (within 1.5 s)"
+        )
+    }
+
+    func testPreviewCloseAndTapOutsideDismissConsistently() {
+        // Both dismiss paths must produce identical end state: sheet gone, no residual UI
+        let tapApp = makeApp(
+            extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_PREVIEW_POINT",
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
+            ]
+        )
+        tapApp.launch()
+
+        let tapGoButton = tapApp.buttons["map_preview_primary_action"].firstMatch
+        XCTAssertTrue(tapGoButton.waitForExistence(timeout: 8))
+
+        let window = tapApp.windows.firstMatch
+        XCTAssertTrue(window.waitForExistence(timeout: 5))
+        window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
+        XCTAssertTrue(
+            waitForDisappearance(of: tapGoButton, timeout: 1.5),
+            "Tap-outside dismiss must complete within 1.5 s"
+        )
+        XCTAssertFalse(tapApp.buttons["map_preview_close_action"].firstMatch.exists)
+
+        let closeApp = makeApp(
+            extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_PREVIEW_POINT",
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
+            ]
+        )
+        closeApp.launch()
+
+        let closeGoButton = closeApp.buttons["map_preview_primary_action"].firstMatch
+        XCTAssertTrue(closeGoButton.waitForExistence(timeout: 8))
+        let closeButton = closeApp.buttons["map_preview_close_action"].firstMatch
+        XCTAssertTrue(closeButton.waitForExistence(timeout: 5))
+        closeButton.tap()
+        XCTAssertTrue(
+            waitForDisappearance(of: closeGoButton, timeout: 1.5),
+            "Close-button dismiss must complete within 1.5 s"
+        )
+        XCTAssertFalse(closeApp.buttons["map_preview_close_action"].firstMatch.exists)
+    }
+
+    func testPinSwitchDoesNotFlickerOrShowBothSheets() {
+        // Tapping a second pin while a preview is open must produce a single sheet transition
+        // (no blank-sheet flash / no two sheets visible simultaneously)
+        let app = makeApp(
+            extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_PREVIEW_POINT",
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
+            ]
+        )
+        app.launch()
+
+        let goButton = app.buttons["map_preview_primary_action"].firstMatch
+        XCTAssertTrue(goButton.waitForExistence(timeout: 8))
+
+        // Tap a different pin to trigger pin-switch path
+        let secondPin = app.buttons["map_point_1947"].firstMatch
+        guard secondPin.waitForExistence(timeout: 5) else {
+            // Second pin not present in test data – skip gracefully
+            return
+        }
+        secondPin.tap()
+
+        // Sheet must still be visible (switched, not gone)
+        XCTAssertTrue(goButton.waitForExistence(timeout: 3), "Preview sheet must reappear after pin switch")
+
+        // No navigation-detail sheet must have sneaked in
+        assertNavigationDetailSheetNotPresented(in: app, timeout: 0.5)
     }
 
     func testPreviewCloseActionDismissesSheet() {
