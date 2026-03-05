@@ -19,7 +19,7 @@ Exactly **one** of three mutually exclusive states at any time:
 | State | Purpose |
 |-------|---------|
 | Tab bar | Global navigation |
-| One-third card | Point preview |
+| Content-aware compact card | Point preview（高度由内容驱动，非固定 1/3） |
 | Full card | Content retrieval |
 
 - **Long-term visual goal (non-blocking for first shell spec):** transitions may later animate as a single container morph.
@@ -32,7 +32,7 @@ Exactly **one** of three mutually exclusive states at any time:
 |--------|-----------|-----------|-------------|-----------|------------|
 | Onboarding ×2 | Solid surface | Centered (dots, logo, buttons) | — | Hidden | Standard |
 | Map Default | Full-bleed map | Pins, user position | Search + locate buttons | Tab bar | Standard |
-| Map Preview | Map (recentered) | Selected pin | Search + locate | One-third card | Standard |
+| Map Preview | Map (recentered) | Selected pin | Search + locate | Content-aware compact card | Standard |
 | Map Navigation | Map + route | Route overlay | Nav pill; buttons conditional | Tab bar | Standard |
 | AR | Camera feed | Guide prompt | Back, badge, player | Hidden | Light-on-dark |
 | Retrieval | Map background | (inside full card) | — | Full card | Standard |
@@ -47,7 +47,7 @@ Exactly **one** of three mutually exclusive states at any time:
 |--------|---------|------------|
 | Onboarding | Hidden | Standard |
 | Map Default / Navigation | Visible | Standard |
-| Map Preview | Replaced by preview card (system sheet in first round) | Standard |
+| Map Preview | Replaced by content-aware compact card (system `.sheet` + `.height(contentHeight)`) | Standard |
 | AR | Hidden | Light-on-dark |
 | Retrieval | Replaced by full card (system sheet / fullScreenCover in first round) | Standard |
 | Photo Gallery | Hidden | Hidden |

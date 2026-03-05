@@ -25,10 +25,12 @@ Feature: App Shell Routine
     When the user switches back to the Settings tab
     Then the "About" subpage is still actively visible
 
-  Scenario: Point preview expands via one-third preview sheet
+  Scenario: Point preview expands via content-aware preview sheet
     Given the user is on the Map default view
     When the user taps a specific map pin
-    Then a preview sheet is presented at one-third height
+    Then a preview sheet is presented at a content-aware compact height
+    And the primary CTA button is fully hittable with a minimum touch target of 44×44
+    And no action element overlaps with or is visually pressed against the Tab Bar
     And the map dynamically recenters to the selected pin
 
   Scenario: Map search basic behavior flow

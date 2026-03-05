@@ -16,7 +16,7 @@ App Shell 构成应用的主流程骨架，基于 `TabView` 和 `NavigationStack
 | --- | --- | --- |
 | 底栏固定导航切换 | `TabView` 与 `tabItem` 修饰符 | L1 |
 | 层级结构的压栈推入 | `NavigationStack` 与 `NavigationLink` | L1 |
-| 地点预览（1/3 预览卡） | `.sheet` 结合 `presentationDetents([.fraction(0.33), .large])` | L1 |
+| 地点预览（自适应预览卡） | `.sheet` 结合 `presentationDetents([.height(contentHeight), .large])`，紧凑态高度由内容实际尺寸驱动 | L1 |
 | 记忆提取（全屏卡） | `.sheet` 结合 `.large` detent 或 `.fullScreenCover` | L1 |
 | 地图默认状态搜索 | `.searchable` 修饰符 | L1 |
 | 横跨层级的异常通知 | 原生 `.alert` 弹窗或顶层可控的 `.overlay(alignment: .top)` | L1 |
