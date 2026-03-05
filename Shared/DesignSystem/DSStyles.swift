@@ -8,7 +8,7 @@ struct DSPrimaryCTAButtonStyle: ButtonStyle {
             .dsTextStyle(.body, weight: .semibold)
             .foregroundStyle(DSColor.accentOnPrimary)
             .padding(.horizontal, DSSpacing.space16)
-            .frame(minHeight: DSControl.minTouchTarget)
+            .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget)
             .background(
                 RoundedRectangle(cornerRadius: DSRadius.r12, style: .continuous)
                     .fill(DSColor.accentPrimary)
@@ -29,7 +29,7 @@ struct DSSecondaryCTAButtonStyle: ButtonStyle {
             .dsTextStyle(.body, weight: .semibold)
             .foregroundStyle(DSColor.textPrimary)
             .padding(.horizontal, DSSpacing.space16)
-            .frame(minHeight: DSControl.minTouchTarget)
+            .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget)
             .background(
                 RoundedRectangle(cornerRadius: DSRadius.r12, style: .continuous)
                     .fill(DSColor.surfaceSecondary)

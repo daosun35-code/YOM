@@ -965,7 +965,6 @@ private struct MapPreviewSheetView: View {
             onPrimaryAction()
         }
         .dsPrimaryCTAStyle()
-        .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget)
         .lineLimit(1)
         .minimumScaleFactor(0.8)
         .accessibilityIdentifier("map_preview_primary_action")

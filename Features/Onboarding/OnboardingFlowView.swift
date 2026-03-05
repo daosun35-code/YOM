@@ -140,7 +140,6 @@ struct OnboardingFlowView: View {
             }
             .dsPrimaryCTAStyle()
             .accessibilityIdentifier("onboarding_continue")
-            .frame(maxWidth: .infinity, minHeight: DSControl.minTouchTarget)
             .padding(.top, DSSpacing.space4)
             .lineLimit(1)
             .minimumScaleFactor(0.8)
@@ -154,7 +153,7 @@ struct OnboardingFlowView: View {
             }
             .dsPrimaryCTAStyle()
             .accessibilityIdentifier("onboarding_allow_permission")
-            .frame(maxWidth: .infinity, minHeight: DSControl.largeButtonHeight)
+            .frame(minHeight: DSControl.largeButtonHeight)
             .multilineTextAlignment(.center)
             .lineLimit(2)
             .minimumScaleFactor(0.85)
@@ -166,7 +165,7 @@ struct OnboardingFlowView: View {
             }
             .dsSecondaryCTAStyle()
             .accessibilityIdentifier("onboarding_skip")
-            .frame(maxWidth: .infinity, minHeight: DSControl.largeButtonHeight)
+            .frame(minHeight: DSControl.largeButtonHeight)
             .multilineTextAlignment(.center)
             .lineLimit(2)
             .minimumScaleFactor(0.85)
