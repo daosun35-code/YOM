@@ -133,7 +133,7 @@ final class YOMUITests: XCTestCase {
         assertNavigationDetailSheetNotPresented(in: app, timeout: 1.5)
     }
 
-    func testTopNavigationEndActionEndsNavigationAfterConfirmation() {
+    func testTopNavigationEndActionEndsNavigationImmediately() {
         let app = makeApp(extraArguments: ["UITEST_FORCE_NAVIGATION_ACTIVE"])
         app.launch()
 
@@ -149,19 +149,13 @@ final class YOMUITests: XCTestCase {
             .firstMatch
         XCTAssertTrue(endButton.waitForExistence(timeout: 8))
         endButton.tap()
-
-        let confirmButton = app.descendants(matching: .any)
-            .matching(identifier: "map_confirm_end_navigation_in_top_pill")
-            .firstMatch
-        XCTAssertTrue(confirmButton.waitForExistence(timeout: 5))
-        confirmButton.tap()
 
         XCTAssertTrue(waitForDisappearance(of: navigationPill, timeout: 5))
         XCTAssertFalse(endButton.exists)
     }
 
-    func testEndNavigationConfirmationCompletesWithinTimeBound() {
-        // Guards against spring-animation拖尾: teardown must finish within 2.0 s after confirm tap.
+    func testEndNavigationCompletesWithinTimeBound() {
+        // Direct end path should finish quickly after tapping the top end action.
         let app = makeApp(extraArguments: ["UITEST_FORCE_NAVIGATION_ACTIVE"])
         app.launch()
 
@@ -178,20 +172,14 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(endButton.waitForExistence(timeout: 8))
         endButton.tap()
 
-        let confirmButton = app.descendants(matching: .any)
-            .matching(identifier: "map_confirm_end_navigation_in_top_pill")
-            .firstMatch
-        XCTAssertTrue(confirmButton.waitForExistence(timeout: 5))
-        confirmButton.tap()
-
         XCTAssertTrue(
             waitForDisappearance(of: navigationPill, timeout: 2.0),
-            "Navigation pill must disappear within 2.0 s after confirmation (no spring-animation拖尾)"
+            "Navigation pill must disappear within 2.0 s after tapping End"
         )
     }
 
     func testEndNavigationLeavesNoResidualTopContainers() {
-        // After confirming end, all top-layer navigation containers must be fully cleared.
+        // After direct end, all top-layer navigation containers must be fully cleared.
         let app = makeApp(extraArguments: ["UITEST_FORCE_NAVIGATION_ACTIVE"])
         app.launch()
 
@@ -211,8 +199,10 @@ final class YOMUITests: XCTestCase {
         let confirmButton = app.descendants(matching: .any)
             .matching(identifier: "map_confirm_end_navigation_in_top_pill")
             .firstMatch
-        XCTAssertTrue(confirmButton.waitForExistence(timeout: 5))
-        confirmButton.tap()
+        XCTAssertFalse(
+            confirmButton.waitForExistence(timeout: 0.8),
+            "End action should not present a confirmation dialog"
+        )
 
         XCTAssertTrue(waitForDisappearance(of: navigationPill, timeout: 5))
 

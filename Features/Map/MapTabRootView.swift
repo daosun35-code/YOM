@@ -146,7 +146,6 @@ struct MapTabRootView: View {
     @State private var lastRouteAttemptAt = Date.distantPast
     @State private var routeRetryNonce = 0
     @State private var activeAlert: MapFeedbackAlert?
-    @State private var isEndNavigationDialogPresented = false
     @State private var hasAppliedUITestOverrides = false
     @State private var previewSheetDetent: PresentationDetent = .height(280)
     @State private var measuredPreviewContentHeight: CGFloat = 280
@@ -293,7 +292,7 @@ struct MapTabRootView: View {
                         point: navPoint,
                         language: languageStore.language,
                         onEndTap: {
-                            isEndNavigationDialogPresented = true
+                            handleEndNavigationAction()
                         }
                     )
 
@@ -358,25 +357,6 @@ struct MapTabRootView: View {
             guard pointID != nil else { return }
             measuredPreviewContentHeight = 280
             previewSheetDetent = .height(280)
-        }
-        .confirmationDialog(
-            strings.endNavigationConfirmTitle,
-            isPresented: $isEndNavigationDialogPresented,
-            titleVisibility: .visible
-        ) {
-            Button(strings.endNavigationConfirmAction, role: .destructive) {
-                isEndNavigationDialogPresented = false
-                DispatchQueue.main.async {
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        state.endNavigation()
-                    }
-                }
-            }
-            .accessibilityIdentifier("map_confirm_end_navigation_in_top_pill")
-
-            Button(strings.notNowText, role: .cancel) {}
-        } message: {
-            Text(strings.endNavigationConfirmBody)
         }
     }
 
@@ -643,6 +623,12 @@ struct MapTabRootView: View {
             break
         case .deniedOrRestricted:
             activeAlert = .locationPermissionDenied
+        }
+    }
+
+    private func handleEndNavigationAction() {
+        withAnimation(.easeOut(duration: 0.16)) {
+            state.endNavigation()
         }
     }
 
@@ -1274,7 +1260,6 @@ private struct NavigationInlineDetailCard: View {
 
 private struct NavigationDetailSheet: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @State private var isEndNavigationDialogPresented = false
 
     let point: PointOfInterest?
     let route: MKRoute?
@@ -1320,7 +1305,7 @@ private struct NavigationDetailSheet: View {
 
                 Section {
                     Button(role: .destructive) {
-                        isEndNavigationDialogPresented = true
+                        onEnd()
                     } label: {
                         Text(strings.endNavigation)
                     }
@@ -1329,20 +1314,6 @@ private struct NavigationDetailSheet: View {
             }
             .navigationTitle(strings.navigationActive)
             .navigationBarTitleDisplayMode(.inline)
-            .confirmationDialog(
-                strings.endNavigationConfirmTitle,
-                isPresented: $isEndNavigationDialogPresented,
-                titleVisibility: .visible
-            ) {
-                Button(strings.endNavigationConfirmAction, role: .destructive) {
-                    onEnd()
-                }
-                .accessibilityIdentifier("map_confirm_end_navigation_in_sheet")
-
-                Button(strings.notNowText, role: .cancel) {}
-            } message: {
-                Text(strings.endNavigationConfirmBody)
-            }
         }
     }
 

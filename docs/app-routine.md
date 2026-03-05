@@ -23,7 +23,7 @@ Switching preserves each tab's internal state; active indicator slides on tap.
 |-------|-------|------|
 | **Default** | Launch / dismiss preview / dismiss detail sheet | — |
 | **Preview** | Tap map pin / search result | Tap outside / close / navigate / view details |
-| **Navigation** | Tap "Go" / "Change Destination" | Arrival CTA / confirm end |
+| **Navigation** | Tap "Go" / "Change Destination" | Arrival CTA / tap end |
 
 - **Default → Preview**: card rises from bottom; map recenters pin. Card offers "Go" and "View Details".
 - **Preview → Default (dismiss)**: three equivalent paths all write `previewPoint = nil` via `dismissPreview()`:
@@ -31,7 +31,7 @@ Switching preserves each tab's internal state; active indicator slides on tap.
   2. **Close button** — explicit `onClose` callback.
   3. **Swipe down** — native sheet drag-to-dismiss.
 - **Preview → Navigation**: card dismisses; compact navigation pill appears at top. If route status is failed/unavailable, a quick retry banner appears under the pill. Tapping the pill does **not** open a navigation detail sheet. Tapping another pin during navigation shows "Change Destination".
-- **Navigation → Default (end)**: the `End` button (`map_top_navigation_end_action`) on the pill triggers a `confirmationDialog` anchored to the stable map canvas layer (not the pill itself). Confirming first closes the dialog, then triggers navigation state teardown on the next frame. The pill and all top-layer navigation containers clear within ≤ 2 s; no residual containers remain.
+- **Navigation → Default (end)**: tapping the `End` button (`map_top_navigation_end_action`) on the top pill directly tears down navigation in a short non-spring transition. The pill and all top-layer navigation containers clear within ≤ 2 s; no residual containers remain.
 - **Preview → Detail Sheet**: tapping "View Details" opens an in-map sheet first (medium/large detent). Retrieval opens only after tapping "Open Retrieval" in that sheet.
 - **Arrival**: adaptive CTA — AR points: "Immerse" + "Retrieve"; others: "Retrieve" only. Proximity triple-pulse haptic.
 
@@ -71,7 +71,7 @@ Result tap → map centers + preview card. Dismiss: cancel / tap outside / swipe
 Launch → [First: Language → Permission →] Map
 Tabs: Archive ↔ Map ↔ Settings
 Map pin → Preview → Go/Change Destination → Navigation (top pill)
-  ├─ End button on pill → confirmationDialog (canvas layer) → confirm → teardown → Default
+  ├─ End button on pill → direct teardown → Default
   ├─ Arrival CTA: Immerse → AR (push)
   └─ Arrival CTA: Retrieve → Retrieval (push)
 Map pin → Preview → View Details → Map Detail Sheet → Open Retrieval → Retrieval (push) → Photo (hero)
