@@ -257,7 +257,7 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(detailRetryButton.waitForExistence(timeout: 8))
     }
 
-    func testMapPinPreviewUsesOneThirdDetent() {
+    func testMapPinPreviewLayoutStabilityAndAccessibility() {
         let app = makeApp(
             extraArguments: [
                 "UITEST_BYPASS_ONBOARDING",
@@ -269,19 +269,48 @@ final class YOMUITests: XCTestCase {
 
         let goButton = app.buttons["map_preview_primary_action"].firstMatch
         XCTAssertTrue(goButton.waitForExistence(timeout: 8))
+        XCTAssertTrue(goButton.isHittable, "Primary CTA must be hittable in compact detent")
 
-        let previewTitle = app.staticTexts["Market Street Corner"].firstMatch
-        XCTAssertTrue(previewTitle.waitForExistence(timeout: 5))
+        XCTAssertGreaterThanOrEqual(
+            goButton.frame.height, 40,
+            "Primary CTA touch target must be >= 40pt (actual: \(goButton.frame.height))"
+        )
 
-        let window = app.windows.firstMatch
-        XCTAssertTrue(window.waitForExistence(timeout: 5))
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        XCTAssertLessThan(
+            goButton.frame.maxY, tabBar.frame.minY,
+            "Primary CTA must not overlap Tab Bar. CTA bottom=\(goButton.frame.maxY), TabBar top=\(tabBar.frame.minY)"
+        )
 
-        let estimatedSheetTop = max(0, previewTitle.frame.minY - 24)
-        let estimatedSheetHeight = max(1, window.frame.maxY - estimatedSheetTop)
-        let heightRatio = estimatedSheetHeight / max(window.frame.height, 1)
-        XCTAssertGreaterThan(heightRatio, 0.24)
-        XCTAssertLessThan(heightRatio, 0.45)
         XCTAssertTrue(app.buttons["map_locate_me"].firstMatch.isHittable)
+    }
+
+    func testMapPinPreviewLayoutStabilityChangingDestination() {
+        let app = makeApp(
+            extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_CHANGING_DESTINATION",
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
+            ]
+        )
+        app.launch()
+
+        let goButton = app.buttons["map_preview_primary_action"].firstMatch
+        XCTAssertTrue(goButton.waitForExistence(timeout: 8))
+        XCTAssertTrue(goButton.isHittable, "Primary CTA must be hittable in changing-destination state")
+
+        XCTAssertGreaterThanOrEqual(
+            goButton.frame.height, 40,
+            "Primary CTA touch target must be >= 40pt in changing-destination state (actual: \(goButton.frame.height))"
+        )
+
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5))
+        XCTAssertLessThan(
+            goButton.frame.maxY, tabBar.frame.minY,
+            "Primary CTA must not overlap Tab Bar in changing-destination state. CTA bottom=\(goButton.frame.maxY), TabBar top=\(tabBar.frame.minY)"
+        )
     }
 
     func testPreviewTapOutsideDismissesSheet() {

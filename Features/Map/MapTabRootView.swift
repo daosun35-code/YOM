@@ -864,6 +864,14 @@ struct MapTabRootView: View {
             activeAlert = .searchNoResults(query: "forced")
         }
 
+        if launchArguments.contains("UITEST_FORCE_CHANGING_DESTINATION"),
+           points.count >= 2 {
+            state.navigationPoint = points[0]
+            state.routeStatus = .ready
+            state.selectPoint(points[1])
+            return
+        }
+
         if launchArguments.contains("UITEST_FORCE_NAVIGATION_ACTIVE"),
            let point = points.first {
             state.navigationPoint = point
