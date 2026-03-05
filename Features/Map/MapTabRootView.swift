@@ -161,8 +161,7 @@ struct MapTabRootView: View {
     @State private var routeRetryNonce = 0
     @State private var activeAlert: MapFeedbackAlert?
     @State private var hasAppliedUITestOverrides = false
-    @State private var previewSheetDetent: PresentationDetent = .height(280)
-    @State private var previewSheetContentHeight: CGFloat = 280
+    @State private var previewSheetDetent: PresentationDetent = .fraction(0.33)
     @FocusState private var isSearchFieldFocused: Bool
     @Namespace private var searchTransitionNamespace
 
@@ -188,8 +187,9 @@ struct MapTabRootView: View {
     private var forcePreviewExpandedForUITests: Bool {
         launchArguments.contains("UITEST_FORCE_PREVIEW_EXPANDED")
     }
+    private let previewSheetCompactFraction: CGFloat = 0.33
     private var previewSheetCompactDetent: PresentationDetent {
-        .height(previewSheetContentHeight)
+        .fraction(previewSheetCompactFraction)
     }
     private var previewSheetDetents: Set<PresentationDetent> {
         [previewSheetCompactDetent, .large]
@@ -235,22 +235,9 @@ struct MapTabRootView: View {
                             state.showDetails()
                         },
                         onClose: {
-                            withAnimation(shellAnimation) {
-                                state.dismissPreview()
-                            }
+                            state.dismissPreview()
                         }
                     )
-                    .background(
-                        GeometryReader { proxy in
-                            Color.clear
-                                .preference(key: SheetContentHeightKey.self, value: proxy.size.height)
-                        }
-                    )
-                    .onPreferenceChange(SheetContentHeightKey.self) { newHeight in
-                        if newHeight > 0 {
-                            previewSheetContentHeight = newHeight
-                        }
-                    }
                     .presentationDetents(previewSheetDetents, selection: $previewSheetDetent)
                     .presentationBackgroundInteraction(.enabled(upThrough: previewSheetCompactDetent))
                     .presentationContentInteraction(.scrolls)
@@ -718,9 +705,7 @@ struct MapTabRootView: View {
 
     private func handleMapBackgroundTap() {
         guard state.previewPoint != nil else { return }
-        withAnimation(shellAnimation) {
-            state.dismissPreview()
-        }
+        state.dismissPreview()
     }
 
     private func handleSearchSubmit() async {
@@ -1658,13 +1643,5 @@ struct SearchPlace {
 
         self.annotationTitle = resolvedTitle
         self.coordinate = mapItem.placemark.coordinate
-    }
-}
-
-private struct SheetContentHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        let next = nextValue()
-        if next > value { value = next }
     }
 }
