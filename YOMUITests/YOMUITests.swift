@@ -1063,3 +1063,190 @@ final class YOMUITests: XCTestCase {
         add(attachment)
     }
 }
+
+// MARK: - 压力测试门禁 (TEST-001 MUST)
+//
+// 依据：导航与预览链路压力测试调研 spec §6.1 稳定性门禁 + §6.2 时延门禁。
+//
+// 默认次数（开发/CI 快速通道）：
+//   STRESS_REPETITIONS = 10 次稳定性重复
+//   LATENCY_SAMPLES    = 10 次时延采样
+//
+// 发布门禁：环境变量覆盖为 200 / 50（或 xcodebuild -testRepetitionMode untilFailure）。
+//   xcodebuild test -testRepetitionMode fixedNumber -testRepetitions 200
+//   xcodebuild test -testRepetitionMode untilFailure
+
+final class YOMStressTests: XCTestCase {
+
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+    }
+
+    // MARK: - 稳定性重复：导航结束链路（关键链路 A）
+
+    func testEndNavigationStability() {
+        for iteration in 1...stressRepetitionCount {
+            let app = makeStressApp(extraArguments: ["UITEST_FORCE_NAVIGATION_ACTIVE"])
+            app.launch()
+            completeOnboarding(in: app)
+
+            let endButton = app.descendants(matching: .any)
+                .matching(identifier: "map_top_navigation_end_action")
+                .firstMatch
+            XCTAssertTrue(endButton.waitForExistence(timeout: 8), "iter \(iteration): End button not found")
+            endButton.tap()
+
+            let pill = app.descendants(matching: .any)
+                .matching(identifier: "map_top_navigation_pill_container")
+                .firstMatch
+            XCTAssertTrue(
+                waitForDisappearance(of: pill, timeout: 2.0),
+                "iter \(iteration): Navigation pill did not disappear within 2 s"
+            )
+            app.terminate()
+        }
+    }
+
+    // MARK: - 稳定性重复：预览 Sheet 关闭链路（关键链路 B）
+
+    func testPreviewCloseStability() {
+        for iteration in 1...stressRepetitionCount {
+            let app = makeStressApp(extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_PREVIEW_POINT",
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
+            ])
+            app.launch()
+
+            let goButton = app.buttons["map_preview_primary_action"].firstMatch
+            XCTAssertTrue(goButton.waitForExistence(timeout: 8), "iter \(iteration): Preview not shown")
+
+            let closeButton = app.buttons["map_preview_close_action"].firstMatch
+            XCTAssertTrue(closeButton.waitForExistence(timeout: 5), "iter \(iteration): Close not found")
+            closeButton.tap()
+
+            XCTAssertTrue(
+                waitForDisappearance(of: goButton, timeout: 1.5),
+                "iter \(iteration): Preview did not close within 1.5 s"
+            )
+            app.terminate()
+        }
+    }
+
+    // MARK: - 时延采样：导航结束 P50/P95/P99 (§6.2 门禁：P95 < 500ms, P99 < 800ms)
+
+    func testEndNavigationLatencyP95() {
+        var samples: [TimeInterval] = []
+
+        for iteration in 1...latencySampleCount {
+            let app = makeStressApp(extraArguments: ["UITEST_FORCE_NAVIGATION_ACTIVE"])
+            app.launch()
+            completeOnboarding(in: app)
+
+            let pill = app.descendants(matching: .any)
+                .matching(identifier: "map_top_navigation_pill_container")
+                .firstMatch
+            XCTAssertTrue(pill.waitForExistence(timeout: 8), "iter \(iteration): Pill not found")
+
+            let endButton = app.descendants(matching: .any)
+                .matching(identifier: "map_top_navigation_end_action")
+                .firstMatch
+            XCTAssertTrue(endButton.waitForExistence(timeout: 8), "iter \(iteration): End not found")
+
+            let start = Date()
+            endButton.tap()
+            _ = waitForDisappearance(of: pill, timeout: 5.0)
+            samples.append(Date().timeIntervalSince(start))
+
+            app.terminate()
+        }
+
+        let (p50, p95, p99, maxVal) = percentiles(samples)
+        let report = "EndNavigation latency (\(latencySampleCount) samples): P50=\(ms(p50)) P95=\(ms(p95)) P99=\(ms(p99)) Max=\(ms(maxVal))"
+        XCTContext.runActivity(named: report) { _ in }
+        XCTAssertLessThanOrEqual(p95, 0.500, "P95 \(ms(p95)) must be < 500 ms. \(report)")
+        XCTAssertLessThanOrEqual(p99, 0.800, "P99 \(ms(p99)) must be < 800 ms. \(report)")
+    }
+
+    // MARK: - 时延采样：预览关闭 P50/P95/P99 (§6.2 门禁：P95 < 400ms, P99 < 800ms)
+
+    func testPreviewCloseLatencyP95() {
+        var samples: [TimeInterval] = []
+
+        for iteration in 1...latencySampleCount {
+            let app = makeStressApp(extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_PREVIEW_POINT",
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
+            ])
+            app.launch()
+
+            let goButton = app.buttons["map_preview_primary_action"].firstMatch
+            XCTAssertTrue(goButton.waitForExistence(timeout: 8), "iter \(iteration): Preview not shown")
+
+            let closeButton = app.buttons["map_preview_close_action"].firstMatch
+            XCTAssertTrue(closeButton.waitForExistence(timeout: 5), "iter \(iteration): Close not found")
+
+            let start = Date()
+            closeButton.tap()
+            _ = waitForDisappearance(of: goButton, timeout: 5.0)
+            samples.append(Date().timeIntervalSince(start))
+
+            app.terminate()
+        }
+
+        let (p50, p95, p99, maxVal) = percentiles(samples)
+        let report = "PreviewClose latency (\(latencySampleCount) samples): P50=\(ms(p50)) P95=\(ms(p95)) P99=\(ms(p99)) Max=\(ms(maxVal))"
+        XCTContext.runActivity(named: report) { _ in }
+        XCTAssertLessThanOrEqual(p95, 0.400, "P95 \(ms(p95)) must be < 400 ms. \(report)")
+        XCTAssertLessThanOrEqual(p99, 0.800, "P99 \(ms(p99)) must be < 800 ms. \(report)")
+    }
+
+    // MARK: - Private helpers
+
+    /// 稳定性重复次数。发布门禁应设为 200；开发/CI 快速通道默认 10。
+    private var stressRepetitionCount: Int {
+        ProcessInfo.processInfo.environment["STRESS_REPETITIONS"].flatMap(Int.init) ?? 10
+    }
+
+    /// 时延采样次数。发布门禁应设为 50；开发/CI 快速通道默认 10。
+    private var latencySampleCount: Int {
+        ProcessInfo.processInfo.environment["LATENCY_SAMPLES"].flatMap(Int.init) ?? 10
+    }
+
+    private func percentiles(_ samples: [TimeInterval]) -> (p50: TimeInterval, p95: TimeInterval, p99: TimeInterval, max: TimeInterval) {
+        guard samples.isEmpty == false else { return (0, 0, 0, 0) }
+        let s = samples.sorted()
+        let p50 = s[s.count / 2]
+        let p95 = s[min(s.count - 1, Int(Double(s.count) * 0.95))]
+        let p99 = s[min(s.count - 1, Int(Double(s.count) * 0.99))]
+        return (p50, p95, p99, s.last ?? 0)
+    }
+
+    private func ms(_ t: TimeInterval) -> String { String(format: "%.0f ms", t * 1000) }
+
+    private func makeStressApp(extraArguments: [String] = []) -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments += ["UITEST_RESET_APP_STATE", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launchArguments += extraArguments
+        return app
+    }
+
+    private func completeOnboarding(in app: XCUIApplication) {
+        XCTAssertTrue(app.staticTexts["Choose your language"].waitForExistence(timeout: 8))
+        let continueButton = app.buttons["onboarding_continue"]
+        XCTAssertTrue(continueButton.waitForExistence(timeout: 5))
+        continueButton.tap()
+        XCTAssertTrue(app.staticTexts["Stay updated while walking"].waitForExistence(timeout: 5))
+        let skipButton = app.buttons["onboarding_skip"]
+        XCTAssertTrue(skipButton.waitForExistence(timeout: 5))
+        skipButton.tap()
+        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 8))
+    }
+
+    private func waitForDisappearance(of element: XCUIElement, timeout: TimeInterval) -> Bool {
+        let predicate = NSPredicate(format: "exists == false")
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
+        return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
+    }
+}

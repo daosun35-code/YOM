@@ -60,9 +60,7 @@ final class MapScreenState: ObservableObject {
         let needsDismissFirst = previewPoint != nil && previewPoint?.id != point.id
         if needsDismissFirst {
             previewPoint = nil
-            DispatchQueue.main.async {
-                self.previewPoint = point
-            }
+            Task { @MainActor in self.previewPoint = point }
         } else {
             previewPoint = point
         }
