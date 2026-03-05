@@ -1072,14 +1072,22 @@ final class YOMUITests: XCTestCase {
 //   STRESS_REPETITIONS = 10 次稳定性重复
 //   LATENCY_SAMPLES    = 10 次时延采样
 //
-// 发布门禁：环境变量覆盖为 200 / 50（或 xcodebuild -testRepetitionMode untilFailure）。
+// 发布门禁（推荐使用 SIMCTL_CHILD_ 前缀，确保注入到模拟器内测试 Runner）：
+//   SIMCTL_CHILD_STRESS_REPETITIONS=200 SIMCTL_CHILD_LATENCY_SAMPLES=50 xcodebuild test ...
+//   或兼容旧方式：STRESS_REPETITIONS=200 LATENCY_SAMPLES=50 xcodebuild test ...
 //   xcodebuild test -testRepetitionMode fixedNumber -testRepetitions 200
 //   xcodebuild test -testRepetitionMode untilFailure
 
 final class YOMStressTests: XCTestCase {
+    private static var didLogRuntimeConfig = false
 
     override func setUpWithError() throws {
         continueAfterFailure = false
+        if Self.didLogRuntimeConfig == false {
+            let config = "YOMStressTests runtime config: repetitions=\(stressRepetitionCount), latencySamples=\(latencySampleCount)"
+            XCTContext.runActivity(named: config) { _ in }
+            Self.didLogRuntimeConfig = true
+        }
     }
 
     // MARK: - 稳定性重复：导航结束链路（关键链路 A）
@@ -1206,12 +1214,48 @@ final class YOMStressTests: XCTestCase {
 
     /// 稳定性重复次数。发布门禁应设为 200；开发/CI 快速通道默认 10。
     private var stressRepetitionCount: Int {
-        ProcessInfo.processInfo.environment["STRESS_REPETITIONS"].flatMap(Int.init) ?? 10
+        resolvedPositiveInt(
+            envKeys: ["STRESS_REPETITIONS", "SIMCTL_CHILD_STRESS_REPETITIONS"],
+            argumentKeys: ["-STRESS_REPETITIONS", "--stress-repetitions"],
+            defaultValue: 10
+        )
     }
 
     /// 时延采样次数。发布门禁应设为 50；开发/CI 快速通道默认 10。
     private var latencySampleCount: Int {
-        ProcessInfo.processInfo.environment["LATENCY_SAMPLES"].flatMap(Int.init) ?? 10
+        resolvedPositiveInt(
+            envKeys: ["LATENCY_SAMPLES", "SIMCTL_CHILD_LATENCY_SAMPLES"],
+            argumentKeys: ["-LATENCY_SAMPLES", "--latency-samples"],
+            defaultValue: 10
+        )
+    }
+
+    private func resolvedPositiveInt(
+        envKeys: [String],
+        argumentKeys: [String],
+        defaultValue: Int
+    ) -> Int {
+        let env = ProcessInfo.processInfo.environment
+        for key in envKeys {
+            if let raw = env[key], let value = Int(raw), value > 0 {
+                return value
+            }
+        }
+
+        let args = ProcessInfo.processInfo.arguments
+        for key in argumentKeys {
+            if let index = args.firstIndex(of: key), args.indices.contains(index + 1) {
+                if let value = Int(args[index + 1]), value > 0 {
+                    return value
+                }
+            }
+            if let pair = args.first(where: { $0.hasPrefix("\(key)=") }),
+               let raw = pair.split(separator: "=", maxSplits: 1).last,
+               let value = Int(raw), value > 0 {
+                return value
+            }
+        }
+        return defaultValue
     }
 
     private func percentiles(_ samples: [TimeInterval]) -> (p50: TimeInterval, p95: TimeInterval, p99: TimeInterval, max: TimeInterval) {
