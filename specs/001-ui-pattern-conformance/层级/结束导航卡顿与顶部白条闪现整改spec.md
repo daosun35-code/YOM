@@ -6,7 +6,7 @@
 
 ## 0. 检索标签（建议原样复用）
 
-`结束导航卡顿` `顶部白条闪现` `safeAreaInset 抖动` `confirmationDialog 锚点` `map_top_navigation_end_action` `navigation teardown`
+`结束导航卡顿` `顶部白条闪现` `safeAreaInset 抖动` `confirmationDialog 锚点` `map_top_navigation_end_action` `navigation teardown` `NavigationDetailSheet 潜在同构` `settings_beta_return_onboarding`
 
 ## 1. 问题定义（当前基线）
 
@@ -157,3 +157,36 @@ https://support.google.com/waze/answer/6286774
 https://developer.apple.com/documentation/swiftui/view/safeareainset(edge:alignment:spacing:content:)
 5. SwiftUI `ignoresSafeArea`：  
 https://developer.apple.com/documentation/swiftui/view/ignoressafearea(_:edges:)
+
+## 10. 跨链路同类风险补充（2026-03-05 二次审计）
+
+> 说明：以下为“同构风险记录”，用于后续窗口复用与防回归，不改变本轮 Step 1-4 主整改边界。
+
+### RISK-X01（P1）Map 侧潜在同构：未接入链路仍保留局部 dialog 锚点
+
+1. 结论：`NavigationDetailSheet` 目前虽未接入主展示链路，但内部仍是“局部 `@State` + `.confirmationDialog` + 破坏性结束动作”同构模式。  
+2. 风险：未来若重新接入详情 Sheet 并承载结束导航，可能复现“弹层 dismiss 与宿主 teardown 并行”引发的卡顿/闪变。  
+3. 代码锚点（当前基线）：
+1. `Features/Map/MapTabRootView.swift`：`NavigationDetailSheet` 局部状态 `isEndNavigationDialogPresented`。  
+2. `Features/Map/MapTabRootView.swift`：`NavigationDetailSheet` 的 `.confirmationDialog(...)` 与确认结束按钮。  
+4. 跟踪建议：
+1. 若恢复该链路，优先复用本 spec Step 1/2 原则：弹层上提到稳定父层、确认关闭与结束写回分事务。  
+2. 在 UI Test 增补“详情 Sheet 结束导航”时序断言，避免隐性回归。
+
+### RISK-X02（P2）Settings 低风险同构：确认后触发根视图切换
+
+1. 结论：Settings 的 Beta 重置入口存在“确认弹层后立刻触发根层切换（Tab -> Onboarding）”的结构相似性。  
+2. 风险：在低端设备或高负载场景下，存在轻微动画并帧/观感抖动可能，但当前不具备“顶部白条”触发条件。  
+3. 代码锚点（当前基线）：
+1. `Features/Settings/SettingsTabRootView.swift`：`.confirmationDialog(...)` + `resetOnboardingStateForBeta()`。  
+2. `Shared/Localization/LanguageStore.swift`：`resetOnboardingForBeta()` 写回 `hasCompletedOnboarding = false`。  
+3. `App/AppRootView.swift`：`hasCompletedOnboarding` 驱动根层 `TabView / OnboardingFlowView` 切换与统一动画。  
+4. 跟踪建议：
+1. 若后续出现“重置后慢半拍/闪变”反馈，可按本 spec Step 2 思路做事务拆分。  
+2. 可选补一条 UI Test：确认重置后在阈值时间内稳定进入 Onboarding 首屏。
+
+### RISK-X03（排除结论）Archive 顶部 inset 当前不属于同类
+
+1. 结论：Archive 页虽使用 `.safeAreaInset(edge: .top)`，但为常驻分段栏，不随破坏性动作瞬时回收。  
+2. 判定：不满足“条件收起 + 顶部未铺满 + 同帧 teardown”三要素，当前归类为非同类链路。  
+3. 代码锚点：`Features/Archive/ArchiveTabRootView.swift` 顶部分段栏 inset。
