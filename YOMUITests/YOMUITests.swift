@@ -206,6 +206,33 @@ final class YOMUITests: XCTestCase {
         assertNavigationDetailSheetNotPresented(in: app, timeout: 1.2)
     }
 
+    func testTappingCurrentNavigationPinDoesNotShowChangeDestinationPreview() {
+        let app = makeApp(
+            extraArguments: [
+                "UITEST_FORCE_NAVIGATION_ACTIVE"
+            ]
+        )
+        app.launch()
+
+        completeOnboarding(in: app)
+
+        let navigationPill = app.descendants(matching: .any)
+            .matching(identifier: "map_top_navigation_pill_container")
+            .firstMatch
+        XCTAssertTrue(navigationPill.waitForExistence(timeout: 8))
+
+        let currentDestinationPin = app.buttons["map_point_1935"]
+        XCTAssertTrue(currentDestinationPin.waitForExistence(timeout: 8))
+        currentDestinationPin.tap()
+
+        let previewPrimaryAction = app.buttons["map_preview_primary_action"].firstMatch
+        XCTAssertFalse(
+            previewPrimaryAction.waitForExistence(timeout: 1.2),
+            "Tapping the current navigation destination should not open change-destination preview."
+        )
+        XCTAssertTrue(navigationPill.exists)
+    }
+
     func testHalfSheetKeepsDetailsAndCloseActionsReachable() {
         let app = makeApp(
             extraArguments: [

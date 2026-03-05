@@ -48,7 +48,6 @@ final class MapScreenState: ObservableObject {
     }
 
     func selectPoint(_ point: PointOfInterest) {
-        let needsDismissFirst = previewPoint != nil && previewPoint?.id != point.id
         cameraPosition = .region(
             MKCoordinateRegion(
                 center: point.coordinate,
@@ -58,6 +57,11 @@ final class MapScreenState: ObservableObject {
         searchedPlace = nil
         isSearchPresented = false
         recordRecent(point)
+        if navigationPoint?.id == point.id {
+            previewPoint = nil
+            return
+        }
+        let needsDismissFirst = previewPoint != nil && previewPoint?.id != point.id
         if needsDismissFirst {
             previewPoint = nil
             DispatchQueue.main.async {
@@ -87,6 +91,10 @@ final class MapScreenState: ObservableObject {
 
     func startOrChangeNavigation() {
         guard let point = previewPoint else { return }
+        if navigationPoint?.id == point.id {
+            previewPoint = nil
+            return
+        }
         navigationPoint = point
         activeRoute = nil
         routeStatus = .loading
