@@ -154,3 +154,4 @@
 - 2026-03-04：新增分层 spec《`预览Sheet紧凑高度排版错位spec.md`》，用于检索“固定 1/3 detent 导致动作区贴底/错位”的同类问题。
 - 2026-03-05：新增分层 spec《`半Sheet导航细节即时下拉spec.md`》，用于执行”半 Sheet 保留细节/取消 + 删除更改目的地冗余提示 + 顶部导航 pill 仅保留极简箭头提示 + 消除延迟弹页”整改。
 - 2026-03-05：新增分层 spec《`预览Sheet空白点击关闭迟滞整改spec.md`》并完成全部四步执行。采用方案 A（Scrim First）：`presentationBackgroundInteraction` 改为 `.disabled`，删除地图层 `TapGesture`/`handleMapBackgroundTap()`，关闭路径统一经由 `dismissPreview()`；备选方案 B/C 不采纳（B 需保留背景可交互，C 混合方案复杂度高于收益）。回归锚点：`testPreviewTapOutsideDismissesSheet`（timeout 收紧至 1.5 s）、`testPreviewCloseAndTapOutsideDismissConsistently`、`testPinSwitchDoesNotFlickerOrShowBothSheets`。
+- 2026-03-05：新增分层 spec《`导航与预览链路压力测试调研spec.md`》，沉淀当前链路压测矩阵、阈值口径、`xcodebuild` 重复执行策略与发布后 MetricKit 观察路径（不新增脚本文件）。
