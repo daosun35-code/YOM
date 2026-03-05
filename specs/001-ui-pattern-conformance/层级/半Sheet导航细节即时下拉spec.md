@@ -37,7 +37,8 @@
 3. 顶部导航 pill 不再承担“打开导航细节”功能，不再触发详情 Sheet/inline 卡。  
 4. 顶部导航 pill 右侧仅保留一个极简箭头提示（视觉提示，不新增详情层级）。  
 5. 关闭半 Sheet、点击更改目的地时，不再出现延迟补弹的详情页。  
-6. 关键交互在 UI Test 中可稳定复现并回归。
+6. 导航中点击“当前正在导航的 pin”仍可打开预览 Sheet，但不显示主按钮（`map_preview_primary_action`），仅保留 `细节/取消`。  
+7. 关键交互在 UI Test 中可稳定复现并回归。
 
 ## 3. 行业对标（交互依据）
 
@@ -112,6 +113,7 @@ https://developer.apple.com/videos/play/wwdc2022/10001/
 2. 新增：更改目的地模式下，“这个将会替代……”文案不存在。  
 3. 新增：点击 `map_top_navigation_pill_container` 后，不出现导航详情 Sheet。  
 4. 新增：导航 pill 右侧箭头提示存在（可用独立 identifier：`map_top_navigation_pill_chevron`）。  
+5. 新增：导航中点击当前导航目标 pin，预览 Sheet 出现且 `map_preview_primary_action` 不存在。  
 - DoD：
 1. 新旧测试在本地稳定通过。  
 2. 核心链路（导航、改目的地、结束导航）不回退。

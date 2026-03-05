@@ -57,10 +57,6 @@ final class MapScreenState: ObservableObject {
         searchedPlace = nil
         isSearchPresented = false
         recordRecent(point)
-        if navigationPoint?.id == point.id {
-            previewPoint = nil
-            return
-        }
         let needsDismissFirst = previewPoint != nil && previewPoint?.id != point.id
         if needsDismissFirst {
             previewPoint = nil
@@ -218,6 +214,7 @@ struct MapTabRootView: View {
                         point: point,
                         language: languageStore.language,
                         isCompact: !forcePreviewExpandedForUITests && previewSheetDetent == previewSheetCompactDetent,
+                        showsPrimaryAction: state.navigationPoint?.id != point.id,
                         primaryActionTitle: state.navigationPoint == nil ? strings.goText : strings.changeDestination,
                         detailsTitle: strings.detailsText,
                         closeTitle: strings.closeText,
@@ -862,6 +859,7 @@ private struct MapPreviewSheetView: View {
     let point: PointOfInterest
     let language: AppLanguage
     let isCompact: Bool
+    let showsPrimaryAction: Bool
     let primaryActionTitle: String
     let detailsTitle: String
     let closeTitle: String
@@ -937,7 +935,9 @@ private struct MapPreviewSheetView: View {
     @ViewBuilder
     private var actionSection: some View {
         VStack(spacing: DSSpacing.space12) {
-            primaryActionButton
+            if showsPrimaryAction {
+                primaryActionButton
+            }
             if shouldStackSecondaryActionsVertically {
                 VStack(spacing: DSSpacing.space8) {
                     secondaryActionButton

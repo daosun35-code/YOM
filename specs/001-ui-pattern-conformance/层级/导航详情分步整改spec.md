@@ -52,6 +52,7 @@
 4. 预览卡只保留一个强主 CTA；`Details` 降为弱次级动作。  
 5. 导航详情内容以导航任务信息优先，地点叙述次之。  
 6. 路由失败/不可用时，重试入口在 `NavigationDetailSheet` 可见且可操作（不依赖已下线容器）。  
+7. 导航中点击“当前正在导航的 pin”仍可进入预览 Sheet，但不显示 `map_preview_primary_action`，避免同目标重复触发“更改目的地/重算路”链路。  
 
 ## 3. 拆分原则（执行约束）
 
@@ -85,6 +86,8 @@
 | ND-T019 | 更新 Map 快照基线与快照测试说明 | `YOMUITests/SnapshotBaselines/*`, `YOMUITests/SnapshotBaselines/README.md` | ND-T018 | Map 基线与新结构一致 |
 | ND-T020 | 将 route 失败重试入口迁移到 `NavigationDetailSheet`，保留 `map_route_retry` 标识 | `Features/Map/MapTabRootView.swift` | ND-T003 | 导航失败时在详情 Sheet（中等 detent 首屏）可见 Retry |
 | ND-T021 | 更新 `testMapRouteRetryFlowAfterFailure` 为 `Go -> 打开详情 -> Retry` 路径 | `YOMUITests/YOMUITests.swift` | ND-T020 | 失败重试链路测试稳定通过 |
+| ND-T022 | 导航中同目标 pin 语义分流：保留预览 Sheet，隐藏主 CTA，保留 `Details/Close` | `Features/Map/MapTabRootView.swift` | ND-T003 | 点击当前导航目标 pin 可开预览，但不出现 `map_preview_primary_action`，且不触发 reroute |
+| ND-T023 | 新增 UI Test 锁定 ND-T022 行为 | `YOMUITests/YOMUITests.swift` | ND-T022 | `testTappingCurrentNavigationPinShowsPreviewWithoutPrimaryAction` 稳定通过 |
 
 ## 5. 每步通用验收模板
 
@@ -100,6 +103,7 @@
 3. 再做危险动作降权：`ND-T012` 到 `ND-T014`。  
 4. 再做失败恢复入口迁移：`ND-T020` 到 `ND-T021`。  
 5. 最后做视觉语义收口：`ND-T015` 到 `ND-T019`。  
+6. 并行收口导航中同目标 pin 语义：`ND-T022` 到 `ND-T023`。  
 
 ## 7. 非目标（本轮不做）
 
@@ -107,10 +111,12 @@
 2. 不重做地图渲染与路线算法。  
 3. 不重写 Archive/Settings 页面，仅处理本 Spec 涉及路径。  
 
-## 8. 落地记录（2026-03-04）
+## 8. 落地记录（2026-03-04 ~ 2026-03-05）
 
 1. ND-T020 已落地：`map_route_retry` 迁移到 `NavigationDetailSheet`，并按 `routeStatus == .failed/.unavailable` 显示。  
 2. ND-T021 已落地：`testMapRouteRetryFlowAfterFailure` 更新为“先进入导航详情，再点击 Retry”。  
+3. ND-T022 已落地（2026-03-05）：导航中点击当前导航目标 pin 时，预览 Sheet 仍可打开，但主 CTA 隐藏。  
+4. ND-T023 已落地（2026-03-05）：新增 `testTappingCurrentNavigationPinShowsPreviewWithoutPrimaryAction` 覆盖同目标 pin 场景。  
 
 ## 9. Step 4 对齐收口（2026-03-04）
 
@@ -129,6 +135,7 @@
 | End Navigation 仅在详情层触发 | 顶部胶囊只负责打开详情；结束导航需在详情页确认 | `testEndNavigationRequiresConfirmation` |
 | 导航详情信息层级优先导航任务 | ETA/距离/状态区置顶，地点摘要后置 | `testNavigationDetailShowsTaskInfoBeforePointSummary` |
 | 失败恢复一跳可触达 + 详情可重试 | 主层 `map_route_retry_quick` 与详情 `map_route_retry` 均可触发重试 | `testMapRouteRetryFlowAfterFailure` |
+| 导航中同目标 pin 不触发重规划 | 点当前导航目标 pin 仍开预览，但主 CTA 隐藏，仅保留 `Details/Close` | `testTappingCurrentNavigationPinShowsPreviewWithoutPrimaryAction` |
 
 ### 9.3 快照基线说明（ND-T019）
 
