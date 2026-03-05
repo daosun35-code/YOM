@@ -152,4 +152,5 @@
 - 2026-03-04：Step 3 完成。清理 `routeOverlay` 下线遗留与无消费状态，`Details`/重试文案语义与行为一致，详情页标题层级去重；回归锚点：`testPreviewDetailsOpensMapSheetWithoutImmediateRetrieval`、`testEndNavigationRequiresConfirmation`。
 - 2026-03-04：Step 4 完成。`docs/app-routine.md` 与分层 spec 已按当前实现对齐，并补充回归与快照使用说明，可直接复用于后续窗口交接。
 - 2026-03-04：新增分层 spec《`预览Sheet紧凑高度排版错位spec.md`》，用于检索“固定 1/3 detent 导致动作区贴底/错位”的同类问题。
-- 2026-03-05：新增分层 spec《`半Sheet导航细节即时下拉spec.md`》，用于执行“半 Sheet 保留细节/取消 + 删除更改目的地冗余提示 + 顶部导航 pill 仅保留极简箭头提示 + 消除延迟弹页”整改。
+- 2026-03-05：新增分层 spec《`半Sheet导航细节即时下拉spec.md`》，用于执行”半 Sheet 保留细节/取消 + 删除更改目的地冗余提示 + 顶部导航 pill 仅保留极简箭头提示 + 消除延迟弹页”整改。
+- 2026-03-05：新增分层 spec《`预览Sheet空白点击关闭迟滞整改spec.md`》并完成全部四步执行。采用方案 A（Scrim First）：`presentationBackgroundInteraction` 改为 `.disabled`，删除地图层 `TapGesture`/`handleMapBackgroundTap()`，关闭路径统一经由 `dismissPreview()`；备选方案 B/C 不采纳（B 需保留背景可交互，C 混合方案复杂度高于收益）。回归锚点：`testPreviewTapOutsideDismissesSheet`（timeout 收紧至 1.5 s）、`testPreviewCloseAndTapOutsideDismissConsistently`、`testPinSwitchDoesNotFlickerOrShowBothSheets`。

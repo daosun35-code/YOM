@@ -26,6 +26,10 @@ Switching preserves each tab's internal state; active indicator slides on tap.
 | **Navigation** | Tap "Go" / "Change Destination" | Arrival CTA / confirm end |
 
 - **Default → Preview**: card rises from bottom; map recenters pin. Card offers "Go" and "View Details".
+- **Preview → Default (dismiss)**: three equivalent paths all write `previewPoint = nil` via `dismissPreview()`:
+  1. **Tap outside (scrim)** — system sheet scrim absorbs tap directly; no map-gesture arbitration; immediate dismiss. Background map interaction is disabled while preview is open (`presentationBackgroundInteraction(.disabled)`).
+  2. **Close button** — explicit `onClose` callback.
+  3. **Swipe down** — native sheet drag-to-dismiss.
 - **Preview → Navigation**: card dismisses; compact navigation pill appears at top. If route status is failed/unavailable, a quick retry banner appears under the pill. Tapping the pill opens the navigation detail sheet (task metrics, retry, end navigation). Tapping another pin during navigation shows "Change Destination".
 - **Preview → Detail Sheet**: tapping "View Details" opens an in-map sheet first (medium/large detent). Retrieval opens only after tapping "Open Retrieval" in that sheet.
 - **Arrival**: adaptive CTA — AR points: "Immerse" + "Retrieve"; others: "Retrieve" only. Proximity triple-pulse haptic.
