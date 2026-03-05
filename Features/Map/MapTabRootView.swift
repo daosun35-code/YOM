@@ -19,13 +19,13 @@ final class MapScreenState: ObservableObject {
     @Published var activeRoute: MKRoute?
     @Published var routeStatus: RouteStatus = .idle
     @Published var retrievalPoint: PointOfInterest?
-    @Published var previewDetailPoint: PointOfInterest?
+
     @Published var isNavigationDetailPresented = false
     @Published var searchText = ""
     @Published var isSearchPresented = false
     @Published private(set) var recentPointIDs: [UUID] = []
     @Published private(set) var recentSearchQueries: [String] = []
-    private var pendingRetrievalPointFromPreviewDetail: PointOfInterest?
+
 
     private let defaultRegion = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
@@ -95,10 +95,10 @@ final class MapScreenState: ObservableObject {
         previewPoint = nil
     }
 
-    func showDetails() {
+    func openRetrievalFromPreview() {
         guard let point = previewPoint else { return }
         previewPoint = nil
-        previewDetailPoint = point
+        retrievalPoint = point
     }
 
     func endNavigation() {
@@ -115,18 +115,6 @@ final class MapScreenState: ObservableObject {
 
     func closeRetrieval() {
         retrievalPoint = nil
-    }
-
-    func openRetrievalFromPreviewDetail() {
-        guard let point = previewDetailPoint else { return }
-        pendingRetrievalPointFromPreviewDetail = point
-        previewDetailPoint = nil
-    }
-
-    func presentPendingRetrievalIfNeeded() {
-        guard let point = pendingRetrievalPointFromPreviewDetail else { return }
-        pendingRetrievalPointFromPreviewDetail = nil
-        retrievalPoint = point
     }
 
     func recents(from points: [PointOfInterest]) -> [PointOfInterest] {
@@ -245,7 +233,7 @@ struct MapTabRootView: View {
                             handleNavigationAction()
                         },
                         onDetails: {
-                            state.showDetails()
+                            state.openRetrievalFromPreview()
                         },
                         onClose: {
                             state.dismissPreview()
@@ -263,19 +251,7 @@ struct MapTabRootView: View {
                     .presentationCornerRadius(DSRadius.r16 + DSSpacing.space8)
                     .presentationDragIndicator(.visible)
                 }
-                .sheet(item: $state.previewDetailPoint, onDismiss: {
-                    state.presentPendingRetrievalIfNeeded()
-                }) { point in
-                    MapPreviewDetailSheet(
-                        point: point,
-                        language: languageStore.language,
-                        onOpenRetrieval: {
-                            state.openRetrievalFromPreviewDetail()
-                        }
-                    )
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
-                }
+
                 .sheet(isPresented: $state.isNavigationDetailPresented) {
                     NavigationDetailSheet(
                         point: state.navigationPoint,
@@ -1099,39 +1075,7 @@ private struct NavigationPillView: View {
     }
 }
 
-private struct MapPreviewDetailSheet: View {
-    let point: PointOfInterest
-    let language: AppLanguage
-    let onOpenRetrieval: () -> Void
 
-    private var strings: AppStrings { AppStrings(language: language) }
-
-    var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    Text(point.title(in: language))
-                        .dsTextStyle(.body, weight: .semibold)
-                        .foregroundStyle(DSColor.textPrimary)
-                    Text(point.summary(in: language))
-                        .dsTextStyle(.caption)
-                        .foregroundStyle(DSColor.textSecondary)
-                }
-
-                Section {
-                    Button(strings.archiveOpenRetrievalText) {
-                        onOpenRetrieval()
-                    }
-                    .accessibilityIdentifier("map_preview_detail_open_retrieval")
-                    .accessibilityHint(strings.archiveOpenRetrievalHint)
-                }
-            }
-            .accessibilityIdentifier("map_preview_detail_sheet")
-            .navigationTitle(strings.detailsText)
-            .navigationBarTitleDisplayMode(.inline)
-        }
-    }
-}
 
 private struct NavigationDetailSheet: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
