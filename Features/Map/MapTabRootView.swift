@@ -50,6 +50,7 @@ final class MapScreenState: ObservableObject {
     }
 
     func selectPoint(_ point: PointOfInterest) {
+        let needsDismissFirst = previewPoint != nil && previewPoint?.id != point.id
         cameraPosition = .region(
             MKCoordinateRegion(
                 center: point.coordinate,
@@ -57,9 +58,16 @@ final class MapScreenState: ObservableObject {
             )
         )
         searchedPlace = nil
-        previewPoint = point
         isSearchPresented = false
         recordRecent(point)
+        if needsDismissFirst {
+            previewPoint = nil
+            DispatchQueue.main.async {
+                self.previewPoint = point
+            }
+        } else {
+            previewPoint = point
+        }
     }
 
     func selectSearchPlace(_ place: SearchPlace, query: String) {
@@ -161,7 +169,8 @@ struct MapTabRootView: View {
     @State private var routeRetryNonce = 0
     @State private var activeAlert: MapFeedbackAlert?
     @State private var hasAppliedUITestOverrides = false
-    @State private var previewSheetDetent: PresentationDetent = .fraction(0.33)
+    @State private var previewSheetDetent: PresentationDetent = .height(280)
+    @State private var measuredPreviewContentHeight: CGFloat = 280
     @FocusState private var isSearchFieldFocused: Bool
     @Namespace private var searchTransitionNamespace
 
@@ -187,9 +196,13 @@ struct MapTabRootView: View {
     private var forcePreviewExpandedForUITests: Bool {
         launchArguments.contains("UITEST_FORCE_PREVIEW_EXPANDED")
     }
-    private let previewSheetCompactFraction: CGFloat = 0.33
+    private let previewSheetCompactMinHeight: CGFloat = 200
+    private let previewSheetCompactMaxHeight: CGFloat = 360
+    private var clampedPreviewContentHeight: CGFloat {
+        min(max(measuredPreviewContentHeight, previewSheetCompactMinHeight), previewSheetCompactMaxHeight)
+    }
     private var previewSheetCompactDetent: PresentationDetent {
-        .fraction(previewSheetCompactFraction)
+        .height(clampedPreviewContentHeight)
     }
     private var previewSheetDetents: Set<PresentationDetent> {
         [previewSheetCompactDetent, .large]
@@ -236,8 +249,14 @@ struct MapTabRootView: View {
                         },
                         onClose: {
                             state.dismissPreview()
+                        },
+                        onContentHeightMeasured: { height in
+                            if abs(measuredPreviewContentHeight - height) > 1 {
+                                measuredPreviewContentHeight = height
+                            }
                         }
                     )
+                    .id(point.id)
                     .presentationDetents(previewSheetDetents, selection: $previewSheetDetent)
                     .presentationBackgroundInteraction(.enabled(upThrough: previewSheetCompactDetent))
                     .presentationContentInteraction(.scrolls)
@@ -380,7 +399,8 @@ struct MapTabRootView: View {
         }
         .onChange(of: state.previewPoint?.id) { _, pointID in
             guard pointID != nil else { return }
-            previewSheetDetent = previewSheetCompactDetent
+            measuredPreviewContentHeight = 280
+            previewSheetDetent = .height(280)
         }
     }
 
@@ -872,6 +892,13 @@ struct MapTabRootView: View {
     }
 }
 
+private struct SheetContentHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
 private struct MapPreviewSheetView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -886,6 +913,7 @@ private struct MapPreviewSheetView: View {
     let onPrimaryAction: () -> Void
     let onDetails: () -> Void
     let onClose: () -> Void
+    let onContentHeightMeasured: (CGFloat) -> Void
 
     private var summaryLineLimit: Int {
         dynamicTypeSize.isAccessibilitySize ? 4 : 2
@@ -930,6 +958,15 @@ private struct MapPreviewSheetView: View {
             .padding(.top, DSSpacing.space16)
             .padding(.bottom, DSSpacing.space24)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                GeometryReader { geo in
+                    Color.clear.preference(key: SheetContentHeightKey.self, value: geo.size.height)
+                }
+            )
+        }
+        .onPreferenceChange(SheetContentHeightKey.self) { height in
+            guard height > 0 else { return }
+            onContentHeightMeasured(height)
         }
     }
 
