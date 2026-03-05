@@ -356,7 +356,7 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(waitForDisappearance(of: goButton, timeout: 5))
     }
 
-    func testPreviewDetailsOpensRetrievalDirectly() {
+    func testPreviewDetailsExpandsToLargeDetent() {
         let app = makeApp(
             extraArguments: [
                 "UITEST_BYPASS_ONBOARDING",
@@ -371,7 +371,11 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(detailsButton.waitForExistence(timeout: 8))
         detailsButton.tap()
 
-        XCTAssertTrue(app.navigationBars["Retrieval"].waitForExistence(timeout: 8))
+        let detailNotes = app.otherElements["map_preview_detail_notes"].firstMatch
+        XCTAssertTrue(
+            detailNotes.waitForExistence(timeout: 8),
+            "Detail content should be visible after expanding to large detent"
+        )
     }
 
     func testArchiveCardShowsOpenActionAndNavigatesToRetrieval() {

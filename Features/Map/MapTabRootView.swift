@@ -18,7 +18,7 @@ final class MapScreenState: ObservableObject {
     @Published var navigationPoint: PointOfInterest?
     @Published var activeRoute: MKRoute?
     @Published var routeStatus: RouteStatus = .idle
-    @Published var retrievalPoint: PointOfInterest?
+
 
     @Published var isNavigationDetailPresented = false
     @Published var searchText = ""
@@ -95,11 +95,7 @@ final class MapScreenState: ObservableObject {
         previewPoint = nil
     }
 
-    func openRetrievalFromPreview() {
-        guard let point = previewPoint else { return }
-        previewPoint = nil
-        retrievalPoint = point
-    }
+
 
     func endNavigation() {
         navigationPoint = nil
@@ -113,9 +109,7 @@ final class MapScreenState: ObservableObject {
         isNavigationDetailPresented = true
     }
 
-    func closeRetrieval() {
-        retrievalPoint = nil
-    }
+
 
     func recents(from points: [PointOfInterest]) -> [PointOfInterest] {
         recentPointIDs.compactMap { id in
@@ -229,18 +223,27 @@ struct MapTabRootView: View {
                         changeDestinationHint: strings.changeDestinationHint,
                         detailsTitle: strings.detailsText,
                         closeTitle: strings.closeText,
+                        retrievalModeText: strings.retrievalModeStatic,
+                        demoNotesTitle: strings.demoNotesTitle,
+                        demoNotesBody: strings.demoNotesBody,
                         onPrimaryAction: {
                             handleNavigationAction()
                         },
                         onDetails: {
-                            state.openRetrievalFromPreview()
+                            withAnimation {
+                                previewSheetDetent = .large
+                            }
                         },
                         onClose: {
                             state.dismissPreview()
                         },
                         onContentHeightMeasured: { height in
                             if abs(measuredPreviewContentHeight - height) > 1 {
+                                let wasAtCompact = previewSheetDetent != .large
                                 measuredPreviewContentHeight = height
+                                if wasAtCompact {
+                                    previewSheetDetent = .height(min(max(height, previewSheetCompactMinHeight), previewSheetCompactMaxHeight))
+                                }
                             }
                         }
                     )
@@ -263,14 +266,7 @@ struct MapTabRootView: View {
                     )
                     .presentationDetents([.medium])
                 }
-                .fullScreenCover(item: $state.retrievalPoint) { point in
-                    NavigationStack {
-                        RetrievalView(point: point, showsCloseButton: true, onClose: {
-                            state.closeRetrieval()
-                        })
-                    }
-                    .environmentObject(languageStore)
-                }
+
                 .alert(item: $activeAlert) { alert in
                     switch alert {
                     case .searchNoResults(_):
@@ -886,6 +882,9 @@ private struct MapPreviewSheetView: View {
     let changeDestinationHint: String
     let detailsTitle: String
     let closeTitle: String
+    let retrievalModeText: String
+    let demoNotesTitle: String
+    let demoNotesBody: String
     let onPrimaryAction: () -> Void
     let onDetails: () -> Void
     let onClose: () -> Void
@@ -902,43 +901,51 @@ private struct MapPreviewSheetView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DSSpacing.space16) {
-                VStack(alignment: .leading, spacing: DSSpacing.space12) {
-                    Text(point.title(in: language))
-                        .dsTextStyle(.title, weight: .semibold)
-                        .foregroundStyle(DSColor.textPrimary)
-                        .lineLimit(2)
-                        .accessibilityAddTraits(.isHeader)
+                // — Compact content (measured for detent height) —
+                VStack(alignment: .leading, spacing: DSSpacing.space16) {
+                    VStack(alignment: .leading, spacing: DSSpacing.space12) {
+                        Text(point.title(in: language))
+                            .dsTextStyle(.title, weight: .semibold)
+                            .foregroundStyle(DSColor.textPrimary)
+                            .lineLimit(2)
+                            .accessibilityAddTraits(.isHeader)
 
-                    HStack(spacing: DSSpacing.space8) {
-                        PreviewMetadataChip(systemName: "calendar", text: String(point.year))
-                        PreviewMetadataChip(systemName: "location.fill", text: point.distanceText(in: language))
+                        HStack(spacing: DSSpacing.space8) {
+                            PreviewMetadataChip(systemName: "calendar", text: String(point.year))
+                            PreviewMetadataChip(systemName: "location.fill", text: point.distanceText(in: language))
+                        }
+                    }
+
+                    Text(point.summary(in: language))
+                        .dsTextStyle(.body)
+                        .foregroundStyle(DSColor.textPrimary)
+                        .lineLimit(summaryLineLimit)
+
+                    Divider()
+
+                    actionSection
+
+                    if isChangingDestination {
+                        Text(changeDestinationHint)
+                            .dsTextStyle(.caption)
+                            .foregroundStyle(DSColor.textSecondary)
                     }
                 }
+                .background(
+                    GeometryReader { geo in
+                        Color.clear.preference(key: SheetContentHeightKey.self, value: geo.size.height)
+                    }
+                )
 
-                Text(point.summary(in: language))
-                    .dsTextStyle(.body)
-                    .foregroundStyle(DSColor.textPrimary)
-                    .lineLimit(summaryLineLimit)
-
-                Divider()
-
-                actionSection
-
-                if isChangingDestination {
-                    Text(changeDestinationHint)
-                        .dsTextStyle(.caption)
-                        .foregroundStyle(DSColor.textSecondary)
+                // — Detail content (only in large, NOT measured for compact detent) —
+                if !isCompact {
+                    detailContentSection
                 }
             }
             .padding(.horizontal, DSSpacing.space24)
             .padding(.top, DSSpacing.space16)
             .padding(.bottom, DSSpacing.space24)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                GeometryReader { geo in
-                    Color.clear.preference(key: SheetContentHeightKey.self, value: geo.size.height)
-                }
-            )
         }
         .onPreferenceChange(SheetContentHeightKey.self) { height in
             guard height > 0 else { return }
@@ -1006,6 +1013,36 @@ private struct MapPreviewSheetView: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("map_preview_close_action")
+    }
+
+    @ViewBuilder
+    private var detailContentSection: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.space12) {
+            Divider()
+
+            Text(point.summary(in: language))
+                .dsTextStyle(.body)
+                .foregroundStyle(DSColor.textPrimary)
+                .lineSpacing(DSLineSpacing.body)
+                .accessibilityIdentifier("map_preview_detail_summary")
+
+            Text(retrievalModeText)
+                .dsTextStyle(.caption)
+                .foregroundStyle(DSColor.textSecondary)
+                .accessibilityIdentifier("map_preview_detail_mode")
+
+            GroupBox {
+                Text(demoNotesBody)
+                    .dsTextStyle(.caption)
+                    .foregroundStyle(DSColor.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, DSSpacing.space4)
+            } label: {
+                Text(demoNotesTitle)
+                    .dsTextStyle(.headline)
+            }
+            .accessibilityIdentifier("map_preview_detail_notes")
+        }
     }
 }
 
