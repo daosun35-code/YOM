@@ -146,6 +146,7 @@ struct MapTabRootView: View {
     @State private var lastRouteAttemptAt = Date.distantPast
     @State private var routeRetryNonce = 0
     @State private var activeAlert: MapFeedbackAlert?
+    @State private var isEndNavigationDialogPresented = false
     @State private var hasAppliedUITestOverrides = false
     @State private var previewSheetDetent: PresentationDetent = .height(280)
     @State private var measuredPreviewContentHeight: CGFloat = 280
@@ -291,10 +292,8 @@ struct MapTabRootView: View {
                     NavigationPillView(
                         point: navPoint,
                         language: languageStore.language,
-                        onEndNavigation: {
-                            withAnimation(shellAnimation) {
-                                state.endNavigation()
-                            }
+                        onEndTap: {
+                            isEndNavigationDialogPresented = true
                         }
                     )
 
@@ -360,13 +359,32 @@ struct MapTabRootView: View {
             measuredPreviewContentHeight = 280
             previewSheetDetent = .height(280)
         }
+        .confirmationDialog(
+            strings.endNavigationConfirmTitle,
+            isPresented: $isEndNavigationDialogPresented,
+            titleVisibility: .visible
+        ) {
+            Button(strings.endNavigationConfirmAction, role: .destructive) {
+                isEndNavigationDialogPresented = false
+                DispatchQueue.main.async {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        state.endNavigation()
+                    }
+                }
+            }
+            .accessibilityIdentifier("map_confirm_end_navigation_in_top_pill")
+
+            Button(strings.notNowText, role: .cancel) {}
+        } message: {
+            Text(strings.endNavigationConfirmBody)
+        }
     }
 
     @ViewBuilder
     private var mapBackgroundLayer: some View {
         if forceStaticMapSnapshotForUITests {
             DSColor.surfaceSecondary
-                .ignoresSafeArea(edges: .bottom)
+                .ignoresSafeArea(edges: [.top, .bottom])
                 .overlay(alignment: .topLeading) {
                     VStack(alignment: .leading, spacing: DSSpacing.space4) {
                         Text(strings.mapTitle)
@@ -419,7 +437,7 @@ struct MapTabRootView: View {
                     }
                 }
             }
-            .ignoresSafeArea(edges: .bottom)
+            .ignoresSafeArea(edges: [.top, .bottom])
         }
     }
 
@@ -1048,11 +1066,9 @@ private struct PreviewMetadataChip: View {
 }
 
 private struct NavigationPillView: View {
-    @State private var isEndNavigationDialogPresented = false
-
     let point: PointOfInterest
     let language: AppLanguage
-    let onEndNavigation: () -> Void
+    let onEndTap: () -> Void
 
     private var strings: AppStrings { AppStrings(language: language) }
 
@@ -1074,7 +1090,7 @@ private struct NavigationPillView: View {
             .accessibilityElement(children: .combine)
 
             Button(role: .destructive) {
-                isEndNavigationDialogPresented = true
+                onEndTap()
             } label: {
                 Text(strings.endNavigation)
                     .dsTextStyle(.caption, weight: .semibold)
@@ -1103,20 +1119,6 @@ private struct NavigationPillView: View {
         .background(.ultraThinMaterial, in: Capsule())
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("map_top_navigation_pill_container")
-        .confirmationDialog(
-            strings.endNavigationConfirmTitle,
-            isPresented: $isEndNavigationDialogPresented,
-            titleVisibility: .visible
-        ) {
-            Button(strings.endNavigationConfirmAction, role: .destructive) {
-                onEndNavigation()
-            }
-            .accessibilityIdentifier("map_confirm_end_navigation_in_top_pill")
-
-            Button(strings.notNowText, role: .cancel) {}
-        } message: {
-            Text(strings.endNavigationConfirmBody)
-        }
     }
 }
 
