@@ -117,20 +117,47 @@ final class YOMUITests: XCTestCase {
         assertNavigationDetailSheetNotPresented(in: app, timeout: 1.5)
     }
 
-    func testTopNavigationPillShowsChevronHintWithoutIndependentTapTarget() {
+    func testTopNavigationPillShowsEndActionButton() {
         let app = makeApp(extraArguments: ["UITEST_FORCE_NAVIGATION_ACTIVE"])
         app.launch()
 
         completeOnboarding(in: app)
 
-        let chevron = app.descendants(matching: .any)
-            .matching(identifier: "map_top_navigation_pill_chevron")
+        let endButton = app.descendants(matching: .any)
+            .matching(identifier: "map_top_navigation_end_action")
             .firstMatch
-        XCTAssertTrue(chevron.waitForExistence(timeout: 8))
-        XCTAssertFalse(app.buttons["map_top_navigation_pill_chevron"].exists)
+        XCTAssertTrue(endButton.waitForExistence(timeout: 8))
+        XCTAssertTrue(endButton.isHittable)
 
         _ = tapTopNavigationPill(in: app)
         assertNavigationDetailSheetNotPresented(in: app, timeout: 1.5)
+    }
+
+    func testTopNavigationEndActionEndsNavigationAfterConfirmation() {
+        let app = makeApp(extraArguments: ["UITEST_FORCE_NAVIGATION_ACTIVE"])
+        app.launch()
+
+        completeOnboarding(in: app)
+
+        let navigationPill = app.descendants(matching: .any)
+            .matching(identifier: "map_top_navigation_pill_container")
+            .firstMatch
+        XCTAssertTrue(navigationPill.waitForExistence(timeout: 8))
+
+        let endButton = app.descendants(matching: .any)
+            .matching(identifier: "map_top_navigation_end_action")
+            .firstMatch
+        XCTAssertTrue(endButton.waitForExistence(timeout: 8))
+        endButton.tap()
+
+        let confirmButton = app.descendants(matching: .any)
+            .matching(identifier: "map_confirm_end_navigation_in_top_pill")
+            .firstMatch
+        XCTAssertTrue(confirmButton.waitForExistence(timeout: 5))
+        confirmButton.tap()
+
+        XCTAssertTrue(waitForDisappearance(of: navigationPill, timeout: 5))
+        XCTAssertFalse(endButton.exists)
     }
 
     func testNavigationShowsSingleTopStatusContainerBaseline() {
@@ -279,10 +306,10 @@ final class YOMUITests: XCTestCase {
         let previewPrimaryAction = app.buttons["map_preview_primary_action"].firstMatch
         XCTAssertTrue(previewPrimaryAction.waitForExistence(timeout: 8))
 
-        let chevron = app.descendants(matching: .any)
-            .matching(identifier: "map_top_navigation_pill_chevron")
+        let endButton = app.descendants(matching: .any)
+            .matching(identifier: "map_top_navigation_end_action")
             .firstMatch
-        XCTAssertTrue(chevron.waitForExistence(timeout: 8))
+        XCTAssertTrue(endButton.waitForExistence(timeout: 8))
 
         _ = tapTopNavigationPill(in: app)
         assertNavigationDetailSheetNotPresented(in: app, timeout: 1.5)

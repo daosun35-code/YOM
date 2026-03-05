@@ -290,7 +290,12 @@ struct MapTabRootView: View {
                 VStack(spacing: DSSpacing.space8) {
                     NavigationPillView(
                         point: navPoint,
-                        language: languageStore.language
+                        language: languageStore.language,
+                        onEndNavigation: {
+                            withAnimation(shellAnimation) {
+                                state.endNavigation()
+                            }
+                        }
                     )
 
                     if shouldShowQuickRouteRetry {
@@ -1043,8 +1048,11 @@ private struct PreviewMetadataChip: View {
 }
 
 private struct NavigationPillView: View {
+    @State private var isEndNavigationDialogPresented = false
+
     let point: PointOfInterest
     let language: AppLanguage
+    let onEndNavigation: () -> Void
 
     private var strings: AppStrings { AppStrings(language: language) }
 
@@ -1063,19 +1071,52 @@ private struct NavigationPillView: View {
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .combine)
 
-            Image(systemName: "chevron.down")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(DSColor.textSecondary.opacity(DSOpacity.controlDisabled))
-                .accessibilityHidden(true)
-                .accessibilityIdentifier("map_top_navigation_pill_chevron")
+            Button(role: .destructive) {
+                isEndNavigationDialogPresented = true
+            } label: {
+                Text(strings.endNavigation)
+                    .dsTextStyle(.caption, weight: .semibold)
+                    .foregroundStyle(DSColor.statusError)
+                    .padding(.horizontal, DSSpacing.space8)
+                    .frame(minHeight: DSControl.minTouchTarget)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(DSColor.surfaceSecondary)
+                    )
+                    .overlay(
+                        Capsule(style: .continuous)
+                            .stroke(
+                                DSColor.statusError.opacity(DSOpacity.secondaryBorderEnabled),
+                                lineWidth: DSBorder.bw1
+                            )
+                    )
+            }
+            .buttonStyle(.plain)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(strings.endNavigation)
+            .accessibilityIdentifier("map_top_navigation_end_action")
         }
         .padding(.horizontal, DSSpacing.space12)
         .padding(.vertical, DSSpacing.space12)
         .background(.ultraThinMaterial, in: Capsule())
-        .accessibilityLabel("\(strings.navigationActive), \(point.title(in: language))")
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("map_top_navigation_pill_container")
+        .confirmationDialog(
+            strings.endNavigationConfirmTitle,
+            isPresented: $isEndNavigationDialogPresented,
+            titleVisibility: .visible
+        ) {
+            Button(strings.endNavigationConfirmAction, role: .destructive) {
+                onEndNavigation()
+            }
+            .accessibilityIdentifier("map_confirm_end_navigation_in_top_pill")
+
+            Button(strings.notNowText, role: .cancel) {}
+        } message: {
+            Text(strings.endNavigationConfirmBody)
+        }
     }
 }
 
