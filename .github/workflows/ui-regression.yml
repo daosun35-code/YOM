@@ -1,0 +1,82 @@
+name: UI Regression
+
+on:
+  pull_request:
+    paths:
+      - 'Features/**'
+      - 'Shared/**'
+      - 'App/**'
+      - 'YOMUITests/**'
+      - 'project.yml'
+  schedule:
+    # Every day at UTC 06:00 (ET 01:00)
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: 'Number of regression rounds (default 3)'
+        required: false
+        default: '3'
+
+concurrency:
+  group: ui-regression-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ui-regression:
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Resolve simulator
+        id: sim
+        run: |
+          for model in "iPhone 17 Pro" "iPhone 17" "iPhone 16 Pro" "iPhone 16" "iPhone 15 Pro" "iPhone"; do
+            UDID=$(xcrun simctl list devices available \
+              | awk -v m="$model" -F '[()]' '$0 ~ m {print $2; exit}')
+            if [[ -n "$UDID" ]]; then
+              echo "Found simulator: $model ($UDID)"
+              echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+              echo "name=$model" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "::error::No available iPhone simulator found"
+          exit 1
+
+      - name: Determine run count
+        id: runcount
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "runs=1" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "runs=${{ github.event.inputs.runs || '3' }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "runs=3" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run UI regression
+        env:
+          SIM_UDID: ${{ steps.sim.outputs.udid }}
+          RUNS: ${{ steps.runcount.outputs.runs }}
+          RESULT_BUNDLE_PATH: ${{ runner.temp }}/ui-regression.xcresult
+        run: scripts/run_ui_regression_3x.sh
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-regression-xcresult
+          path: ${{ runner.temp }}/ui-regression.xcresult
+          retention-days: 14
+          if-no-files-found: ignore
