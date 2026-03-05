@@ -185,6 +185,9 @@ struct MapTabRootView: View {
     private var forcePreviewPointForUITests: Bool {
         launchArguments.contains("UITEST_FORCE_PREVIEW_POINT")
     }
+    private var forcePreviewExpandedForUITests: Bool {
+        launchArguments.contains("UITEST_FORCE_PREVIEW_EXPANDED")
+    }
     private var previewSheetCompactDetent: PresentationDetent {
         .height(previewSheetContentHeight)
     }
@@ -220,6 +223,7 @@ struct MapTabRootView: View {
                         point: point,
                         language: languageStore.language,
                         isChangingDestination: state.navigationPoint != nil,
+                        isCompact: !forcePreviewExpandedForUITests && previewSheetDetent == previewSheetCompactDetent,
                         primaryActionTitle: state.navigationPoint == nil ? strings.goText : strings.changeDestination,
                         changeDestinationHint: strings.changeDestinationHint,
                         detailsTitle: strings.detailsText,
@@ -881,6 +885,7 @@ private struct MapPreviewSheetView: View {
     let point: PointOfInterest
     let language: AppLanguage
     let isChangingDestination: Bool
+    let isCompact: Bool
     let primaryActionTitle: String
     let changeDestinationHint: String
     let detailsTitle: String
@@ -898,54 +903,58 @@ private struct MapPreviewSheetView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DSSpacing.space16) {
-            VStack(alignment: .leading, spacing: DSSpacing.space12) {
-                Text(point.title(in: language))
-                    .dsTextStyle(.title, weight: .semibold)
-                    .foregroundStyle(DSColor.textPrimary)
-                    .lineLimit(2)
-                    .accessibilityAddTraits(.isHeader)
+        ScrollView {
+            VStack(alignment: .leading, spacing: DSSpacing.space16) {
+                VStack(alignment: .leading, spacing: DSSpacing.space12) {
+                    Text(point.title(in: language))
+                        .dsTextStyle(.title, weight: .semibold)
+                        .foregroundStyle(DSColor.textPrimary)
+                        .lineLimit(2)
+                        .accessibilityAddTraits(.isHeader)
 
-                HStack(spacing: DSSpacing.space8) {
-                    PreviewMetadataChip(systemName: "calendar", text: String(point.year))
-                    PreviewMetadataChip(systemName: "location.fill", text: point.distanceText(in: language))
+                    HStack(spacing: DSSpacing.space8) {
+                        PreviewMetadataChip(systemName: "calendar", text: String(point.year))
+                        PreviewMetadataChip(systemName: "location.fill", text: point.distanceText(in: language))
+                    }
+                }
+
+                Text(point.summary(in: language))
+                    .dsTextStyle(.body)
+                    .foregroundStyle(DSColor.textPrimary)
+                    .lineLimit(summaryLineLimit)
+
+                Divider()
+
+                actionSection
+
+                if isChangingDestination {
+                    Text(changeDestinationHint)
+                        .dsTextStyle(.caption)
+                        .foregroundStyle(DSColor.textSecondary)
                 }
             }
-
-            Text(point.summary(in: language))
-                .dsTextStyle(.body)
-                .foregroundStyle(DSColor.textPrimary)
-                .lineLimit(summaryLineLimit)
-
-            Divider()
-
-            actionSection
-
-            if isChangingDestination {
-                Text(changeDestinationHint)
-                    .dsTextStyle(.caption)
-                    .foregroundStyle(DSColor.textSecondary)
-            }
+            .padding(.horizontal, DSSpacing.space24)
+            .padding(.top, DSSpacing.space16)
+            .padding(.bottom, DSSpacing.space24)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.horizontal, DSSpacing.space24)
-        .padding(.top, DSSpacing.space16)
-        .padding(.bottom, DSSpacing.space24)
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
     private var actionSection: some View {
         VStack(spacing: DSSpacing.space12) {
             primaryActionButton
-            if usesVerticalActions {
-                VStack(spacing: DSSpacing.space8) {
-                    secondaryActionButton
-                    closeActionButton
-                }
-            } else {
-                HStack(spacing: DSSpacing.space12) {
-                    secondaryActionButton
-                    closeActionButton
+            if !isCompact {
+                if usesVerticalActions {
+                    VStack(spacing: DSSpacing.space8) {
+                        secondaryActionButton
+                        closeActionButton
+                    }
+                } else {
+                    HStack(spacing: DSSpacing.space12) {
+                        secondaryActionButton
+                        closeActionButton
+                    }
                 }
             }
         }

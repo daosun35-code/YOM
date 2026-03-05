@@ -311,7 +311,8 @@ final class YOMUITests: XCTestCase {
             extraArguments: [
                 "UITEST_BYPASS_ONBOARDING",
                 "UITEST_FORCE_PREVIEW_POINT",
-                "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT",
+                "UITEST_FORCE_PREVIEW_EXPANDED"
             ]
         )
         app.launch()
@@ -331,7 +332,8 @@ final class YOMUITests: XCTestCase {
             extraArguments: [
                 "UITEST_BYPASS_ONBOARDING",
                 "UITEST_FORCE_PREVIEW_POINT",
-                "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT",
+                "UITEST_FORCE_PREVIEW_EXPANDED"
             ]
         )
         app.launch()
@@ -352,7 +354,8 @@ final class YOMUITests: XCTestCase {
             extraArguments: [
                 "UITEST_BYPASS_ONBOARDING",
                 "UITEST_FORCE_PREVIEW_POINT",
-                "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT",
+                "UITEST_FORCE_PREVIEW_EXPANDED"
             ]
         )
         app.launch()
@@ -575,6 +578,7 @@ final class YOMUITests: XCTestCase {
         let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
         return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
     }
+
 
     private func assertBaselineSnapshot(
         named page: SnapshotPage,
