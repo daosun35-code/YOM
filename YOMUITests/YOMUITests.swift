@@ -106,68 +106,31 @@ final class YOMUITests: XCTestCase {
         }
     }
 
-    func testEndNavigationRequiresConfirmation() {
+    func testTopNavigationPillTapDoesNotPresentNavigationDetailSheet() {
         let app = makeApp(extraArguments: ["UITEST_FORCE_NAVIGATION_ACTIVE"])
         app.launch()
 
         completeOnboarding(in: app)
 
-        let navigationPill = app.descendants(matching: .any)
-            .matching(identifier: "map_top_navigation_pill_container")
-            .firstMatch
-        XCTAssertTrue(navigationPill.waitForExistence(timeout: 8))
-
-        openNavigationDetailSheetFromTopPill(in: app)
-
-        let endButton = app.buttons["map_end_navigation_in_sheet"].firstMatch
-        XCTAssertTrue(endButton.waitForExistence(timeout: 5))
-        endButton.tap()
-
-        let confirmButton = app.buttons
-            .matching(identifier: "map_confirm_end_navigation_in_sheet")
-            .firstMatch
-        let confirmButtonByTitle = app.buttons["End Navigation"].firstMatch
-        let firstDialogShown =
-            confirmButton.waitForExistence(timeout: 5) ||
-            confirmButtonByTitle.waitForExistence(timeout: 1)
-        XCTAssertTrue(firstDialogShown)
-        if confirmButton.waitForExistence(timeout: 5) {
-            confirmButton.tap()
-        } else {
-            XCTAssertTrue(confirmButtonByTitle.waitForExistence(timeout: 5))
-            confirmButtonByTitle.tap()
-        }
-
-        XCTAssertTrue(waitForDisappearance(of: navigationPill, timeout: 5))
+        let navigationPill = tapTopNavigationPill(in: app)
+        XCTAssertTrue(navigationPill.exists)
+        assertNavigationDetailSheetNotPresented(in: app, timeout: 1.5)
     }
 
-    func testNavigationDetailShowsTaskInfoBeforePointSummary() {
+    func testTopNavigationPillShowsChevronHintWithoutIndependentTapTarget() {
         let app = makeApp(extraArguments: ["UITEST_FORCE_NAVIGATION_ACTIVE"])
         app.launch()
 
         completeOnboarding(in: app)
 
-        openNavigationDetailSheetFromTopPill(in: app)
-
-        let taskInfoSection = app.otherElements["map_navigation_task_info_section"].firstMatch
-        XCTAssertTrue(taskInfoSection.waitForExistence(timeout: 5))
-
-        let etaRow = app.descendants(matching: .any)
-            .matching(identifier: "map_navigation_task_eta_row")
+        let chevron = app.descendants(matching: .any)
+            .matching(identifier: "map_top_navigation_pill_chevron")
             .firstMatch
-        let distanceRow = app.descendants(matching: .any)
-            .matching(identifier: "map_navigation_task_distance_row")
-            .firstMatch
-        let statusRow = app.descendants(matching: .any)
-            .matching(identifier: "map_navigation_task_status_row")
-            .firstMatch
-        XCTAssertTrue(etaRow.waitForExistence(timeout: 5))
-        XCTAssertTrue(distanceRow.waitForExistence(timeout: 5))
-        XCTAssertTrue(statusRow.waitForExistence(timeout: 5))
+        XCTAssertTrue(chevron.waitForExistence(timeout: 8))
+        XCTAssertFalse(app.buttons["map_top_navigation_pill_chevron"].exists)
 
-        let pointSummary = app.staticTexts["map_navigation_detail_point_summary"].firstMatch
-        XCTAssertTrue(pointSummary.waitForExistence(timeout: 5))
-        XCTAssertLessThan(taskInfoSection.frame.minY, pointSummary.frame.minY)
+        _ = tapTopNavigationPill(in: app)
+        assertNavigationDetailSheetNotPresented(in: app, timeout: 1.5)
     }
 
     func testNavigationShowsSingleTopStatusContainerBaseline() {
@@ -240,18 +203,7 @@ final class YOMUITests: XCTestCase {
         quickRetryButton.tap()
         XCTAssertTrue(waitForDisappearance(of: quickRetryButton, timeout: 3))
         XCTAssertTrue(quickRetryButton.waitForExistence(timeout: 8))
-
-        openNavigationDetailSheetFromTopPill(in: app)
-
-        let detailRetryButton = app.buttons
-            .matching(identifier: "map_route_retry")
-            .matching(NSPredicate(format: "label == %@", "Retry"))
-            .firstMatch
-        XCTAssertTrue(detailRetryButton.waitForExistence(timeout: 5))
-
-        detailRetryButton.tap()
-        XCTAssertTrue(waitForDisappearance(of: detailRetryButton, timeout: 3))
-        XCTAssertTrue(detailRetryButton.waitForExistence(timeout: 8))
+        assertNavigationDetailSheetNotPresented(in: app, timeout: 1.2)
     }
 
     func testHalfSheetKeepsDetailsAndCloseActionsReachable() {
@@ -282,7 +234,7 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(waitForDisappearance(of: primaryButton, timeout: 5))
     }
 
-    func testHalfSheetTopPillTapShowsInlineDetailCard() {
+    func testHalfSheetTopPillTapDoesNotPresentNavigationDetailSheet() {
         let app = makeApp(
             extraArguments: [
                 "UITEST_BYPASS_ONBOARDING",
@@ -295,8 +247,13 @@ final class YOMUITests: XCTestCase {
         let previewPrimaryAction = app.buttons["map_preview_primary_action"].firstMatch
         XCTAssertTrue(previewPrimaryAction.waitForExistence(timeout: 8))
 
-        _ = tapTopNavigationPillAndAssertInlineCardAppears(in: app)
-        assertNavigationDetailSheetNotPresented(in: app, timeout: 1.2)
+        let chevron = app.descendants(matching: .any)
+            .matching(identifier: "map_top_navigation_pill_chevron")
+            .firstMatch
+        XCTAssertTrue(chevron.waitForExistence(timeout: 8))
+
+        _ = tapTopNavigationPill(in: app)
+        assertNavigationDetailSheetNotPresented(in: app, timeout: 1.5)
     }
 
     func testClosingHalfSheetDoesNotTriggerDelayedNavigationDetailSheet() {
@@ -314,18 +271,18 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(previewPrimaryAction.waitForExistence(timeout: 8))
         XCTAssertTrue(closeButton.waitForExistence(timeout: 5))
 
-        let inlineCard = tapTopNavigationPillAndAssertInlineCardAppears(in: app)
+        _ = tapTopNavigationPill(in: app)
         closeButton.tap()
 
         XCTAssertTrue(waitForDisappearance(of: previewPrimaryAction, timeout: 5))
-        XCTAssertTrue(waitForDisappearance(of: inlineCard, timeout: 3))
-        assertNavigationDetailSheetNotPresented(in: app, timeout: 1.5)
+        assertNavigationDetailSheetNotPresented(in: app, timeout: 1.8)
     }
 
     func testChangeDestinationDoesNotTriggerDelayedNavigationDetailSheet() {
         let app = makeApp(
             extraArguments: [
                 "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_LOCATION_AUTHORIZED",
                 "UITEST_FORCE_CHANGING_DESTINATION",
                 "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
             ]
@@ -335,12 +292,36 @@ final class YOMUITests: XCTestCase {
         let previewPrimaryAction = app.buttons["map_preview_primary_action"].firstMatch
         XCTAssertTrue(previewPrimaryAction.waitForExistence(timeout: 8))
 
-        let inlineCard = tapTopNavigationPillAndAssertInlineCardAppears(in: app)
+        _ = tapTopNavigationPill(in: app)
         previewPrimaryAction.tap()
 
         XCTAssertTrue(waitForDisappearance(of: previewPrimaryAction, timeout: 5))
-        XCTAssertTrue(waitForDisappearance(of: inlineCard, timeout: 3))
-        assertNavigationDetailSheetNotPresented(in: app, timeout: 1.5)
+        assertNavigationDetailSheetNotPresented(in: app, timeout: 1.8)
+    }
+
+    func testChangeDestinationHalfSheetDoesNotShowReplacementHintCopy() {
+        let app = makeApp(
+            extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_CHANGING_DESTINATION",
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT",
+                "-AppleLanguages", "(zh-Hans)",
+                "-AppleLocale", "zh_Hans_CN"
+            ]
+        )
+        app.launch()
+
+        let previewPrimaryAction = app.buttons["map_preview_primary_action"].firstMatch
+        XCTAssertTrue(previewPrimaryAction.waitForExistence(timeout: 8))
+
+        let zhHint = app.staticTexts
+            .containing(NSPredicate(format: "label CONTAINS %@", "替代"))
+            .firstMatch
+        let enHint = app.staticTexts
+            .containing(NSPredicate(format: "label CONTAINS[c] %@", "replace"))
+            .firstMatch
+        XCTAssertFalse(zhHint.waitForExistence(timeout: 1))
+        XCTAssertFalse(enHint.waitForExistence(timeout: 1))
     }
 
     func testMapPinPreviewLayoutStabilityAndAccessibility() {
@@ -612,30 +593,9 @@ final class YOMUITests: XCTestCase {
             .matching(identifier: "map_top_navigation_pill_container")
             .firstMatch
         XCTAssertTrue(navigationPill.waitForExistence(timeout: 8))
-
-        openNavigationDetailSheetFromTopPill(in: app)
-
-        let endButton = app.buttons["map_end_navigation_in_sheet"].firstMatch
-        XCTAssertTrue(endButton.waitForExistence(timeout: 5))
-        endButton.tap()
-
-        let confirmButton = app.buttons
-            .matching(identifier: "map_confirm_end_navigation_in_sheet")
-            .firstMatch
-        let confirmButtonByTitle = app.buttons["End Navigation"].firstMatch
-        let confirmationVisible =
-            confirmButton.waitForExistence(timeout: 5) ||
-            confirmButtonByTitle.waitForExistence(timeout: 1)
-        XCTAssertTrue(confirmationVisible)
-
-        if confirmButton.waitForExistence(timeout: 1) {
-            confirmButton.tap()
-        } else {
-            XCTAssertTrue(confirmButtonByTitle.waitForExistence(timeout: 5))
-            confirmButtonByTitle.tap()
-        }
-
-        XCTAssertTrue(waitForDisappearance(of: navigationPill, timeout: 5))
+        navigationPill.tap()
+        assertNavigationDetailSheetNotPresented(in: app, timeout: 1.5)
+        XCTAssertTrue(navigationPill.exists)
     }
 
     private func makeApp(extraArguments: [String] = [], extraEnvironment: [String: String] = [:]) -> XCUIApplication {
@@ -674,9 +634,8 @@ final class YOMUITests: XCTestCase {
     }
 
     @discardableResult
-    private func tapTopNavigationPillAndAssertInlineCardAppears(
+    private func tapTopNavigationPill(
         in app: XCUIApplication,
-        timeout: TimeInterval = 5,
         file: StaticString = #filePath,
         line: UInt = #line
     ) -> XCUIElement {
@@ -685,37 +644,7 @@ final class YOMUITests: XCTestCase {
             .firstMatch
         XCTAssertTrue(navigationPill.waitForExistence(timeout: 8), file: file, line: line)
         navigationPill.tap()
-
-        let inlineCard = app.descendants(matching: .any)
-            .matching(identifier: "map_navigation_inline_detail_card")
-            .firstMatch
-        XCTAssertTrue(
-            inlineCard.waitForExistence(timeout: timeout),
-            "Inline detail card should appear after tapping top navigation pill",
-            file: file,
-            line: line
-        )
-        return inlineCard
-    }
-
-    private func openNavigationDetailSheetFromTopPill(
-        in app: XCUIApplication,
-        file: StaticString = #filePath,
-        line: UInt = #line
-    ) {
-        _ = tapTopNavigationPillAndAssertInlineCardAppears(in: app, file: file, line: line)
-
-        let expandAction = app.descendants(matching: .any)
-            .matching(
-                NSPredicate(
-                    format: "identifier == %@ OR label == %@",
-                    "map_navigation_inline_expand_full_detail",
-                    "Open Full Details"
-                )
-            )
-            .firstMatch
-        XCTAssertTrue(expandAction.waitForExistence(timeout: 5), file: file, line: line)
-        expandAction.tap()
+        return navigationPill
     }
 
     private func assertNavigationDetailSheetNotPresented(
@@ -725,9 +654,25 @@ final class YOMUITests: XCTestCase {
         line: UInt = #line
     ) {
         let endButton = app.buttons["map_end_navigation_in_sheet"].firstMatch
+        let inlineDetailCard = app.descendants(matching: .any)
+            .matching(identifier: "map_navigation_inline_detail_card")
+            .firstMatch
+        let taskInfoSection = app.otherElements["map_navigation_task_info_section"].firstMatch
         XCTAssertFalse(
             endButton.waitForExistence(timeout: timeout),
             "Navigation detail sheet should not appear unexpectedly",
+            file: file,
+            line: line
+        )
+        XCTAssertFalse(
+            inlineDetailCard.waitForExistence(timeout: 0.2),
+            "Inline detail card should not appear after tapping top navigation pill",
+            file: file,
+            line: line
+        )
+        XCTAssertFalse(
+            taskInfoSection.waitForExistence(timeout: 0.2),
+            "Navigation detail task info should not appear unexpectedly",
             file: file,
             line: line
         )

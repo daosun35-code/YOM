@@ -19,9 +19,6 @@ final class MapScreenState: ObservableObject {
     @Published var activeRoute: MKRoute?
     @Published var routeStatus: RouteStatus = .idle
 
-
-    @Published var isNavigationDetailPresented = false
-    @Published var isInlineNavigationCardPresented = false
     @Published var searchText = ""
     @Published var isSearchPresented = false
     @Published private(set) var recentPointIDs: [UUID] = []
@@ -86,7 +83,6 @@ final class MapScreenState: ObservableObject {
 
     func dismissPreview() {
         previewPoint = nil
-        resetNavigationPresentationState()
     }
 
     func startOrChangeNavigation() {
@@ -95,7 +91,6 @@ final class MapScreenState: ObservableObject {
         activeRoute = nil
         routeStatus = .loading
         previewPoint = nil
-        resetNavigationPresentationState()
     }
 
 
@@ -104,30 +99,6 @@ final class MapScreenState: ObservableObject {
         navigationPoint = nil
         activeRoute = nil
         routeStatus = .idle
-        resetNavigationPresentationState()
-    }
-
-    func openNavigationDetail() {
-        guard navigationPoint != nil else { return }
-        isNavigationDetailPresented = false
-        isInlineNavigationCardPresented = true
-    }
-
-    func collapseInlineNavigationCard() {
-        isInlineNavigationCardPresented = false
-    }
-
-    func expandNavigationDetailFromInlineCard() {
-        guard navigationPoint != nil else { return }
-        isInlineNavigationCardPresented = false
-        if previewPoint != nil {
-            previewPoint = nil
-            DispatchQueue.main.async {
-                self.isNavigationDetailPresented = true
-            }
-            return
-        }
-        isNavigationDetailPresented = true
     }
 
 
@@ -154,11 +125,6 @@ final class MapScreenState: ObservableObject {
 
     var routeSourceFallback: CLLocationCoordinate2D {
         defaultRegion.center
-    }
-
-    private func resetNavigationPresentationState() {
-        isInlineNavigationCardPresented = false
-        isNavigationDetailPresented = false
     }
 }
 
@@ -243,10 +209,8 @@ struct MapTabRootView: View {
                     MapPreviewSheetView(
                         point: point,
                         language: languageStore.language,
-                        isChangingDestination: state.navigationPoint != nil,
                         isCompact: !forcePreviewExpandedForUITests && previewSheetDetent == previewSheetCompactDetent,
                         primaryActionTitle: state.navigationPoint == nil ? strings.goText : strings.changeDestination,
-                        changeDestinationHint: strings.changeDestinationHint,
                         detailsTitle: strings.detailsText,
                         closeTitle: strings.closeText,
                         retrievalModeText: strings.retrievalModeStatic,
@@ -279,18 +243,6 @@ struct MapTabRootView: View {
                     .presentationContentInteraction(.scrolls)
                     .presentationCornerRadius(DSRadius.r16 + DSSpacing.space8)
                     .presentationDragIndicator(.visible)
-                }
-
-                .sheet(isPresented: $state.isNavigationDetailPresented) {
-                    NavigationDetailSheet(
-                        point: state.navigationPoint,
-                        route: state.activeRoute,
-                        routeStatus: state.routeStatus,
-                        language: languageStore.language,
-                        onRetry: { retryRoute() },
-                        onEnd: { state.endNavigation() }
-                    )
-                    .presentationDetents([.medium])
                 }
 
                 .alert(item: $activeAlert) { alert in
@@ -334,34 +286,8 @@ struct MapTabRootView: View {
                 VStack(spacing: DSSpacing.space8) {
                     NavigationPillView(
                         point: navPoint,
-                        language: languageStore.language,
-                        onOpenDetail: {
-                            withAnimation(inlineNavigationCardAnimation) {
-                                state.openNavigationDetail()
-                            }
-                        }
+                        language: languageStore.language
                     )
-
-                    if state.isInlineNavigationCardPresented {
-                        NavigationInlineDetailCard(
-                            point: navPoint,
-                            route: state.activeRoute,
-                            routeStatus: state.routeStatus,
-                            language: languageStore.language,
-                            onExpandDetail: {
-                                withAnimation(inlineNavigationCardAnimation) {
-                                    state.expandNavigationDetailFromInlineCard()
-                                }
-                            },
-                            onCollapse: {
-                                withAnimation(inlineNavigationCardAnimation) {
-                                    state.collapseInlineNavigationCard()
-                                }
-                            }
-                        )
-                        .transition(inlineNavigationCardTransition)
-                        .accessibilityIdentifier("map_navigation_inline_detail_card")
-                    }
 
                     if shouldShowQuickRouteRetry {
                         routeQuickRetryBanner
@@ -514,23 +440,7 @@ struct MapTabRootView: View {
         if state.navigationPoint == nil {
             return DSSpacing.space8
         }
-        var inset = DSSpacing.space8 + DSControl.floatingActionTopInsetWithBanner
-        if state.isInlineNavigationCardPresented {
-            inset += 124
-        }
-        return inset
-    }
-
-    private var inlineNavigationCardTransition: AnyTransition {
-        let shouldReduceMotion = reduceMotion || forceReduceMotionForUITests
-        return shouldReduceMotion
-            ? .opacity
-            : .move(edge: .top).combined(with: .opacity)
-    }
-
-    private var inlineNavigationCardAnimation: Animation {
-        let shouldReduceMotion = reduceMotion || forceReduceMotionForUITests
-        return .easeInOut(duration: shouldReduceMotion ? DSMotion.durationFast : 0.24)
+        return DSSpacing.space8 + DSControl.floatingActionTopInsetWithBanner
     }
 
     private var shouldShowQuickRouteRetry: Bool {
@@ -943,10 +853,8 @@ private struct MapPreviewSheetView: View {
 
     let point: PointOfInterest
     let language: AppLanguage
-    let isChangingDestination: Bool
     let isCompact: Bool
     let primaryActionTitle: String
-    let changeDestinationHint: String
     let detailsTitle: String
     let closeTitle: String
     let retrievalModeText: String
@@ -995,12 +903,6 @@ private struct MapPreviewSheetView: View {
                     Divider()
 
                     actionSection
-
-                    if isChangingDestination {
-                        Text(changeDestinationHint)
-                            .dsTextStyle(.caption)
-                            .foregroundStyle(DSColor.textSecondary)
-                    }
                 }
                 .background(
                     GeometryReader { geo in
@@ -1147,36 +1049,36 @@ private struct PreviewMetadataChip: View {
 private struct NavigationPillView: View {
     let point: PointOfInterest
     let language: AppLanguage
-    let onOpenDetail: () -> Void
 
     private var strings: AppStrings { AppStrings(language: language) }
 
     var body: some View {
-        Button {
-            onOpenDetail()
-        } label: {
-            HStack(spacing: DSSpacing.space8) {
-                Image(systemName: "location.north.line.fill")
+        HStack(spacing: DSSpacing.space8) {
+            Image(systemName: "location.north.line.fill")
+                .foregroundStyle(DSColor.textPrimary)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: DSSpacing.space4) {
+                Text(strings.navigationActive)
+                    .dsTextStyle(.caption, weight: .semibold)
+                    .foregroundStyle(DSColor.textSecondary)
+                Text(point.title(in: language))
+                    .dsTextStyle(.body)
                     .foregroundStyle(DSColor.textPrimary)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: DSSpacing.space4) {
-                    Text(strings.navigationActive)
-                        .dsTextStyle(.caption, weight: .semibold)
-                        .foregroundStyle(DSColor.textSecondary)
-                    Text(point.title(in: language))
-                        .dsTextStyle(.body)
-                        .foregroundStyle(DSColor.textPrimary)
-                        .lineLimit(1)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                    .lineLimit(1)
             }
-            .padding(.horizontal, DSSpacing.space12)
-            .padding(.vertical, DSSpacing.space12)
-            .background(.ultraThinMaterial, in: Capsule())
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Image(systemName: "chevron.down")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(DSColor.textSecondary.opacity(DSOpacity.controlDisabled))
+                .accessibilityHidden(true)
+                .accessibilityIdentifier("map_top_navigation_pill_chevron")
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, DSSpacing.space12)
+        .padding(.vertical, DSSpacing.space12)
+        .background(.ultraThinMaterial, in: Capsule())
         .accessibilityLabel("\(strings.navigationActive), \(point.title(in: language))")
-        .accessibilityHint(strings.openNavigationDetailsHint)
+        .accessibilityElement(children: .combine)
         .accessibilityIdentifier("map_top_navigation_pill_container")
     }
 }

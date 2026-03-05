@@ -211,14 +211,6 @@ struct AppStrings {
         }
     }
 
-    var changeDestinationHint: String {
-        switch language {
-        case .en: return "This will replace your current destination and recalculate the route."
-        case .zhHans: return "此操作会替换当前目的地，并重新计算路线。"
-        case .yue: return "此操作會取代目前目的地，並重新計算路線。"
-        }
-    }
-
     var detailsText: String {
         switch language {
         case .en: return "View Details"
