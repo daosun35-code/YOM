@@ -88,13 +88,13 @@ final class MapScreenState: ObservableObject {
     func startOrChangeNavigation() {
         guard let point = previewPoint else { return }
         if navigationPoint?.id == point.id {
-            previewPoint = nil
+            dismissPreview()
             return
         }
         navigationPoint = point
         activeRoute = nil
         routeStatus = .loading
-        previewPoint = nil
+        dismissPreview()
     }
 
 
