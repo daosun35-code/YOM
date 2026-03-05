@@ -244,7 +244,7 @@ struct MapTabRootView: View {
                     )
                     .id(point.id)
                     .presentationDetents(previewSheetDetents, selection: $previewSheetDetent)
-                    .presentationBackgroundInteraction(.enabled(upThrough: previewSheetCompactDetent))
+                    .presentationBackgroundInteraction(.disabled)
                     .presentationContentInteraction(.scrolls)
                     .presentationCornerRadius(DSRadius.r16 + DSSpacing.space8)
                     .presentationDragIndicator(.visible)
@@ -284,7 +284,6 @@ struct MapTabRootView: View {
             mapBackgroundLayer
         }
         .contentShape(Rectangle())
-        .gesture(mapPreviewDismissGesture, including: .gesture)
         .accessibilityIdentifier("map_interaction_surface")
         .safeAreaInset(edge: .top) {
             if let navPoint = state.navigationPoint {
@@ -355,12 +354,6 @@ struct MapTabRootView: View {
             guard pointID != nil else { return }
             measuredPreviewContentHeight = 280
             previewSheetDetent = .height(280)
-        }
-    }
-
-    private var mapPreviewDismissGesture: some Gesture {
-        TapGesture().onEnded {
-            handleMapBackgroundTap()
         }
     }
 
@@ -675,11 +668,6 @@ struct MapTabRootView: View {
         withAnimation(shellAnimation) {
             state.isSearchPresented = false
         }
-    }
-
-    private func handleMapBackgroundTap() {
-        guard state.previewPoint != nil else { return }
-        state.dismissPreview()
     }
 
     private func handleSearchSubmit() async {
