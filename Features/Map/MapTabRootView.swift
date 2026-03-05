@@ -161,7 +161,8 @@ struct MapTabRootView: View {
     @State private var routeRetryNonce = 0
     @State private var activeAlert: MapFeedbackAlert?
     @State private var hasAppliedUITestOverrides = false
-    @State private var previewSheetDetent: PresentationDetent = .fraction(0.33)
+    @State private var previewSheetDetent: PresentationDetent = .height(280)
+    @State private var previewSheetContentHeight: CGFloat = 280
     @FocusState private var isSearchFieldFocused: Bool
     @Namespace private var searchTransitionNamespace
 
@@ -185,7 +186,7 @@ struct MapTabRootView: View {
         launchArguments.contains("UITEST_FORCE_PREVIEW_POINT")
     }
     private var previewSheetCompactDetent: PresentationDetent {
-        .fraction(0.33)
+        .height(previewSheetContentHeight)
     }
     private var previewSheetDetents: Set<PresentationDetent> {
         [previewSheetCompactDetent, .large]
@@ -235,6 +236,17 @@ struct MapTabRootView: View {
                             }
                         }
                     )
+                    .background(
+                        GeometryReader { proxy in
+                            Color.clear
+                                .preference(key: SheetContentHeightKey.self, value: proxy.size.height)
+                        }
+                    )
+                    .onPreferenceChange(SheetContentHeightKey.self) { newHeight in
+                        if newHeight > 0 {
+                            previewSheetContentHeight = newHeight
+                        }
+                    }
                     .presentationDetents(previewSheetDetents, selection: $previewSheetDetent)
                     .presentationBackgroundInteraction(.enabled(upThrough: previewSheetCompactDetent))
                     .presentationContentInteraction(.scrolls)
@@ -1630,5 +1642,13 @@ struct SearchPlace {
 
         self.annotationTitle = resolvedTitle
         self.coordinate = mapItem.placemark.coordinate
+    }
+}
+
+private struct SheetContentHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        let next = nextValue()
+        if next > value { value = next }
     }
 }
