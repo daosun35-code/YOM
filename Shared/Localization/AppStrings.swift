@@ -229,9 +229,57 @@ struct AppStrings {
 
     var openNavigationDetailsHint: String {
         switch language {
-        case .en: return "Open details first, then continue with the next action."
-        case .zhHans: return "先查看详情，再继续后续操作。"
-        case .yue: return "先查看詳情，再繼續後續操作。"
+        case .en: return "Show an instant trip card below the top banner."
+        case .zhHans: return "点击后会在顶部下方即时展开行程卡片。"
+        case .yue: return "點擊後會喺頂部下方即時展開行程卡片。"
+        }
+    }
+
+    var navigationInlineCardTitle: String {
+        switch language {
+        case .en: return "Current Trip"
+        case .zhHans: return "当前行程"
+        case .yue: return "目前行程"
+        }
+    }
+
+    var navigationInlineNextActionLabel: String {
+        switch language {
+        case .en: return "Next Action"
+        case .zhHans: return "下一动作"
+        case .yue: return "下一步"
+        }
+    }
+
+    var navigationInlineNextActionPlaceholder: String {
+        switch language {
+        case .en: return "Step details will appear after route sync."
+        case .zhHans: return "路线同步后将显示下一步。"
+        case .yue: return "路線同步後會顯示下一步。"
+        }
+    }
+
+    var navigationInlineExpandDetailAction: String {
+        switch language {
+        case .en: return "Open Full Details"
+        case .zhHans: return "展开完整详情"
+        case .yue: return "展開完整詳情"
+        }
+    }
+
+    var navigationInlineCollapseAction: String {
+        switch language {
+        case .en: return "Collapse trip card"
+        case .zhHans: return "收起行程卡片"
+        case .yue: return "收起行程卡片"
+        }
+    }
+
+    var navigationInlineValuePlaceholder: String {
+        switch language {
+        case .en: return "--"
+        case .zhHans: return "--"
+        case .yue: return "--"
         }
     }
 

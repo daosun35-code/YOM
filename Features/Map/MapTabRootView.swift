@@ -21,6 +21,7 @@ final class MapScreenState: ObservableObject {
 
 
     @Published var isNavigationDetailPresented = false
+    @Published var isInlineNavigationCardPresented = false
     @Published var searchText = ""
     @Published var isSearchPresented = false
     @Published private(set) var recentPointIDs: [UUID] = []
@@ -85,6 +86,7 @@ final class MapScreenState: ObservableObject {
 
     func dismissPreview() {
         previewPoint = nil
+        resetNavigationPresentationState()
     }
 
     func startOrChangeNavigation() {
@@ -93,6 +95,7 @@ final class MapScreenState: ObservableObject {
         activeRoute = nil
         routeStatus = .loading
         previewPoint = nil
+        resetNavigationPresentationState()
     }
 
 
@@ -101,11 +104,29 @@ final class MapScreenState: ObservableObject {
         navigationPoint = nil
         activeRoute = nil
         routeStatus = .idle
-        isNavigationDetailPresented = false
+        resetNavigationPresentationState()
     }
 
     func openNavigationDetail() {
         guard navigationPoint != nil else { return }
+        isNavigationDetailPresented = false
+        isInlineNavigationCardPresented = true
+    }
+
+    func collapseInlineNavigationCard() {
+        isInlineNavigationCardPresented = false
+    }
+
+    func expandNavigationDetailFromInlineCard() {
+        guard navigationPoint != nil else { return }
+        isInlineNavigationCardPresented = false
+        if previewPoint != nil {
+            previewPoint = nil
+            DispatchQueue.main.async {
+                self.isNavigationDetailPresented = true
+            }
+            return
+        }
         isNavigationDetailPresented = true
     }
 
@@ -133,6 +154,11 @@ final class MapScreenState: ObservableObject {
 
     var routeSourceFallback: CLLocationCoordinate2D {
         defaultRegion.center
+    }
+
+    private func resetNavigationPresentationState() {
+        isInlineNavigationCardPresented = false
+        isNavigationDetailPresented = false
     }
 }
 
@@ -309,8 +335,33 @@ struct MapTabRootView: View {
                     NavigationPillView(
                         point: navPoint,
                         language: languageStore.language,
-                        onOpenDetail: { state.openNavigationDetail() }
+                        onOpenDetail: {
+                            withAnimation(inlineNavigationCardAnimation) {
+                                state.openNavigationDetail()
+                            }
+                        }
                     )
+
+                    if state.isInlineNavigationCardPresented {
+                        NavigationInlineDetailCard(
+                            point: navPoint,
+                            route: state.activeRoute,
+                            routeStatus: state.routeStatus,
+                            language: languageStore.language,
+                            onExpandDetail: {
+                                withAnimation(inlineNavigationCardAnimation) {
+                                    state.expandNavigationDetailFromInlineCard()
+                                }
+                            },
+                            onCollapse: {
+                                withAnimation(inlineNavigationCardAnimation) {
+                                    state.collapseInlineNavigationCard()
+                                }
+                            }
+                        )
+                        .transition(inlineNavigationCardTransition)
+                        .accessibilityIdentifier("map_navigation_inline_detail_card")
+                    }
 
                     if shouldShowQuickRouteRetry {
                         routeQuickRetryBanner
@@ -463,7 +514,23 @@ struct MapTabRootView: View {
         if state.navigationPoint == nil {
             return DSSpacing.space8
         }
-        return DSSpacing.space8 + DSControl.floatingActionTopInsetWithBanner
+        var inset = DSSpacing.space8 + DSControl.floatingActionTopInsetWithBanner
+        if state.isInlineNavigationCardPresented {
+            inset += 124
+        }
+        return inset
+    }
+
+    private var inlineNavigationCardTransition: AnyTransition {
+        let shouldReduceMotion = reduceMotion || forceReduceMotionForUITests
+        return shouldReduceMotion
+            ? .opacity
+            : .move(edge: .top).combined(with: .opacity)
+    }
+
+    private var inlineNavigationCardAnimation: Animation {
+        let shouldReduceMotion = reduceMotion || forceReduceMotionForUITests
+        return .easeInOut(duration: shouldReduceMotion ? DSMotion.durationFast : 0.24)
     }
 
     private var shouldShowQuickRouteRetry: Bool {
@@ -898,6 +965,10 @@ private struct MapPreviewSheetView: View {
         dynamicTypeSize.isAccessibilitySize
     }
 
+    private var shouldStackSecondaryActionsVertically: Bool {
+        isCompact || usesVerticalActions
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DSSpacing.space16) {
@@ -957,17 +1028,15 @@ private struct MapPreviewSheetView: View {
     private var actionSection: some View {
         VStack(spacing: DSSpacing.space12) {
             primaryActionButton
-            if !isCompact {
-                if usesVerticalActions {
-                    VStack(spacing: DSSpacing.space8) {
-                        secondaryActionButton
-                        closeActionButton
-                    }
-                } else {
-                    HStack(spacing: DSSpacing.space12) {
-                        secondaryActionButton
-                        closeActionButton
-                    }
+            if shouldStackSecondaryActionsVertically {
+                VStack(spacing: DSSpacing.space8) {
+                    secondaryActionButton
+                    closeActionButton
+                }
+            } else {
+                HStack(spacing: DSSpacing.space12) {
+                    secondaryActionButton
+                    closeActionButton
                 }
             }
         }
@@ -1109,6 +1178,154 @@ private struct NavigationPillView: View {
         .accessibilityLabel("\(strings.navigationActive), \(point.title(in: language))")
         .accessibilityHint(strings.openNavigationDetailsHint)
         .accessibilityIdentifier("map_top_navigation_pill_container")
+    }
+}
+
+private struct NavigationInlineDetailCard: View {
+    let point: PointOfInterest
+    let route: MKRoute?
+    let routeStatus: MapScreenState.RouteStatus
+    let language: AppLanguage
+    let onExpandDetail: () -> Void
+    let onCollapse: () -> Void
+
+    private var strings: AppStrings { AppStrings(language: language) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.space12) {
+            HStack(alignment: .top, spacing: DSSpacing.space8) {
+                VStack(alignment: .leading, spacing: DSSpacing.space4) {
+                    Text(strings.navigationInlineCardTitle)
+                        .dsTextStyle(.caption, weight: .semibold)
+                        .foregroundStyle(DSColor.textSecondary)
+
+                    Text(point.title(in: language))
+                        .dsTextStyle(.body, weight: .semibold)
+                        .foregroundStyle(DSColor.textPrimary)
+                        .lineLimit(1)
+                        .accessibilityIdentifier("map_navigation_inline_destination")
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Button {
+                    onCollapse()
+                } label: {
+                    Image(systemName: "chevron.up")
+                        .font(DSTypography.iconMedium.weight(.semibold))
+                        .foregroundStyle(DSColor.textSecondary)
+                        .frame(width: DSControl.minTouchTarget, height: DSControl.minTouchTarget)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(strings.navigationInlineCollapseAction)
+                .accessibilityIdentifier("map_navigation_inline_collapse")
+            }
+
+            inlineMetricRow(
+                label: strings.navigationInlineNextActionLabel,
+                value: nextActionText,
+                valueIdentifier: "map_navigation_inline_next_action_value"
+            )
+            inlineMetricRow(
+                label: strings.navigationTaskDistanceLabel,
+                value: nextDistanceText,
+                valueIdentifier: "map_navigation_inline_distance_value"
+            )
+            inlineMetricRow(
+                label: strings.navigationTaskStatusLabel,
+                value: routeStatusText,
+                valueIdentifier: "map_navigation_inline_status_value"
+            )
+
+            Button(strings.navigationInlineExpandDetailAction) {
+                onExpandDetail()
+            }
+            .dsSecondaryCTAStyle()
+            .accessibilityIdentifier("map_navigation_inline_expand_full_detail")
+        }
+        .padding(DSSpacing.space12)
+        .background(
+            RoundedRectangle(cornerRadius: DSRadius.r16, style: .continuous)
+                .fill(.regularMaterial)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: DSRadius.r16, style: .continuous)
+                .stroke(DSColor.borderSubtle.opacity(DSOpacity.subtleBorder), lineWidth: DSBorder.bw1)
+        )
+    }
+
+    private func inlineMetricRow(label: String, value: String, valueIdentifier: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: DSSpacing.space8) {
+            Text(label)
+                .dsTextStyle(.caption, weight: .semibold)
+                .foregroundStyle(DSColor.textSecondary)
+
+            Spacer(minLength: DSSpacing.space8)
+
+            Text(value)
+                .dsTextStyle(.caption)
+                .foregroundStyle(DSColor.textPrimary)
+                .multilineTextAlignment(.trailing)
+                .lineLimit(2)
+                .accessibilityIdentifier(valueIdentifier)
+        }
+    }
+
+    private var nextActionText: String {
+        guard routeStatus == .ready else {
+            return fallbackNextActionText
+        }
+        guard let route else {
+            return fallbackNextActionText
+        }
+        if let nextStep = route.steps.first(where: { step in
+            step.instructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+        }) {
+            return nextStep.instructions
+        }
+        return fallbackNextActionText
+    }
+
+    private var fallbackNextActionText: String {
+        switch routeStatus {
+        case .loading:
+            strings.routeLoading
+        case .failed, .unavailable, .idle, .ready:
+            strings.navigationInlineNextActionPlaceholder
+        }
+    }
+
+    private var nextDistanceText: String {
+        guard let route else { return strings.navigationInlineValuePlaceholder }
+        let stepDistance = route.steps
+            .first(where: { step in
+                step.instructions.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+            })?.distance ?? route.distance
+        return formattedDistance(stepDistance)
+    }
+
+    private var routeStatusText: String {
+        switch routeStatus {
+        case .idle:
+            strings.navigationTaskStatusPending
+        case .loading:
+            strings.routeLoading
+        case .ready:
+            strings.navigationTaskStatusReady
+        case .unavailable:
+            strings.routeUnavailable
+        case .failed:
+            strings.routeFailedRetry
+        }
+    }
+
+    private func formattedDistance(_ distance: CLLocationDistance) -> String {
+        let measurementFormatter = MeasurementFormatter()
+        measurementFormatter.unitStyle = .short
+        measurementFormatter.unitOptions = .naturalScale
+        measurementFormatter.locale = language.locale
+        return measurementFormatter.string(
+            from: Measurement(value: distance, unit: UnitLength.meters)
+        )
     }
 }
 

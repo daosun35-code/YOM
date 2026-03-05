@@ -116,7 +116,8 @@ final class YOMUITests: XCTestCase {
             .matching(identifier: "map_top_navigation_pill_container")
             .firstMatch
         XCTAssertTrue(navigationPill.waitForExistence(timeout: 8))
-        navigationPill.tap()
+
+        openNavigationDetailSheetFromTopPill(in: app)
 
         let endButton = app.buttons["map_end_navigation_in_sheet"].firstMatch
         XCTAssertTrue(endButton.waitForExistence(timeout: 5))
@@ -146,11 +147,7 @@ final class YOMUITests: XCTestCase {
 
         completeOnboarding(in: app)
 
-        let navigationPill = app.descendants(matching: .any)
-            .matching(identifier: "map_top_navigation_pill_container")
-            .firstMatch
-        XCTAssertTrue(navigationPill.waitForExistence(timeout: 8))
-        navigationPill.tap()
+        openNavigationDetailSheetFromTopPill(in: app)
 
         let taskInfoSection = app.otherElements["map_navigation_task_info_section"].firstMatch
         XCTAssertTrue(taskInfoSection.waitForExistence(timeout: 5))
@@ -244,7 +241,7 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(waitForDisappearance(of: quickRetryButton, timeout: 3))
         XCTAssertTrue(quickRetryButton.waitForExistence(timeout: 8))
 
-        navigationPill.tap()
+        openNavigationDetailSheetFromTopPill(in: app)
 
         let detailRetryButton = app.buttons
             .matching(identifier: "map_route_retry")
@@ -255,6 +252,95 @@ final class YOMUITests: XCTestCase {
         detailRetryButton.tap()
         XCTAssertTrue(waitForDisappearance(of: detailRetryButton, timeout: 3))
         XCTAssertTrue(detailRetryButton.waitForExistence(timeout: 8))
+    }
+
+    func testHalfSheetKeepsDetailsAndCloseActionsReachable() {
+        let app = makeApp(
+            extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_PREVIEW_POINT",
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
+            ]
+        )
+        app.launch()
+
+        let primaryButton = app.buttons["map_preview_primary_action"].firstMatch
+        let detailsButton = app.buttons["map_preview_secondary_details"].firstMatch
+        let closeButton = app.buttons["map_preview_close_action"].firstMatch
+
+        XCTAssertTrue(primaryButton.waitForExistence(timeout: 8))
+        XCTAssertTrue(detailsButton.waitForExistence(timeout: 5))
+        XCTAssertTrue(closeButton.waitForExistence(timeout: 5))
+        XCTAssertTrue(detailsButton.isHittable)
+        XCTAssertTrue(closeButton.isHittable)
+
+        detailsButton.tap()
+        let detailNotes = app.otherElements["map_preview_detail_notes"].firstMatch
+        XCTAssertTrue(detailNotes.waitForExistence(timeout: 8))
+
+        closeButton.tap()
+        XCTAssertTrue(waitForDisappearance(of: primaryButton, timeout: 5))
+    }
+
+    func testHalfSheetTopPillTapShowsInlineDetailCard() {
+        let app = makeApp(
+            extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_CHANGING_DESTINATION",
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
+            ]
+        )
+        app.launch()
+
+        let previewPrimaryAction = app.buttons["map_preview_primary_action"].firstMatch
+        XCTAssertTrue(previewPrimaryAction.waitForExistence(timeout: 8))
+
+        _ = tapTopNavigationPillAndAssertInlineCardAppears(in: app)
+        assertNavigationDetailSheetNotPresented(in: app, timeout: 1.2)
+    }
+
+    func testClosingHalfSheetDoesNotTriggerDelayedNavigationDetailSheet() {
+        let app = makeApp(
+            extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_CHANGING_DESTINATION",
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
+            ]
+        )
+        app.launch()
+
+        let previewPrimaryAction = app.buttons["map_preview_primary_action"].firstMatch
+        let closeButton = app.buttons["map_preview_close_action"].firstMatch
+        XCTAssertTrue(previewPrimaryAction.waitForExistence(timeout: 8))
+        XCTAssertTrue(closeButton.waitForExistence(timeout: 5))
+
+        let inlineCard = tapTopNavigationPillAndAssertInlineCardAppears(in: app)
+        closeButton.tap()
+
+        XCTAssertTrue(waitForDisappearance(of: previewPrimaryAction, timeout: 5))
+        XCTAssertTrue(waitForDisappearance(of: inlineCard, timeout: 3))
+        assertNavigationDetailSheetNotPresented(in: app, timeout: 1.5)
+    }
+
+    func testChangeDestinationDoesNotTriggerDelayedNavigationDetailSheet() {
+        let app = makeApp(
+            extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_CHANGING_DESTINATION",
+                "UITEST_FORCE_STATIC_MAP_SNAPSHOT"
+            ]
+        )
+        app.launch()
+
+        let previewPrimaryAction = app.buttons["map_preview_primary_action"].firstMatch
+        XCTAssertTrue(previewPrimaryAction.waitForExistence(timeout: 8))
+
+        let inlineCard = tapTopNavigationPillAndAssertInlineCardAppears(in: app)
+        previewPrimaryAction.tap()
+
+        XCTAssertTrue(waitForDisappearance(of: previewPrimaryAction, timeout: 5))
+        XCTAssertTrue(waitForDisappearance(of: inlineCard, timeout: 3))
+        assertNavigationDetailSheetNotPresented(in: app, timeout: 1.5)
     }
 
     func testMapPinPreviewLayoutStabilityAndAccessibility() {
@@ -526,7 +612,8 @@ final class YOMUITests: XCTestCase {
             .matching(identifier: "map_top_navigation_pill_container")
             .firstMatch
         XCTAssertTrue(navigationPill.waitForExistence(timeout: 8))
-        navigationPill.tap()
+
+        openNavigationDetailSheetFromTopPill(in: app)
 
         let endButton = app.buttons["map_end_navigation_in_sheet"].firstMatch
         XCTAssertTrue(endButton.waitForExistence(timeout: 5))
@@ -584,6 +671,66 @@ final class YOMUITests: XCTestCase {
         let predicate = NSPredicate(format: "exists == false")
         let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
         return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
+    }
+
+    @discardableResult
+    private func tapTopNavigationPillAndAssertInlineCardAppears(
+        in app: XCUIApplication,
+        timeout: TimeInterval = 5,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) -> XCUIElement {
+        let navigationPill = app.descendants(matching: .any)
+            .matching(identifier: "map_top_navigation_pill_container")
+            .firstMatch
+        XCTAssertTrue(navigationPill.waitForExistence(timeout: 8), file: file, line: line)
+        navigationPill.tap()
+
+        let inlineCard = app.descendants(matching: .any)
+            .matching(identifier: "map_navigation_inline_detail_card")
+            .firstMatch
+        XCTAssertTrue(
+            inlineCard.waitForExistence(timeout: timeout),
+            "Inline detail card should appear after tapping top navigation pill",
+            file: file,
+            line: line
+        )
+        return inlineCard
+    }
+
+    private func openNavigationDetailSheetFromTopPill(
+        in app: XCUIApplication,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        _ = tapTopNavigationPillAndAssertInlineCardAppears(in: app, file: file, line: line)
+
+        let expandAction = app.descendants(matching: .any)
+            .matching(
+                NSPredicate(
+                    format: "identifier == %@ OR label == %@",
+                    "map_navigation_inline_expand_full_detail",
+                    "Open Full Details"
+                )
+            )
+            .firstMatch
+        XCTAssertTrue(expandAction.waitForExistence(timeout: 5), file: file, line: line)
+        expandAction.tap()
+    }
+
+    private func assertNavigationDetailSheetNotPresented(
+        in app: XCUIApplication,
+        timeout: TimeInterval,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        let endButton = app.buttons["map_end_navigation_in_sheet"].firstMatch
+        XCTAssertFalse(
+            endButton.waitForExistence(timeout: timeout),
+            "Navigation detail sheet should not appear unexpectedly",
+            file: file,
+            line: line
+        )
     }
 
 
