@@ -19,6 +19,13 @@ final class MapScreenState: ObservableObject {
     @Published var activeRoute: MKRoute?
     @Published var routeStatus: RouteStatus = .idle
 
+    // STATE-001: 路由缓存状态从视图层上移，保持视图 @State 最小化
+    // routeRetryNonce 须 @Published 以驱动 .task(id:) 重启
+    @Published var routeRetryNonce: Int = 0
+    var routeCache: [RouteCacheKey: CachedRoute] = [:]
+    var lastRouteAttemptKey: RouteCacheKey?
+    var lastRouteAttemptAt = Date.distantPast
+
     @Published var searchText = ""
     @Published var isSearchPresented = false
     @Published private(set) var recentPointIDs: [UUID] = []
@@ -139,10 +146,6 @@ struct MapTabRootView: View {
     @StateObject private var state = MapScreenState()
     @StateObject private var searchModel = MapSearchModel()
     @StateObject private var locationProvider = UserLocationProvider()
-    @State private var routeCache: [RouteCacheKey: CachedRoute] = [:]
-    @State private var lastRouteAttemptKey: RouteCacheKey?
-    @State private var lastRouteAttemptAt = Date.distantPast
-    @State private var routeRetryNonce = 0
     @State private var activeAlert: MapFeedbackAlert?
     @State private var hasAppliedUITestOverrides = false
     @State private var previewSheetDetent: PresentationDetent = .height(280)
@@ -351,8 +354,8 @@ struct MapTabRootView: View {
             syncLocationUpdates()
             applyUITestOverridesIfNeeded()
         }
-        .onChange(of: state.previewPoint?.id) { _, pointID in
-            guard pointID != nil else { return }
+        // SHEET-001: 任意关闭路径（Close、下滑、Go动作）和新 pin 切入均重置 detent/高度
+        .onChange(of: state.previewPoint?.id) { _, _ in
             measuredPreviewContentHeight = 280
             previewSheetDetent = .height(280)
         }
@@ -710,9 +713,9 @@ struct MapTabRootView: View {
 
     private var routeRefreshKey: String {
         guard let navigationPoint = state.navigationPoint else {
-            return "route:none:\(routeRetryNonce)"
+            return "route:none:\(state.routeRetryNonce)"
         }
-        return "route:\(navigationPoint.id.uuidString):\(locationProvider.coordinateKey):\(routeRetryNonce)"
+        return "route:\(navigationPoint.id.uuidString):\(locationProvider.coordinateKey):\(state.routeRetryNonce)"
     }
 
     private func refreshRouteIfNeeded() async {
@@ -735,18 +738,18 @@ struct MapTabRootView: View {
             return
         }
 
-        if let cached = routeCache[cacheKey], now.timeIntervalSince(cached.createdAt) <= 120 {
+        if let cached = state.routeCache[cacheKey], now.timeIntervalSince(cached.createdAt) <= 120 {
             state.activeRoute = cached.route
             state.routeStatus = .ready
             return
         }
 
-        if lastRouteAttemptKey == cacheKey, now.timeIntervalSince(lastRouteAttemptAt) < 3 {
+        if state.lastRouteAttemptKey == cacheKey, now.timeIntervalSince(state.lastRouteAttemptAt) < 3 {
             return
         }
 
-        lastRouteAttemptKey = cacheKey
-        lastRouteAttemptAt = now
+        state.lastRouteAttemptKey = cacheKey
+        state.lastRouteAttemptAt = now
 
         let request = MKDirections.Request()
         request.source = MKMapItem(placemark: MKPlacemark(coordinate: sourceCoordinate))
@@ -758,10 +761,10 @@ struct MapTabRootView: View {
             if let route = response.routes.first {
                 state.activeRoute = route
                 state.routeStatus = .ready
-                routeCache[cacheKey] = CachedRoute(route: route, createdAt: now)
-                if routeCache.count > 12 {
-                    routeCache = Dictionary(
-                        uniqueKeysWithValues: routeCache
+                state.routeCache[cacheKey] = CachedRoute(route: route, createdAt: now)
+                if state.routeCache.count > 12 {
+                    state.routeCache = Dictionary(
+                        uniqueKeysWithValues: state.routeCache
                             .sorted { $0.value.createdAt > $1.value.createdAt }
                             .prefix(12)
                             .map { ($0.key, $0.value) }
@@ -800,9 +803,9 @@ struct MapTabRootView: View {
         guard state.navigationPoint != nil else { return }
         state.activeRoute = nil
         state.routeStatus = .loading
-        lastRouteAttemptKey = nil
-        lastRouteAttemptAt = .distantPast
-        routeRetryNonce += 1
+        state.lastRouteAttemptKey = nil
+        state.lastRouteAttemptAt = .distantPast
+        state.routeRetryNonce += 1
     }
 
     private func openAppSettings() {

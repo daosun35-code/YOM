@@ -13,9 +13,8 @@ struct ArchiveTabRootView: View {
 
     private let points = PointOfInterest.samples
     private let favoriteYears: Set<Int> = [1935, 1962]
-    private var pointsByID: [UUID: PointOfInterest] {
-        Dictionary(uniqueKeysWithValues: points.map { ($0.id, $0) })
-    }
+    // PERF-001: computed→let，避免每次 body 执行重建字典
+    private let pointsByID = Dictionary(uniqueKeysWithValues: PointOfInterest.samples.map { ($0.id, $0) })
     private var exploredPoints: [PointOfInterest] { points }
     private var favoritePoints: [PointOfInterest] {
         points.filter { favoriteYears.contains($0.year) }

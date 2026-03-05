@@ -112,6 +112,7 @@
 2. `NOW`：表示当前会话信息与权限足够，可在本次会话直接落地执行（默认应继续执行，不等待下一会话）。
 3. `REPORT_ONLY_NEXT`：表示当前仅产出报告供下一次执行使用，必须同时给出原因（缺少输入/权限限制/高风险待确认）。
 4. 若为 `REPORT_ONLY_NEXT`，必须列出“下一次执行所需最小补充项”（文件、命令、环境变量或决策点）。
+5. 反馈末尾必须追加 `SimpleSummary（人话）`：用一句非术语中文明确说明“本会话会不会直接改代码/执行命令”。
 
 ## 4. “最短 SwiftUI API 链路”目标架构（代码无关版）
 
@@ -181,7 +182,8 @@
 - `ExecutionMode: NOW | REPORT_ONLY_NEXT`
 - `Reason: <一句话原因>`
 - `Next Input Needed: <仅在 REPORT_ONLY_NEXT 时填写>`
-3. 任何结论若未包含该反馈，视为不完整交付。
+- `SimpleSummary（人话）: <一句直接结论，例如“本会话将直接改代码执行 Step 2”或“本会话只出报告，不改代码”>`
+3. 任何结论若未包含该反馈（含 `SimpleSummary（人话）`），视为不完整交付。
 
 ### Step 1：架构对齐评审（无代码）
 
@@ -223,7 +225,7 @@
 4. 流畅度：hitch 指标与关键动画观察结果。
 5. 可维护性：状态源数量、关闭入口数量、导航 API 链路长度。
 6. 结论：`Pass / Conditional Pass / Fail`。
-7. 可执行性反馈：`ExecutionMode=NOW | REPORT_ONLY_NEXT`，并附 `Reason`；若为 `REPORT_ONLY_NEXT` 必填 `Next Input Needed`。
+7. 可执行性反馈：`ExecutionMode=NOW | REPORT_ONLY_NEXT`，并附 `Reason`；若为 `REPORT_ONLY_NEXT` 必填 `Next Input Needed`；必须追加 `SimpleSummary（人话）` 一句话。
 
 ## 10. 官方资料清单（交叉论证留痕）
 
