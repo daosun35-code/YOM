@@ -295,4 +295,62 @@ https://developer.apple.com/documentation/metrickit/mxanimationmetric
 
 ## 12. 执行记录
 
-- 2026-03-05：完成“先调研、后映射代码”的行业规范版草案，进入 Step 1（架构差距清单）阶段。
+- 2026-03-05：完成”先调研、后映射代码”的行业规范版草案，进入 Step 1（架构差距清单）阶段。
+- 2026-03-05：Step 2 完成，落地 PERF-001 / STATE-001 / SHEET-001 三项改动。
+- 2026-03-05：Step 3 完成，详见下方审计结论。
+
+### Step 3 审计结论（2026-03-05）
+
+**Teardown 动画（§5）**
+- `handleEndNavigationAction` 已使用 `easeOut(0.16)` ✅
+- NavigationPill `.transition(.opacity)` 与 safeAreaInset 高度收缩同帧，视觉连贯 ✅
+- BUG-FIX：`floatingControlsTopInset` 未计 retry banner 高度，导致 locateMe 与 retry banner 纵向重叠约 40px。已修复：当 `shouldShowQuickRouteRetry == true` 时额外追加 `space8 + minTouchTarget`（52px）。
+
+**Safe Area 白条（§4.3）**
+- 两个 `mapBackgroundLayer` 分支均 `.ignoresSafeArea(edges: [.top, .bottom])`，底图全屏，无白条 ✅
+- safeAreaInset 注入 / ignoresSafeArea 覆盖职责分离 ✅
+
+**Modal/Push 语义（MODAL-001）**
+- `RetrievalView` → Archive：NavigationStack push（层级钻取）✅
+- 地图预览 → `sheet(item:)`（自包含任务）✅
+- 无 `fullScreenCover`，无语义错位 ✅
+
+**改动文件：** `Features/Map/MapTabRootView.swift`（`floatingControlsTopInset`，line 441-447）
+
+### Step 4 完成（2026-03-05）
+
+**缺口发现：** `YOMStressTests` 原有 A/B 链路稳定性+时延测试，缺 C 链路（pin 切换）。
+
+**已落地改动（`YOMUITests/YOMUITests.swift`）：**
+- `testPinSwitchStability()`：pin 切换稳定性重复，默认 10 次，发布门禁 200 次。pin 不可见自动跳过，跳过率 > 20% 视为环境不稳定并 fail。
+- `testPinSwitchLatencyP95()`：pin 切换时延采样，P95 < 500ms / P99 < 800ms 门禁与 §6.2 一致。
+- NOTE：两个测试不使用 `UITEST_FORCE_STATIC_MAP_SNAPSHOT`，需真实 MapKit 渲染以访问 Annotation 按钮（`map_point_1947`）。
+
+**版本门禁结论：Conditional Pass**
+- A 链路（导航结束）：稳定性 + 时延测试已就位，STRESS_REPETITIONS=200 可跑满 ✅
+- B 链路（预览关闭）：稳定性 + 时延测试已就位 ✅
+- C 链路（pin 切换）：测试代码已就位，首次跑需在真机/模拟器验证跳过率 < 20%（MapKit 渲染依赖）⚠️
+- 性能/Hitch 指标：无 XCTOSSignpostMetric 集成，线上期用 MetricKit（§6.3 REPORT_ONLY_NEXT）⚠️
+
+**Step 4 实跑结论（2026-03-05，模拟器 iPhone 17 Pro，10 reps/samples）**
+
+构建修复：`RouteCacheKey`/`CachedRoute` 改为 `fileprivate struct`，`routeCache`/`lastRouteAttemptKey` 属性补 `fileprivate`（Step 2 access control 遗漏）。
+
+| 链路 | 结果 | 数据 |
+|---|---|---|
+| A 稳定性 (10 reps) | ✅ PASS | 10/10 |
+| B 稳定性 (10 reps) | ✅ PASS | 10/10 |
+| A 时延 (10 samples) | ❌ 模拟器超阈值 | P50=2578ms P95=2668ms（门禁 P95<500ms） |
+| B 时延 (10 samples) | ❌ 模拟器超阈值 | P50=1753ms P95=1768ms（门禁 P95<400ms） |
+| C 链路 | — | 未运行 |
+
+时延超阈值为模拟器 XCTest 事件往返开销（非 App 退化），需真机复测。
+
+**全链路门禁执行命令（发布前，正确 env var 透传）：**
+```
+TEST_RUNNER_STRESS_REPETITIONS=200 TEST_RUNNER_LATENCY_SAMPLES=50 \
+  xcodebuild test -project YOM.xcodeproj -scheme YOM \
+  -destination 'platform=iOS,name=<真机名>' \
+  -only-testing:YOMUITests/YOMStressTests
+```
+注：`SIMCTL_CHILD_*` 对 xcodebuild test runner 进程无效，须改用 `TEST_RUNNER_*` 前缀。

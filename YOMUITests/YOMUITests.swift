@@ -1210,6 +1210,85 @@ final class YOMStressTests: XCTestCase {
         XCTAssertLessThanOrEqual(p99, 0.800, "P99 \(ms(p99)) must be < 800 ms. \(report)")
     }
 
+    // MARK: - 稳定性重复：Pin 切换链路（关键链路 C）
+    // NOTE: 不使用 UITEST_FORCE_STATIC_MAP_SNAPSHOT，需真实 MapKit 渲染以访问 Annotation 按钮。
+
+    func testPinSwitchStability() {
+        var skipCount = 0
+        for iteration in 1...stressRepetitionCount {
+            let app = makeStressApp(extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_PREVIEW_POINT"
+            ])
+            app.launch()
+
+            let goButton = app.buttons["map_preview_primary_action"].firstMatch
+            XCTAssertTrue(goButton.waitForExistence(timeout: 8), "iter \(iteration): Preview not shown")
+
+            // 等待相邻 pin 可点击（真实 MapKit 渲染，同视口内）
+            let secondPin = app.buttons["map_point_1947"].firstMatch
+            guard secondPin.waitForExistence(timeout: 5) else {
+                skipCount += 1
+                app.terminate()
+                continue
+            }
+            secondPin.tap()
+
+            // Sheet 必须重新出现（pin 切换完成，而非持续消失）
+            XCTAssertTrue(
+                goButton.waitForExistence(timeout: 2.0),
+                "iter \(iteration): Pin-switch sheet did not reappear within 2 s"
+            )
+            app.terminate()
+        }
+
+        // 跳过率 > 20% 视为环境不稳定，记录为警告
+        let skipRatio = Double(skipCount) / Double(stressRepetitionCount)
+        XCTContext.runActivity(named: "PinSwitch skip ratio: \(String(format: "%.0f%%", skipRatio * 100)) (\(skipCount)/\(stressRepetitionCount))") { _ in }
+        XCTAssertLessThan(skipRatio, 0.2, "Pin 1947 inaccessible in \(skipCount)/\(stressRepetitionCount) iters; map render may be too slow")
+    }
+
+    // MARK: - 时延采样：Pin 切换 P50/P95/P99 (§6.2 参考：P95 < 500ms)
+
+    func testPinSwitchLatencyP95() {
+        var samples: [TimeInterval] = []
+
+        for iteration in 1...latencySampleCount {
+            let app = makeStressApp(extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_PREVIEW_POINT"
+            ])
+            app.launch()
+
+            let goButton = app.buttons["map_preview_primary_action"].firstMatch
+            XCTAssertTrue(goButton.waitForExistence(timeout: 8), "iter \(iteration): Preview not shown")
+
+            let secondPin = app.buttons["map_point_1947"].firstMatch
+            guard secondPin.waitForExistence(timeout: 5) else {
+                app.terminate()
+                continue
+            }
+
+            let start = Date()
+            secondPin.tap()
+            _ = goButton.waitForExistence(timeout: 5.0)
+            samples.append(Date().timeIntervalSince(start))
+
+            app.terminate()
+        }
+
+        guard samples.isEmpty == false else {
+            XCTFail("No latency samples – pin 1947 never accessible in \(latencySampleCount) iterations")
+            return
+        }
+
+        let (p50, p95, p99, maxVal) = percentiles(samples)
+        let report = "PinSwitch latency (\(samples.count) samples): P50=\(ms(p50)) P95=\(ms(p95)) P99=\(ms(p99)) Max=\(ms(maxVal))"
+        XCTContext.runActivity(named: report) { _ in }
+        XCTAssertLessThanOrEqual(p95, 0.500, "P95 \(ms(p95)) must be < 500 ms. \(report)")
+        XCTAssertLessThanOrEqual(p99, 0.800, "P99 \(ms(p99)) must be < 800 ms. \(report)")
+    }
+
     // MARK: - Private helpers
 
     /// 稳定性重复次数。发布门禁应设为 200；开发/CI 快速通道默认 10。

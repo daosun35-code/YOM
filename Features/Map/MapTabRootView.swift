@@ -22,8 +22,8 @@ final class MapScreenState: ObservableObject {
     // STATE-001: 路由缓存状态从视图层上移，保持视图 @State 最小化
     // routeRetryNonce 须 @Published 以驱动 .task(id:) 重启
     @Published var routeRetryNonce: Int = 0
-    var routeCache: [RouteCacheKey: CachedRoute] = [:]
-    var lastRouteAttemptKey: RouteCacheKey?
+    fileprivate var routeCache: [RouteCacheKey: CachedRoute] = [:]
+    fileprivate var lastRouteAttemptKey: RouteCacheKey?
     var lastRouteAttemptAt = Date.distantPast
 
     @Published var searchText = ""
@@ -151,7 +151,7 @@ struct MapTabRootView: View {
     @State private var previewSheetDetent: PresentationDetent = .height(280)
     @State private var measuredPreviewContentHeight: CGFloat = 280
     @FocusState private var isSearchFieldFocused: Bool
-    @Namespace private var searchTransitionNamespace
+    @State private var isSearchCardVisible = false
 
     private let points = PointOfInterest.samples
 
@@ -188,7 +188,10 @@ struct MapTabRootView: View {
     }
     private var searchFocusDelayNanoseconds: UInt64 {
         let shouldReduceMotion = reduceMotion || forceReduceMotionForUITests
-        let delay = (shouldReduceMotion ? DSMotion.durationFast : DSMotion.durationNormal) + 0.05
+        // 键盘在动画中途触发：搜索栏变形动画（spring response 0.35s）进行约 40% 时开始聚焦，
+        // 键盘上升（~0.25s）与 spring 尾段重叠，两者同步到达终态。
+        // reduce-motion 模式下动画极短，给极小缓冲即可。
+        let delay: Double = shouldReduceMotion ? 0.05 : 0.15
         return UInt64(delay * 1_000_000_000)
     }
 
@@ -308,8 +311,9 @@ struct MapTabRootView: View {
         }
         .overlay(alignment: .topTrailing) {
             VStack(alignment: .trailing, spacing: DSSpacing.space8) {
-                if state.isMapDefaultState {
-                    searchControls
+                if state.isMapDefaultState && !state.isSearchPresented {
+                    searchTriggerButton
+                        .transition(.scale(scale: 0.92, anchor: .trailing).combined(with: .opacity))
                 }
 
                 Button {
@@ -327,12 +331,40 @@ struct MapTabRootView: View {
             .padding(.trailing, DSSpacing.space12)
             .padding(.top, floatingControlsTopInset)
         }
+        .overlay(alignment: .top) {
+            if state.isMapDefaultState && state.isSearchPresented {
+                VStack(alignment: .trailing, spacing: DSSpacing.space8) {
+                    searchBar
+
+                    if isSearchCardVisible {
+                        SearchOverlayCard(
+                            language: languageStore.language,
+                            completions: searchModel.completions,
+                            recommendations: filteredRecommendedPoints,
+                            recents: state.recents(from: points),
+                            completionText: { completion in
+                                searchCompletionText(for: completion)
+                            },
+                            onSelectCompletion: handleSearchCompletionSelection,
+                            onSelect: handleSearchSelection
+                        )
+                        .frame(width: searchPanelWidth, alignment: .trailing)
+                        .accessibilityIdentifier("map_search_card")
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+                }
+                .frame(width: searchPanelWidth)
+                .padding(.top, floatingControlsTopInset)
+                .transition(.opacity)
+            }
+        }
         .onChange(of: state.searchText) { _, newValue in
             searchModel.updateQuery(newValue)
         }
         .onChange(of: state.isSearchPresented) { _, isPresented in
             if isPresented == false {
                 isSearchFieldFocused = false
+                isSearchCardVisible = false
             }
         }
         .onChange(of: state.isMapDefaultState) { _, isMapDefaultState in
@@ -341,6 +373,7 @@ struct MapTabRootView: View {
                     state.isSearchPresented = false
                 }
                 isSearchFieldFocused = false
+                isSearchCardVisible = false
             }
         }
         .task(id: routeRefreshKey) {
@@ -439,10 +472,11 @@ struct MapTabRootView: View {
     }
 
     private var floatingControlsTopInset: CGFloat {
-        if state.navigationPoint == nil {
-            return DSSpacing.space8
-        }
-        return DSSpacing.space8 + DSControl.floatingActionTopInsetWithBanner
+        guard state.navigationPoint != nil else { return DSSpacing.space8 }
+        // STEP3-FIX: account for retry banner height so locateMe doesn't overlap it
+        let base = DSSpacing.space8 + DSControl.floatingActionTopInsetWithBanner
+        guard shouldShowQuickRouteRetry else { return base }
+        return base + DSSpacing.space8 + DSControl.minTouchTarget
     }
 
     private var shouldShowQuickRouteRetry: Bool {
@@ -493,34 +527,6 @@ struct MapTabRootView: View {
         .accessibilityIdentifier("map_route_retry_quick")
     }
 
-    @ViewBuilder
-    private var searchControls: some View {
-        if state.isSearchPresented {
-            VStack(alignment: .trailing, spacing: DSSpacing.space8) {
-                searchBar
-
-                SearchOverlayCard(
-                    language: languageStore.language,
-                    completions: searchModel.completions,
-                    recommendations: filteredRecommendedPoints,
-                    recents: state.recents(from: points),
-                    completionText: { completion in
-                        searchCompletionText(for: completion)
-                    },
-                    onSelectCompletion: handleSearchCompletionSelection,
-                    onSelect: handleSearchSelection
-                )
-                .frame(width: searchPanelWidth, alignment: .trailing)
-                .accessibilityIdentifier("map_search_card")
-                .transition(.move(edge: .top).combined(with: .opacity))
-            }
-            .transition(.opacity)
-        } else {
-            searchTriggerButton
-                .transition(.scale(scale: 0.92, anchor: .trailing).combined(with: .opacity))
-        }
-    }
-
     private var searchTriggerButton: some View {
         Button {
             openSearchInterface()
@@ -528,12 +534,10 @@ struct MapTabRootView: View {
             Image(systemName: "magnifyingglass")
                 .font(DSTypography.iconMedium.weight(.semibold))
                 .foregroundStyle(DSColor.textPrimary)
-                .matchedGeometryEffect(id: "map_search_icon", in: searchTransitionNamespace)
                 .frame(width: DSControl.minTouchTarget, height: DSControl.minTouchTarget)
                 .background {
                     Circle()
                         .fill(.ultraThinMaterial)
-                        .matchedGeometryEffect(id: "map_search_surface", in: searchTransitionNamespace)
                 }
         }
         .buttonStyle(.plain)
@@ -546,7 +550,6 @@ struct MapTabRootView: View {
             Image(systemName: "magnifyingglass")
                 .font(DSTypography.iconMedium.weight(.semibold))
                 .foregroundStyle(DSColor.textSecondary)
-                .matchedGeometryEffect(id: "map_search_icon", in: searchTransitionNamespace)
                 .accessibilityHidden(true)
 
             TextField(strings.searchPrompt, text: $state.searchText)
@@ -594,7 +597,6 @@ struct MapTabRootView: View {
         .background {
             RoundedRectangle(cornerRadius: DSRadius.r16, style: .continuous)
                 .fill(.ultraThinMaterial)
-                .matchedGeometryEffect(id: "map_search_surface", in: searchTransitionNamespace)
         }
         .shadow(color: DSColor.borderSubtle.opacity(DSOpacity.overlayShadow), radius: DSRadius.r8, y: DSSpacing.space4)
         .accessibilityIdentifier("map_search_bar")
@@ -671,10 +673,19 @@ struct MapTabRootView: View {
             guard state.isSearchPresented else { return }
             isSearchFieldFocused = true
         }
+        Task { @MainActor in
+            // P0: 等搜索栏首帧动画完成后再 mount 卡片，避免首帧渲染压力叠加
+            try? await Task.sleep(for: .milliseconds(50))
+            guard state.isSearchPresented else { return }
+            withAnimation(shellAnimation) {
+                isSearchCardVisible = true
+            }
+        }
     }
 
     private func closeSearchInterface() {
         isSearchFieldFocused = false
+        isSearchCardVisible = false
         withAnimation(shellAnimation) {
             state.isSearchPresented = false
         }
@@ -938,12 +949,18 @@ private struct MapPreviewSheetView: View {
             }
             if shouldStackSecondaryActionsVertically {
                 VStack(spacing: DSSpacing.space8) {
-                    secondaryActionButton
+                    if isCompact {
+                        secondaryActionButton
+                    }
                     closeActionButton
                 }
             } else {
-                HStack(spacing: DSSpacing.space12) {
-                    secondaryActionButton
+                if isCompact {
+                    HStack(spacing: DSSpacing.space12) {
+                        secondaryActionButton
+                        closeActionButton
+                    }
+                } else {
                     closeActionButton
                 }
             }
@@ -1710,7 +1727,7 @@ private final class UserLocationProvider: NSObject, ObservableObject {
     }
 }
 
-private struct RouteCacheKey: Hashable {
+fileprivate struct RouteCacheKey: Hashable {
     let destinationID: UUID
     let sourceLatitudeBucket: Int
     let sourceLongitudeBucket: Int
@@ -1722,7 +1739,7 @@ private struct RouteCacheKey: Hashable {
     }
 }
 
-private struct CachedRoute {
+fileprivate struct CachedRoute {
     let route: MKRoute
     let createdAt: Date
 }
