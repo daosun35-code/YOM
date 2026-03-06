@@ -1096,24 +1096,13 @@ private struct NavigationPillView: View {
             Button(role: .destructive) {
                 onEndTap()
             } label: {
-                Text(strings.endNavigation)
-                    .dsTextStyle(.caption, weight: .semibold)
-                    .foregroundStyle(DSColor.statusError)
-                    .padding(.horizontal, DSSpacing.space8)
-                    .frame(minHeight: DSControl.minTouchTarget)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(DSColor.surfaceSecondary)
-                    )
-                    .overlay(
-                        Capsule(style: .continuous)
-                            .stroke(
-                                DSColor.statusError.opacity(DSOpacity.secondaryBorderEnabled),
-                                lineWidth: DSBorder.bw1
-                            )
-                    )
+                Label(strings.endNavigation, systemImage: "xmark")
             }
-            .buttonStyle(.plain)
+            .labelStyle(.iconOnly)
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.circle)
+            .controlSize(.large)
+            .tint(DSColor.statusError)
             .accessibilityElement(children: .combine)
             .accessibilityLabel(strings.endNavigation)
             .accessibilityIdentifier("map_top_navigation_end_action")
