@@ -152,6 +152,9 @@ struct MapTabRootView: View {
     @State private var measuredPreviewContentHeight: CGFloat = 280
     @FocusState private var isSearchFieldFocused: Bool
     @State private var isSearchCardVisible = false
+    @State private var searchFocusTask: Task<Void, Never>?
+    @State private var searchCardVisibilityTask: Task<Void, Never>?
+    private let searchFocusFallbackDelayNanoseconds: UInt64 = 120_000_000
 
     private let points = PointOfInterest.samples
 
@@ -185,14 +188,6 @@ struct MapTabRootView: View {
     }
     private var previewSheetDetents: Set<PresentationDetent> {
         [previewSheetCompactDetent, .large]
-    }
-    private var searchFocusDelayNanoseconds: UInt64 {
-        let shouldReduceMotion = reduceMotion || forceReduceMotionForUITests
-        // 键盘在动画中途触发：搜索栏变形动画（spring response 0.35s）进行约 40% 时开始聚焦，
-        // 键盘上升（~0.25s）与 spring 尾段重叠，两者同步到达终态。
-        // reduce-motion 模式下动画极短，给极小缓冲即可。
-        let delay: Double = shouldReduceMotion ? 0.05 : 0.15
-        return UInt64(delay * 1_000_000_000)
     }
 
     private enum MapFeedbackAlert: Identifiable {
@@ -367,18 +362,23 @@ struct MapTabRootView: View {
         }
         .onChange(of: state.isSearchPresented) { _, isPresented in
             if isPresented == false {
+                cancelSearchPresentationTasks()
                 isSearchFieldFocused = false
                 isSearchCardVisible = false
             }
         }
         .onChange(of: state.isMapDefaultState) { _, isMapDefaultState in
             if isMapDefaultState == false {
+                cancelSearchPresentationTasks()
                 withAnimation(shellAnimation) {
                     state.isSearchPresented = false
                 }
                 isSearchFieldFocused = false
                 isSearchCardVisible = false
             }
+        }
+        .onDisappear {
+            cancelSearchPresentationTasks()
         }
         .task(id: routeRefreshKey) {
             await refreshRouteIfNeeded()
@@ -569,6 +569,9 @@ struct MapTabRootView: View {
                         await handleSearchSubmit()
                     }
                 }
+                .onAppear {
+                    requestSearchFieldFocus()
+                }
                 .accessibilityIdentifier("map_search_field")
 
             if state.searchText.isEmpty == false {
@@ -669,29 +672,58 @@ struct MapTabRootView: View {
 
     private func openSearchInterface() {
         guard state.isMapDefaultState else { return }
+        cancelSearchPresentationTasks()
+
         withAnimation(shellAnimation) {
             state.isSearchPresented = true
         }
-        Task { @MainActor in
-            try? await Task.sleep(nanoseconds: searchFocusDelayNanoseconds)
-            guard state.isSearchPresented else { return }
-            isSearchFieldFocused = true
-        }
-        Task { @MainActor in
-            // P0: 等搜索栏首帧动画完成后再 mount 卡片，避免首帧渲染压力叠加
-            try? await Task.sleep(for: .milliseconds(50))
+        searchCardVisibilityTask = Task { @MainActor in
+            // Mount card on next run loop tick to avoid first-frame contention.
+            await Task.yield()
+            guard Task.isCancelled == false else { return }
             guard state.isSearchPresented else { return }
             withAnimation(shellAnimation) {
                 isSearchCardVisible = true
             }
         }
+
+        requestSearchFieldFocus()
     }
 
     private func closeSearchInterface() {
+        cancelSearchPresentationTasks()
         isSearchFieldFocused = false
         isSearchCardVisible = false
         withAnimation(shellAnimation) {
             state.isSearchPresented = false
+        }
+    }
+
+    private func cancelSearchPresentationTasks() {
+        searchFocusTask?.cancel()
+        searchFocusTask = nil
+        searchCardVisibilityTask?.cancel()
+        searchCardVisibilityTask = nil
+    }
+
+    private func requestSearchFieldFocus() {
+        searchFocusTask?.cancel()
+        searchFocusTask = Task { @MainActor in
+            // Reset first so repeated focus requests can still retrigger responder handoff.
+            isSearchFieldFocused = false
+
+            // First attempt on next run loop tick after search UI mounts.
+            await Task.yield()
+            guard Task.isCancelled == false else { return }
+            guard state.isSearchPresented else { return }
+            isSearchFieldFocused = true
+
+            // Fallback retry for transition races where first focus can be dropped.
+            try? await Task.sleep(nanoseconds: searchFocusFallbackDelayNanoseconds)
+            guard Task.isCancelled == false else { return }
+            guard state.isSearchPresented else { return }
+            guard isSearchFieldFocused == false else { return }
+            isSearchFieldFocused = true
         }
     }
 
@@ -1609,6 +1641,9 @@ private final class MapSearchModel: NSObject, ObservableObject {
     @Published private(set) var completions: [MKLocalSearchCompletion] = []
 
     private let completer: MKLocalSearchCompleter
+    private var queryDebounceTask: Task<Void, Never>?
+    private let queryDebounceNanoseconds: UInt64 = 180_000_000
+    private let maxCompletionCount = 12
 
     override init() {
         self.completer = MKLocalSearchCompleter()
@@ -1617,15 +1652,25 @@ private final class MapSearchModel: NSObject, ObservableObject {
         completer.resultTypes = [.address, .pointOfInterest]
     }
 
+    deinit {
+        queryDebounceTask?.cancel()
+    }
+
     func updateQuery(_ query: String) {
         let keyword = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        queryDebounceTask?.cancel()
         guard keyword.isEmpty == false else {
             completions = []
             completer.queryFragment = ""
             return
         }
 
-        completer.queryFragment = keyword
+        queryDebounceTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: self?.queryDebounceNanoseconds ?? 0)
+            guard let self else { return }
+            guard Task.isCancelled == false else { return }
+            self.completer.queryFragment = keyword
+        }
     }
 
     func search(query: String, fallbackTitle: String) async -> SearchPlace? {
@@ -1765,7 +1810,7 @@ extension MapSearchModel: MKLocalSearchCompleterDelegate {
     nonisolated func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
         let results = completer.results
         Task { @MainActor in
-            self.completions = results
+            self.completions = self.deduplicatedResults(from: results)
         }
     }
 
@@ -1773,6 +1818,31 @@ extension MapSearchModel: MKLocalSearchCompleterDelegate {
         Task { @MainActor in
             self.completions = []
         }
+    }
+
+    private func deduplicatedResults(
+        from results: [MKLocalSearchCompletion]
+    ) -> [MKLocalSearchCompletion] {
+        var seenKeys = Set<String>()
+        var uniqueResults: [MKLocalSearchCompletion] = []
+        uniqueResults.reserveCapacity(min(results.count, maxCompletionCount))
+
+        for result in results {
+            let title = result.title
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased()
+            let subtitle = result.subtitle
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased()
+            let key = "\(title)|\(subtitle)"
+            if seenKeys.insert(key).inserted {
+                uniqueResults.append(result)
+                if uniqueResults.count >= maxCompletionCount {
+                    break
+                }
+            }
+        }
+        return uniqueResults
     }
 }
 
