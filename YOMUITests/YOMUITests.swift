@@ -70,6 +70,19 @@ final class YOMUITests: XCTestCase {
         permissionAlert.buttons["Not Now"].tap()
     }
 
+    func testSearchButtonPresentsKeyboardImmediately() {
+        let app = makeApp()
+        app.launch()
+
+        completeOnboarding(in: app)
+
+        let openSearchButton = app.buttons["map_open_search"]
+        XCTAssertTrue(openSearchButton.waitForExistence(timeout: 8))
+        openSearchButton.tap()
+
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5))
+    }
+
     func testSearchSuggestionsAndNoResultRecoveryFlow() {
         let app = makeApp(extraArguments: ["UITEST_FORCE_SEARCH_NO_RESULTS_ON_SUBMIT"])
         app.launch()

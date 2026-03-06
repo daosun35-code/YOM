@@ -150,11 +150,9 @@ struct MapTabRootView: View {
     @State private var hasAppliedUITestOverrides = false
     @State private var previewSheetDetent: PresentationDetent = .height(280)
     @State private var measuredPreviewContentHeight: CGFloat = 280
-    @FocusState private var isSearchFieldFocused: Bool
+    @State private var isSearchFieldFirstResponder = false
     @State private var isSearchCardVisible = false
-    @State private var searchFocusTask: Task<Void, Never>?
     @State private var searchCardVisibilityTask: Task<Void, Never>?
-    private let searchFocusFallbackDelayNanoseconds: UInt64 = 120_000_000
 
     private let points = PointOfInterest.samples
 
@@ -363,17 +361,19 @@ struct MapTabRootView: View {
         .onChange(of: state.isSearchPresented) { _, isPresented in
             if isPresented == false {
                 cancelSearchPresentationTasks()
-                isSearchFieldFocused = false
+                isSearchFieldFirstResponder = false
                 isSearchCardVisible = false
             }
         }
         .onChange(of: state.isMapDefaultState) { _, isMapDefaultState in
             if isMapDefaultState == false {
                 cancelSearchPresentationTasks()
-                withAnimation(shellAnimation) {
-                    state.isSearchPresented = false
+                if state.isSearchPresented {
+                    withAnimation(shellAnimation) {
+                        state.isSearchPresented = false
+                    }
                 }
-                isSearchFieldFocused = false
+                isSearchFieldFirstResponder = false
                 isSearchCardVisible = false
             }
         }
@@ -556,23 +556,20 @@ struct MapTabRootView: View {
                 .foregroundStyle(DSColor.textSecondary)
                 .accessibilityHidden(true)
 
-            TextField(strings.searchPrompt, text: $state.searchText)
-                .focused($isSearchFieldFocused)
-                .submitLabel(.search)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .layoutPriority(1)
-                .accessibilityLabel(strings.searchPrompt)
-                .onSubmit {
+            NativeSearchTextField(
+                text: $state.searchText,
+                isFirstResponder: $isSearchFieldFirstResponder,
+                placeholder: strings.searchPrompt,
+                accessibilityLabel: strings.searchPrompt,
+                accessibilityIdentifier: "map_search_field",
+                onSubmit: {
                     Task {
                         await handleSearchSubmit()
                     }
                 }
-                .onAppear {
-                    requestSearchFieldFocus()
-                }
-                .accessibilityIdentifier("map_search_field")
+            )
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .layoutPriority(1)
 
             if state.searchText.isEmpty == false {
                 Button {
@@ -610,9 +607,13 @@ struct MapTabRootView: View {
     }
 
     private func handleSearchSelection(_ point: PointOfInterest) {
-        state.searchText = point.title(in: languageStore.language)
-        withAnimation(shellAnimation) {
-            state.selectPoint(point)
+        let title = point.title(in: languageStore.language)
+        Task { @MainActor in
+            state.searchText = title
+            await resignSearchInputSession()
+            withAnimation(shellAnimation) {
+                state.selectPoint(point)
+            }
         }
     }
 
@@ -673,6 +674,7 @@ struct MapTabRootView: View {
     private func openSearchInterface() {
         guard state.isMapDefaultState else { return }
         cancelSearchPresentationTasks()
+        isSearchFieldFirstResponder = true
 
         withAnimation(shellAnimation) {
             state.isSearchPresented = true
@@ -686,45 +688,29 @@ struct MapTabRootView: View {
                 isSearchCardVisible = true
             }
         }
-
-        requestSearchFieldFocus()
     }
 
     private func closeSearchInterface() {
-        cancelSearchPresentationTasks()
-        isSearchFieldFocused = false
-        isSearchCardVisible = false
-        withAnimation(shellAnimation) {
-            state.isSearchPresented = false
+        Task { @MainActor in
+            cancelSearchPresentationTasks()
+            await resignSearchInputSession()
+            isSearchCardVisible = false
+            withAnimation(shellAnimation) {
+                state.isSearchPresented = false
+            }
         }
     }
 
     private func cancelSearchPresentationTasks() {
-        searchFocusTask?.cancel()
-        searchFocusTask = nil
         searchCardVisibilityTask?.cancel()
         searchCardVisibilityTask = nil
     }
 
-    private func requestSearchFieldFocus() {
-        searchFocusTask?.cancel()
-        searchFocusTask = Task { @MainActor in
-            // Reset first so repeated focus requests can still retrigger responder handoff.
-            isSearchFieldFocused = false
-
-            // First attempt on next run loop tick after search UI mounts.
-            await Task.yield()
-            guard Task.isCancelled == false else { return }
-            guard state.isSearchPresented else { return }
-            isSearchFieldFocused = true
-
-            // Fallback retry for transition races where first focus can be dropped.
-            try? await Task.sleep(nanoseconds: searchFocusFallbackDelayNanoseconds)
-            guard Task.isCancelled == false else { return }
-            guard state.isSearchPresented else { return }
-            guard isSearchFieldFocused == false else { return }
-            isSearchFieldFocused = true
-        }
+    @MainActor
+    private func resignSearchInputSession() async {
+        isSearchFieldFirstResponder = false
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        await Task.yield()
     }
 
     private func handleSearchSubmit() async {
@@ -732,6 +718,7 @@ struct MapTabRootView: View {
         guard keyword.isEmpty == false else { return }
 
         if forceSearchNoResultsOnSubmitForUITests {
+            await resignSearchInputSession()
             activeAlert = .searchNoResults(query: keyword)
             return
         }
@@ -740,10 +727,12 @@ struct MapTabRootView: View {
             query: keyword,
             fallbackTitle: strings.searchResultFallbackTitle
         ) {
+            await resignSearchInputSession()
             withAnimation(shellAnimation) {
                 state.selectSearchPlace(place, query: keyword)
             }
         } else {
+            await resignSearchInputSession()
             activeAlert = .searchNoResults(query: keyword)
         }
     }
@@ -887,6 +876,128 @@ struct MapTabRootView: View {
         if forcePreviewPointForUITests,
            let point = points.first {
             state.selectPoint(point)
+        }
+    }
+}
+
+private struct NativeSearchTextField: UIViewRepresentable {
+    @Binding var text: String
+    @Binding var isFirstResponder: Bool
+    let placeholder: String
+    let accessibilityLabel: String
+    let accessibilityIdentifier: String
+    let onSubmit: () -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(
+            text: $text,
+            onSubmit: onSubmit
+        )
+    }
+
+    func makeUIView(context: Context) -> DeferredFirstResponderTextField {
+        let textField = DeferredFirstResponderTextField(frame: .zero)
+        textField.delegate = context.coordinator
+        textField.addTarget(
+            context.coordinator,
+            action: #selector(Coordinator.textDidChange(_:)),
+            for: .editingChanged
+        )
+        textField.returnKeyType = .search
+        textField.autocapitalizationType = .none
+        textField.autocorrectionType = .no
+        textField.spellCheckingType = .no
+        textField.clearButtonMode = .never
+        textField.borderStyle = .none
+        textField.backgroundColor = .clear
+        textField.font = UIFont.preferredFont(forTextStyle: .body)
+        textField.adjustsFontForContentSizeCategory = true
+        textField.textColor = .label
+        textField.tintColor = .label
+        textField.accessibilityTraits.insert(.searchField)
+        textField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return textField
+    }
+
+    func updateUIView(_ uiView: DeferredFirstResponderTextField, context: Context) {
+        context.coordinator.text = $text
+        context.coordinator.onSubmit = onSubmit
+
+        if uiView.text != text {
+            uiView.text = text
+        }
+        if uiView.placeholder != placeholder {
+            uiView.placeholder = placeholder
+        }
+        uiView.accessibilityLabel = accessibilityLabel
+        uiView.accessibilityIdentifier = accessibilityIdentifier
+        uiView.desiredFirstResponder = isFirstResponder
+        uiView.reconcileFirstResponder()
+    }
+
+    final class Coordinator: NSObject, UITextFieldDelegate {
+        var text: Binding<String>
+        var onSubmit: () -> Void
+
+        init(
+            text: Binding<String>,
+            onSubmit: @escaping () -> Void
+        ) {
+            self.text = text
+            self.onSubmit = onSubmit
+        }
+
+        @objc func textDidChange(_ textField: UITextField) {
+            text.wrappedValue = textField.text ?? ""
+        }
+
+        func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+            onSubmit()
+            return true
+        }
+    }
+}
+
+private final class DeferredFirstResponderTextField: UITextField {
+    var desiredFirstResponder = false
+    private var hasPendingFirstResponderRequest = false
+
+    override func willMove(toWindow newWindow: UIWindow?) {
+        if newWindow == nil, isFirstResponder {
+            resignFirstResponder()
+        }
+        super.willMove(toWindow: newWindow)
+    }
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        reconcileFirstResponder()
+    }
+
+    func reconcileFirstResponder() {
+        guard desiredFirstResponder else {
+            hasPendingFirstResponderRequest = false
+            if isFirstResponder {
+                resignFirstResponder()
+            }
+            return
+        }
+
+        guard window != nil else { return }
+        guard isFirstResponder == false else {
+            hasPendingFirstResponderRequest = false
+            return
+        }
+        guard hasPendingFirstResponderRequest == false else { return }
+
+        hasPendingFirstResponderRequest = true
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.hasPendingFirstResponderRequest = false
+            guard self.desiredFirstResponder else { return }
+            guard self.window != nil else { return }
+            guard self.isFirstResponder == false else { return }
+            _ = self.becomeFirstResponder()
         }
     }
 }
