@@ -316,18 +316,22 @@ struct MapTabRootView: View {
                         .transition(.scale(scale: 0.92, anchor: .trailing).combined(with: .opacity))
                 }
 
-                Button {
-                    handleLocateMeAction()
-                } label: {
-                    Image(systemName: "location.fill")
-                        .font(DSTypography.iconMedium.weight(.semibold))
-                        .frame(width: DSControl.minTouchTarget, height: DSControl.minTouchTarget)
-                        .background(.ultraThinMaterial, in: Circle())
+                if !state.isSearchPresented {
+                    Button {
+                        handleLocateMeAction()
+                    } label: {
+                        Image(systemName: "location.fill")
+                            .font(DSTypography.iconMedium.weight(.semibold))
+                            .frame(width: DSControl.minTouchTarget, height: DSControl.minTouchTarget)
+                            .background(.ultraThinMaterial, in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("map_locate_me")
+                    .accessibilityLabel(strings.locateMe)
+                    .transition(.scale(scale: 0.92, anchor: .trailing).combined(with: .opacity))
                 }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("map_locate_me")
-                .accessibilityLabel(strings.locateMe)
             }
+            .animation(shellAnimation, value: state.isSearchPresented)
             .padding(.trailing, DSSpacing.space12)
             .padding(.top, floatingControlsTopInset)
         }
