@@ -27,6 +27,7 @@ enum DSTypography {
     static let brandDisplay = Font.system(.largeTitle, design: .rounded).weight(.bold)
     static let iconLarge = Font.title2
     static let iconMedium = Font.body
+    static let iconSmall = Font.caption
 }
 
 extension View {

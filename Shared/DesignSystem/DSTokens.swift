@@ -58,6 +58,7 @@ enum DSOpacity {
 enum DSMotion {
     static let durationFast = 0.2
     static let durationNormal = 0.35
+    static let durationTeardown = 0.16
 
     static func shell(reduceMotion: Bool) -> Animation {
         reduceMotion
@@ -69,6 +70,10 @@ enum DSMotion {
         reduceMotion
             ? .easeInOut(duration: durationFast)
             : .spring(response: durationNormal, dampingFraction: 0.88)
+    }
+
+    static func teardown(reduceMotion: Bool) -> Animation {
+        .easeOut(duration: reduceMotion ? durationFast : durationTeardown)
     }
 }
 
@@ -87,4 +92,6 @@ enum DSControl {
     static let detailHeroHeight: CGFloat = 220
     static let overlayPanelMaxHeight: CGFloat = 280
     static let searchPanelMaxWidth: CGFloat = 360
+    static let previewSheetCompactMinHeight: CGFloat = 200
+    static let previewSheetCompactMaxHeight: CGFloat = 360
 }

@@ -153,6 +153,7 @@ struct MapTabRootView: View {
     @State private var isSearchFieldFirstResponder = false
     @State private var isSearchCardVisible = false
     @State private var searchCardVisibilityTask: Task<Void, Never>?
+    @State private var mapContainerWidth: CGFloat = 0
 
     private let points = PointOfInterest.samples
 
@@ -176,10 +177,11 @@ struct MapTabRootView: View {
     private var forcePreviewExpandedForUITests: Bool {
         launchArguments.contains("UITEST_FORCE_PREVIEW_EXPANDED")
     }
-    private let previewSheetCompactMinHeight: CGFloat = 200
-    private let previewSheetCompactMaxHeight: CGFloat = 360
     private var clampedPreviewContentHeight: CGFloat {
-        min(max(measuredPreviewContentHeight, previewSheetCompactMinHeight), previewSheetCompactMaxHeight)
+        min(
+            max(measuredPreviewContentHeight, DSControl.previewSheetCompactMinHeight),
+            DSControl.previewSheetCompactMaxHeight
+        )
     }
     private var previewSheetCompactDetent: PresentationDetent {
         .height(clampedPreviewContentHeight)
@@ -234,7 +236,10 @@ struct MapTabRootView: View {
                                 let wasAtCompact = previewSheetDetent != .large
                                 measuredPreviewContentHeight = height
                                 if wasAtCompact {
-                                    let clampedHeight = min(max(height, previewSheetCompactMinHeight), previewSheetCompactMaxHeight)
+                                    let clampedHeight = min(
+                                        max(height, DSControl.previewSheetCompactMinHeight),
+                                        DSControl.previewSheetCompactMaxHeight
+                                    )
                                     updatePreviewSheetDetent(.height(clampedHeight), animated: false)
                                 }
                             }
@@ -274,7 +279,15 @@ struct MapTabRootView: View {
     }
 
     private var mapContainer: some View {
-        mapCanvas
+        GeometryReader { proxy in
+            mapCanvas
+                .onAppear {
+                    updateMapContainerWidth(proxy.size.width)
+                }
+                .onChange(of: proxy.size.width) { _, newWidth in
+                    updateMapContainerWidth(newWidth)
+                }
+        }
     }
 
     private var mapCanvas: some View {
@@ -473,7 +486,10 @@ struct MapTabRootView: View {
     }
 
     private var searchPanelWidth: CGFloat {
-        min(DSControl.searchPanelMaxWidth, UIScreen.main.bounds.width - DSSpacing.space24)
+        let availableWidth = mapContainerWidth > 0
+            ? mapContainerWidth - DSSpacing.space24
+            : DSControl.searchPanelMaxWidth
+        return max(DSControl.minTouchTarget, min(DSControl.searchPanelMaxWidth, availableWidth))
     }
 
     private var floatingControlsTopInset: CGFloat {
@@ -639,9 +655,15 @@ struct MapTabRootView: View {
     }
 
     private func handleEndNavigationAction() {
-        withAnimation(.easeOut(duration: 0.16)) {
+        withAnimation(DSMotion.teardown(reduceMotion: reduceMotion || forceReduceMotionForUITests)) {
             state.endNavigation()
         }
+    }
+
+    private func updateMapContainerWidth(_ width: CGFloat) {
+        guard width > 0 else { return }
+        guard abs(mapContainerWidth - width) > 0.5 else { return }
+        mapContainerWidth = width
     }
 
     private func handleLocateMeAction() {
@@ -1221,7 +1243,7 @@ private struct PreviewMetadataChip: View {
     var body: some View {
         HStack(spacing: DSSpacing.space4) {
             Image(systemName: systemName)
-                .font(.caption.weight(.semibold))
+                .font(DSTypography.iconSmall.weight(.semibold))
                 .foregroundStyle(DSColor.textSecondary)
                 .accessibilityHidden(true)
 
@@ -1609,7 +1631,7 @@ private struct NavigationTaskInfoRow: View {
                     .foregroundStyle(DSColor.textSecondary)
             } icon: {
                 Image(systemName: systemName)
-                    .font(.caption.weight(.semibold))
+                    .font(DSTypography.iconSmall.weight(.semibold))
                     .foregroundStyle(DSColor.textSecondary)
                     .accessibilityHidden(true)
             }
