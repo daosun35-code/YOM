@@ -210,7 +210,7 @@ struct MapTabRootView: View {
                     MapPreviewSheetView(
                         point: point,
                         language: languageStore.language,
-                        isCompact: !forcePreviewExpandedForUITests && previewSheetDetent == previewSheetCompactDetent,
+                        isCompact: !forcePreviewExpandedForUITests && previewSheetDetent != .large,
                         showsPrimaryAction: state.navigationPoint?.id != point.id,
                         primaryActionTitle: state.navigationPoint == nil ? strings.goText : strings.changeDestination,
                         detailsTitle: strings.detailsText,
@@ -222,8 +222,8 @@ struct MapTabRootView: View {
                             handleNavigationAction()
                         },
                         onDetails: {
-                            withAnimation {
-                                previewSheetDetent = .large
+                            if previewSheetDetent != .large {
+                                updatePreviewSheetDetent(.large, animated: true)
                             }
                         },
                         onClose: {
@@ -234,7 +234,8 @@ struct MapTabRootView: View {
                                 let wasAtCompact = previewSheetDetent != .large
                                 measuredPreviewContentHeight = height
                                 if wasAtCompact {
-                                    previewSheetDetent = .height(min(max(height, previewSheetCompactMinHeight), previewSheetCompactMaxHeight))
+                                    let clampedHeight = min(max(height, previewSheetCompactMinHeight), previewSheetCompactMaxHeight)
+                                    updatePreviewSheetDetent(.height(clampedHeight), animated: false)
                                 }
                             }
                         }
@@ -242,7 +243,7 @@ struct MapTabRootView: View {
                     .id(point.id)
                     .presentationDetents(previewSheetDetents, selection: $previewSheetDetent)
                     .presentationBackgroundInteraction(.disabled)
-                    .presentationContentInteraction(.scrolls)
+                    .presentationContentInteraction(.resizes)
                     .presentationCornerRadius(DSRadius.r16 + DSSpacing.space8)
                     .presentationDragIndicator(.visible)
                 }
@@ -394,7 +395,7 @@ struct MapTabRootView: View {
         // SHEET-001: 任意关闭路径（Close、下滑、Go动作）和新 pin 切入均重置 detent/高度
         .onChange(of: state.previewPoint?.id) { _, _ in
             measuredPreviewContentHeight = 280
-            previewSheetDetent = .height(280)
+            updatePreviewSheetDetent(.height(280), animated: false)
         }
     }
 
@@ -673,6 +674,11 @@ struct MapTabRootView: View {
 
     private func openSearchInterface() {
         guard state.isMapDefaultState else { return }
+        // Keep open action idempotent for rapid repeated triggers.
+        guard state.isSearchPresented == false else {
+            isSearchFieldFirstResponder = true
+            return
+        }
         cancelSearchPresentationTasks()
         isSearchFieldFirstResponder = true
 
@@ -691,13 +697,13 @@ struct MapTabRootView: View {
     }
 
     private func closeSearchInterface() {
-        Task { @MainActor in
-            cancelSearchPresentationTasks()
-            await resignSearchInputSession()
-            isSearchCardVisible = false
-            withAnimation(shellAnimation) {
-                state.isSearchPresented = false
-            }
+        cancelSearchPresentationTasks()
+        // Write state synchronously to avoid stale async close tasks racing with reopen.
+        isSearchFieldFirstResponder = false
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        isSearchCardVisible = false
+        withAnimation(shellAnimation) {
+            state.isSearchPresented = false
         }
     }
 
@@ -745,6 +751,27 @@ struct MapTabRootView: View {
 
     private var shellAnimation: Animation {
         DSMotion.routeTransition(reduceMotion: reduceMotion || forceReduceMotionForUITests)
+    }
+
+    private var previewSheetDetentAnimation: Animation {
+        reduceMotion || forceReduceMotionForUITests
+            ? .easeOut(duration: DSMotion.durationFast)
+            : .smooth(duration: DSMotion.durationNormal, extraBounce: 0)
+    }
+
+    private func updatePreviewSheetDetent(_ detent: PresentationDetent, animated: Bool) {
+        if animated {
+            withAnimation(previewSheetDetentAnimation) {
+                previewSheetDetent = detent
+            }
+            return
+        }
+
+        var transaction = Transaction(animation: nil)
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            previewSheetDetent = detent
+        }
     }
 
     private var routeRefreshKey: String {

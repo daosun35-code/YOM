@@ -1223,6 +1223,69 @@ final class YOMStressTests: XCTestCase {
         XCTAssertLessThanOrEqual(p99, 0.800, "P99 \(ms(p99)) must be < 800 ms. \(report)")
     }
 
+    // MARK: - 稳定性重复：搜索开关与键盘弹出链路（§6.5 风险项 1）
+
+    func testSearchOpenCloseStability() {
+        for iteration in 1...stressRepetitionCount {
+            let app = makeStressApp(extraArguments: ["UITEST_BYPASS_ONBOARDING"])
+            app.launch()
+
+            let openSearchButton = app.buttons["map_open_search"].firstMatch
+            XCTAssertTrue(openSearchButton.waitForExistence(timeout: 8), "iter \(iteration): Search button not found")
+            openSearchButton.tap()
+
+            let keyboard = app.keyboards.firstMatch
+            if keyboard.waitForExistence(timeout: 1.2) == false {
+                let window = app.windows.firstMatch
+                window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
+            }
+            XCTAssertTrue(
+                keyboard.waitForExistence(timeout: 5),
+                "iter \(iteration): Keyboard not shown after opening search"
+            )
+
+            app.terminate()
+        }
+    }
+
+    // MARK: - 时延采样：搜索按钮到键盘可见 P50/P95/P99 (§6.5 建议：P95 < 350ms, P99 < 600ms, Max < 1000ms)
+
+    func testSearchOpenKeyboardLatencyP95() {
+        var samples: [TimeInterval] = []
+
+        for iteration in 1...latencySampleCount {
+            let app = makeStressApp(extraArguments: ["UITEST_BYPASS_ONBOARDING"])
+            app.launch()
+
+            let openSearchButton = app.buttons["map_open_search"].firstMatch
+            XCTAssertTrue(openSearchButton.waitForExistence(timeout: 8), "iter \(iteration): Search button not found")
+
+            let keyboard = app.keyboards.firstMatch
+            let start = Date()
+            openSearchButton.tap()
+
+            if keyboard.waitForExistence(timeout: 1.2) == false {
+                let window = app.windows.firstMatch
+                window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
+            }
+
+            XCTAssertTrue(
+                keyboard.waitForExistence(timeout: 5),
+                "iter \(iteration): Keyboard did not appear within 5 s"
+            )
+            samples.append(Date().timeIntervalSince(start))
+
+            app.terminate()
+        }
+
+        let (p50, p95, p99, maxVal) = percentiles(samples)
+        let report = "SearchOpen->Keyboard latency (\(samples.count) samples): P50=\(ms(p50)) P95=\(ms(p95)) P99=\(ms(p99)) Max=\(ms(maxVal))"
+        XCTContext.runActivity(named: report) { _ in }
+        XCTAssertLessThanOrEqual(p95, 0.350, "P95 \(ms(p95)) must be < 350 ms. \(report)")
+        XCTAssertLessThanOrEqual(p99, 0.600, "P99 \(ms(p99)) must be < 600 ms. \(report)")
+        XCTAssertLessThanOrEqual(maxVal, 1.000, "Max \(ms(maxVal)) must be < 1000 ms. \(report)")
+    }
+
     // MARK: - 稳定性重复：Pin 切换链路（关键链路 C）
     // NOTE: 不使用 UITEST_FORCE_STATIC_MAP_SNAPSHOT，需真实 MapKit 渲染以访问 Annotation 按钮。
 
