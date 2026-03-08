@@ -25,7 +25,6 @@ targets:
       - App
       - Features
       - Shared
-    resources:
       - Resources
     settings:
       base:

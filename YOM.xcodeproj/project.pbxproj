@@ -3,18 +3,29 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		267A3D9AD562FD9EB3744E13 /* PointOfInterest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30EC77F863A9C094EC9FC979 /* PointOfInterest.swift */; };
 		2A347185509793B3DA244206 /* AppStrings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39A104DC9D4CE442E593DCA5 /* AppStrings.swift */; };
+		2E35C404A4AAFBEC1680C781 /* map.placeholder.png in Resources */ = {isa = PBXBuildFile; fileRef = 136A509CE3D45AAAFE56AF84 /* map.placeholder.png */; };
 		3C5007E7D11717F504FB8A90 /* YOMApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7BDBF9EB1B292ED4D8B8791 /* YOMApp.swift */; };
 		3E87E4445A586E0460B568DE /* DSTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0F2624E7F7291B5F9D5C12E /* DSTokens.swift */; };
+		3F1CEBD54D3D9E4FBE9CAD46 /* settings.placeholder.png in Resources */ = {isa = PBXBuildFile; fileRef = 633A005655861F649723A1C9 /* settings.placeholder.png */; };
+		4421FE1CCADFFAEC966DF5C4 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 2442BC29B025B09108379389 /* README.md */; };
 		50FEA284F803FAE6932CC538 /* ArchiveTabRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2F79C7D76B758867CF0795D /* ArchiveTabRootView.swift */; };
+		590F534AF777709B3A572B00 /* archive.placeholder.png in Resources */ = {isa = PBXBuildFile; fileRef = B74B4DDF470B3FE2AF2F270C /* archive.placeholder.png */; };
 		601C35A9B00A1DB151051547 /* AppRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEB87C6F11C9CD08D683B7ED /* AppRootView.swift */; };
+		6DF020899618E87E4DAB578D /* retrieval.placeholder.png in Resources */ = {isa = PBXBuildFile; fileRef = 06969068DE1334E920A61CAF /* retrieval.placeholder.png */; };
+		6F56675147CF7A0A23537C35 /* onboarding.png in Resources */ = {isa = PBXBuildFile; fileRef = 9393F47E91684A0D2B4E648F /* onboarding.png */; };
+		70FD728FE411A08F561A9663 /* map.png in Resources */ = {isa = PBXBuildFile; fileRef = 60205C615DE460D076FE791C /* map.png */; };
+		7EFCE0389BDC4C57C072FFC8 /* onboarding.placeholder.png in Resources */ = {isa = PBXBuildFile; fileRef = 18F0C34008F6C5F3BEA9DD90 /* onboarding.placeholder.png */; };
 		80BA78F819D86A875444BF87 /* RetrievalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56ACACA61D8E261D6E98C107 /* RetrievalView.swift */; };
+		838D29796657FC21910F96C5 /* archive.png in Resources */ = {isa = PBXBuildFile; fileRef = AEC4529220376050821E902A /* archive.png */; };
+		844089E0C5B5082646303A3F /* retrieval.png in Resources */ = {isa = PBXBuildFile; fileRef = 8D3533A3CB46AEEFABB8BEE6 /* retrieval.png */; };
 		84F07A743C05A628C18F0556 /* OnboardingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E3F8D2A538452DAA45EFD9 /* OnboardingFlowView.swift */; };
+		9059F21185203B1011C6A538 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 736C926176A25F375E2414E7 /* Assets.xcassets */; };
 		922815F7B002ED3086F72266 /* YOMUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CD603EFFFA6C72C1051A20 /* YOMUITests.swift */; };
 		94825F1141F1B7D898AE97BF /* SettingsTabRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814CFBBB975C559A04614B3B /* SettingsTabRootView.swift */; };
 		94CB96CDA7FE541504CF1DC3 /* DSStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDE8EBE7EBC95A4B4258374F /* DSStyles.swift */; };
@@ -23,6 +34,7 @@
 		DA7CE9EBDCABD70173FF7D6B /* LanguageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E48BA3076C1C631CC5B040BD /* LanguageStore.swift */; };
 		F5C2F86251E20844932CB975 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F9215FF8C831F5F25ADF69B /* AppLanguage.swift */; };
 		F8DCC8888CDA9F29AA55DD2A /* MapTabRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EEC5CF1D0E364422DB2B5A4 /* MapTabRootView.swift */; };
+		FE9553239FD82E9BE8F30164 /* settings.png in Resources */ = {isa = PBXBuildFile; fileRef = CBEF9F5DE58BCCAA8C63AE2A /* settings.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,17 +48,29 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		06969068DE1334E920A61CAF /* retrieval.placeholder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = retrieval.placeholder.png; sourceTree = "<group>"; };
+		136A509CE3D45AAAFE56AF84 /* map.placeholder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = map.placeholder.png; sourceTree = "<group>"; };
+		18F0C34008F6C5F3BEA9DD90 /* onboarding.placeholder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = onboarding.placeholder.png; sourceTree = "<group>"; };
+		2442BC29B025B09108379389 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		30EC77F863A9C094EC9FC979 /* PointOfInterest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointOfInterest.swift; sourceTree = "<group>"; };
 		330C4CF0526472DBA280F754 /* AppShellState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShellState.swift; sourceTree = "<group>"; };
 		39A104DC9D4CE442E593DCA5 /* AppStrings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStrings.swift; sourceTree = "<group>"; };
 		56ACACA61D8E261D6E98C107 /* RetrievalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetrievalView.swift; sourceTree = "<group>"; };
+		60205C615DE460D076FE791C /* map.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = map.png; sourceTree = "<group>"; };
+		633A005655861F649723A1C9 /* settings.placeholder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = settings.placeholder.png; sourceTree = "<group>"; };
 		6F9215FF8C831F5F25ADF69B /* AppLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguage.swift; sourceTree = "<group>"; };
+		736C926176A25F375E2414E7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		814CFBBB975C559A04614B3B /* SettingsTabRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsTabRootView.swift; sourceTree = "<group>"; };
+		8D3533A3CB46AEEFABB8BEE6 /* retrieval.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = retrieval.png; sourceTree = "<group>"; };
+		9393F47E91684A0D2B4E648F /* onboarding.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = onboarding.png; sourceTree = "<group>"; };
 		9EEC5CF1D0E364422DB2B5A4 /* MapTabRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapTabRootView.swift; sourceTree = "<group>"; };
 		A2F79C7D76B758867CF0795D /* ArchiveTabRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveTabRootView.swift; sourceTree = "<group>"; };
 		AEB87C6F11C9CD08D683B7ED /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
-		B6E3F6C94A84994F1B12C854 /* YOM.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = YOM.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AEC4529220376050821E902A /* archive.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = archive.png; sourceTree = "<group>"; };
+		B6E3F6C94A84994F1B12C854 /* YOM.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YOM.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B74B4DDF470B3FE2AF2F270C /* archive.placeholder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = archive.placeholder.png; sourceTree = "<group>"; };
 		B8AFC57212BDA90BF498EF20 /* DSTypography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSTypography.swift; sourceTree = "<group>"; };
+		CBEF9F5DE58BCCAA8C63AE2A /* settings.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = settings.png; sourceTree = "<group>"; };
 		D7BDBF9EB1B292ED4D8B8791 /* YOMApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YOMApp.swift; sourceTree = "<group>"; };
 		DDE8EBE7EBC95A4B4258374F /* DSStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSStyles.swift; sourceTree = "<group>"; };
 		E48BA3076C1C631CC5B040BD /* LanguageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageStore.swift; sourceTree = "<group>"; };
@@ -95,6 +119,7 @@
 			isa = PBXGroup;
 			children = (
 				F4CD603EFFFA6C72C1051A20 /* YOMUITests.swift */,
+				B44D45F7FCD76A4AEF893E41 /* SnapshotBaselines */,
 			);
 			path = YOMUITests;
 			sourceTree = "<group>";
@@ -126,6 +151,7 @@
 			children = (
 				D0E19DE7725FFD25D63D1C40 /* App */,
 				39AFC04FDEE19A8353F472CA /* Features */,
+				9D3998A5AFE4DD886251779E /* Resources */,
 				6A11193AEF0E214AB361A581 /* Shared */,
 				22B1E8BDF142DAF10810D39E /* YOMUITests */,
 				638D2E323B46C0F7D03A7404 /* Products */,
@@ -167,12 +193,38 @@
 			path = Map;
 			sourceTree = "<group>";
 		};
+		9D3998A5AFE4DD886251779E /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				736C926176A25F375E2414E7 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		A3488CE0470F463EAE8CDAE5 /* Retrieval */ = {
 			isa = PBXGroup;
 			children = (
 				56ACACA61D8E261D6E98C107 /* RetrievalView.swift */,
 			);
 			path = Retrieval;
+			sourceTree = "<group>";
+		};
+		B44D45F7FCD76A4AEF893E41 /* SnapshotBaselines */ = {
+			isa = PBXGroup;
+			children = (
+				B74B4DDF470B3FE2AF2F270C /* archive.placeholder.png */,
+				AEC4529220376050821E902A /* archive.png */,
+				136A509CE3D45AAAFE56AF84 /* map.placeholder.png */,
+				60205C615DE460D076FE791C /* map.png */,
+				18F0C34008F6C5F3BEA9DD90 /* onboarding.placeholder.png */,
+				9393F47E91684A0D2B4E648F /* onboarding.png */,
+				2442BC29B025B09108379389 /* README.md */,
+				06969068DE1334E920A61CAF /* retrieval.placeholder.png */,
+				8D3533A3CB46AEEFABB8BEE6 /* retrieval.png */,
+				633A005655861F649723A1C9 /* settings.placeholder.png */,
+				CBEF9F5DE58BCCAA8C63AE2A /* settings.png */,
+			);
+			path = SnapshotBaselines;
 			sourceTree = "<group>";
 		};
 		D0E19DE7725FFD25D63D1C40 /* App */ = {
@@ -193,6 +245,7 @@
 			buildConfigurationList = C3685CE7FE7FB90F6B7737E3 /* Build configuration list for PBXNativeTarget "YOM" */;
 			buildPhases = (
 				FC8DCDD2CE35334CE2201347 /* Sources */,
+				63E3383FB17860EBC7E8A80F /* Resources */,
 			);
 			buildRules = (
 			);
@@ -210,6 +263,7 @@
 			buildConfigurationList = C2543C2D1DE4D9A6F5D21CF9 /* Build configuration list for PBXNativeTarget "YOMUITests" */;
 			buildPhases = (
 				697ED5D01285B8A3019AD301 /* Sources */,
+				9A7F43E4A189B7D3C9A072EC /* Resources */,
 			);
 			buildRules = (
 			);
@@ -233,7 +287,6 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					8999E9E7BAAD80538C1EF326 = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					A573D0B57D756B6343FBE0ED = {
@@ -253,7 +306,6 @@
 			);
 			mainGroup = 615244F220049760E61F6E3C;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -262,6 +314,35 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		63E3383FB17860EBC7E8A80F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9059F21185203B1011C6A538 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9A7F43E4A189B7D3C9A072EC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4421FE1CCADFFAEC966DF5C4 /* README.md in Resources */,
+				590F534AF777709B3A572B00 /* archive.placeholder.png in Resources */,
+				838D29796657FC21910F96C5 /* archive.png in Resources */,
+				2E35C404A4AAFBEC1680C781 /* map.placeholder.png in Resources */,
+				70FD728FE411A08F561A9663 /* map.png in Resources */,
+				7EFCE0389BDC4C57C072FFC8 /* onboarding.placeholder.png in Resources */,
+				6F56675147CF7A0A23537C35 /* onboarding.png in Resources */,
+				6DF020899618E87E4DAB578D /* retrieval.placeholder.png in Resources */,
+				844089E0C5B5082646303A3F /* retrieval.png in Resources */,
+				3F1CEBD54D3D9E4FBE9CAD46 /* settings.placeholder.png in Resources */,
+				FE9553239FD82E9BE8F30164 /* settings.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		697ED5D01285B8A3019AD301 /* Sources */ = {
@@ -330,6 +411,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 58Y8HL3FTS;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use your location to show your position on the map.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -350,6 +432,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 58Y8HL3FTS;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use your location to show your position on the map.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
