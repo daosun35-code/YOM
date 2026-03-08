@@ -247,7 +247,7 @@ struct MapTabRootView: View {
                     )
                     .id(point.id)
                     .presentationDetents(previewSheetDetents, selection: $previewSheetDetent)
-                    .presentationBackgroundInteraction(.disabled)
+                    .presentationBackgroundInteraction(.enabled(upThrough: previewSheetCompactDetent))
                     .presentationContentInteraction(.resizes)
                     .presentationCornerRadius(DSRadius.r16 + DSSpacing.space8)
                     .presentationDragIndicator(.visible)
@@ -296,6 +296,16 @@ struct MapTabRootView: View {
         }
         .contentShape(Rectangle())
         .accessibilityIdentifier("map_interaction_surface")
+        // BUG-002-FIX: presentationBackgroundInteraction(.enabled) passes taps through the scrim
+        // to the canvas; add explicit tap-to-dismiss so "tap outside" still closes the preview.
+        // Child views (Map annotation Buttons) take gesture priority, so pin taps are unaffected.
+        .onTapGesture {
+            if state.previewPoint != nil {
+                withAnimation(shellAnimation) {
+                    state.dismissPreview()
+                }
+            }
+        }
         .safeAreaInset(edge: .top) {
             if let navPoint = state.navigationPoint {
                 VStack(spacing: DSSpacing.space8) {

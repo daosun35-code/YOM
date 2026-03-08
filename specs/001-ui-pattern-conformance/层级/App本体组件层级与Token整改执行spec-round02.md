@@ -77,10 +77,82 @@ xcodebuild test -project YOM.xcodeproj -scheme YOM -destination 'platform=iOS Si
 
 ## 5. 执行记录
 
-1. 2026-03-06：Round-02 执行 spec 创建。  
-2. 2026-03-06：Step 1-3 代码已落地。  
-3. 2026-03-06：Step 4 回归结果（Simulator）：
-1. `testSearchButtonPresentsKeyboardImmediately`：Pass。
-2. `testTopNavigationEndActionEndsNavigationImmediately`：Pass。
-3. `testMapPinPreviewLayoutStabilityAndAccessibility`：Fail（`map_locate_me.isHittable` 断言失败，`YOMUITests.swift:488`）。
-4. `testMapPinPreviewLayoutStabilityChangingDestination`：Pass。
+1. 2026-03-06：Round-02 执行 spec 创建。
+2. 2026-03-06：Step 1-3 代码已落地。
+3. 2026-03-06：Step 4 回归（首轮）结果（Simulator）：
+   1. `testSearchButtonPresentsKeyboardImmediately`：Pass。
+   2. `testTopNavigationEndActionEndsNavigationImmediately`：Pass。
+   3. `testMapPinPreviewLayoutStabilityAndAccessibility`：Fail（`map_locate_me.isHittable` 断言失败，`YOMUITests.swift:488`）。
+   4. `testMapPinPreviewLayoutStabilityChangingDestination`：Pass。
+4. 2026-03-06：BUG-001 修复 — 根因：`.presentationBackgroundInteraction(.disabled)` 屏蔽了 sheet 背景层所有交互，包括视觉上未被遮挡的 `map_locate_me` 按钮。
+   修复：改为 `.presentationBackgroundInteraction(.enabled(upThrough: previewSheetCompactDetent))`。
+   语义：compact detent 时背景可交互（locateMe 可点击）；sheet 展开至 `.large` 时背景禁止交互（保留原 UX）。
+   文件：`Features/Map/MapTabRootView.swift:250`。
+5. 2026-03-06：Step 4 回归（终轮）结果（Simulator，iPhone 17 Pro）：
+   - 4 tests, 0 failures。
+   - `testSearchButtonPresentsKeyboardImmediately`：✅ Pass。
+   - `testTopNavigationEndActionEndsNavigationImmediately`：✅ Pass。
+   - `testMapPinPreviewLayoutStabilityAndAccessibility`：✅ Pass（`map_locate_me.isHittable` 现已通过）。
+   - `testMapPinPreviewLayoutStabilityChangingDestination`：✅ Pass。
+   - **整体判定：Pass（Round-02 全部 DoD 满足）**。
+
+## 7. 补充回归结果（2026-03-08）
+
+### 背景
+BUG-001 修复（`.presentationBackgroundInteraction(.disabled)` → `.enabled(upThrough: compact)`）在首轮回归后发现引入了新的交互回归：
+tap-outside-to-dismiss 失效（BUG-002）。
+
+### BUG-002 根因
+`.enabled(upThrough: previewSheetCompactDetent)` 使 tap 穿透 scrim 到 `mapCanvas`，
+但 `mapCanvas` 无显式 dismiss handler，sheet 不再响应背景区域单击关闭。
+
+### BUG-002 修复
+文件：`Features/Map/MapTabRootView.swift`，紧接 `.accessibilityIdentifier("map_interaction_surface")` 后新增：
+```swift
+.onTapGesture {
+    if state.previewPoint != nil {
+        withAnimation(shellAnimation) {
+            state.dismissPreview()
+        }
+    }
+}
+```
+语义：`mapCanvas` 在 preview 激活时响应单击 → dismiss；子视图（Map annotation Button）因手势优先级更高，pin 点击不受影响。
+
+### 补充回归测试结果（Simulator，iPhone 17 Pro，2026-03-08）
+
+命令：
+```bash
+xcodebuild test -project YOM.xcodeproj -scheme YOM \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -only-testing:YOMUITests/YOMUITests/testPreviewTapOutsideDismissesSheet \
+  -only-testing:YOMUITests/YOMUITests/testPreviewCloseAndTapOutsideDismissConsistently \
+  -only-testing:YOMUITests/YOMUITests/testPinSwitchDoesNotFlickerOrShowBothSheets \
+  -only-testing:YOMUITests/YOMUITests/testMapPinPreviewLayoutStabilityAndAccessibility \
+  -only-testing:YOMUITests/YOMUITests/testTopNavigationEndActionEndsNavigationImmediately
+```
+
+| 用例 | 结果 |
+|---|---|
+| testPreviewTapOutsideDismissesSheet | ✅ Pass |
+| testPreviewCloseAndTapOutsideDismissConsistently | ✅ Pass |
+| testPinSwitchDoesNotFlickerOrShowBothSheets | ✅ Pass |
+| testMapPinPreviewLayoutStabilityAndAccessibility | ✅ Pass |
+| testTopNavigationEndActionEndsNavigationImmediately | ✅ Pass |
+
+**5 tests，0 failures。**
+
+### 补充回归最终判定：Pass
+
+**剩余风险（最多3条）：**
+1. `map_locate_me` + tap-outside-dismiss 在真机真实 Map 视图（非静态快照）的组合行为尚未覆盖——模拟器静态快照测试通过，真机 MapKit 渲染需人工验证 `onTapGesture` 不与 Map 的双击缩放手势形成竞态。
+2. 真机 YOMStressTests A/B 链路时延门禁（P95/P99）仍未采样，属 Round-02 遗留 MUST 项。
+3. Pin Switch 链路 C 在真机的稳定性/skip ratio 未验证（MapKit 渲染依赖）。
+
+## 6. 剩余问题（Round-02 范围外，留下一轮）
+
+| ID | 描述 | 优先级 | 说明 |
+|---|---|---|---|
+| HIER-008 | `mapPath` 持久化但无 `navigationDestination` 注册 | P2 | 架构层隐患，无当前功能损坏 |
+| VCNS-001 | Archive(16pt) vs Settings(24pt) 水平 padding 无统一 DSLayout 命名 | P2 | iPad 适配前处理 |
+| 真机门禁 | YOMStressTests 链路 A/B P50/P95/P99 需真机采样 | MUST | 模拟器时延为工具开销，不反映实际性能 |
