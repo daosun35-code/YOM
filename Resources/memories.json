@@ -1,0 +1,110 @@
+{
+    "memoryPoints": [
+        {
+            "id": "A1B2C3D4-E5F6-7890-ABCD-EF1234567890",
+            "year": 1935,
+            "latitude": 37.7749,
+            "longitude": -122.4194,
+            "distanceMeters": 240,
+            "nameByLanguage": {
+                "en": "Market Street Corner",
+                "zhHans": "市场街街角",
+                "yue": "市場街街角"
+            },
+            "summaryByLanguage": {
+                "en": "A storefront photo and oral story from a busy tram stop.",
+                "zhHans": "一张有轨电车站旁店铺照片与口述故事。",
+                "yue": "一張電車站旁店舖相片同口述故事。"
+            },
+            "storyByLanguage": {
+                "en": "In 1935, the corner of Market Street was alive with the clatter of trams and the bustle of merchants. Mrs. Chen ran a small dry-goods shop here, where the scent of dried tangerine peel mingled with freshly printed newspapers. Neighbors would gather each evening, sharing stories of home across the ocean.",
+                "zhHans": "1935年，市场街街角充满了有轨电车的叮当声和商贩的喧闹。陈太太在这里经营一家小杂货铺，晾晒的陈皮香气和新印的报纸气味交织在一起。每到傍晚，邻居们都会聚在一起，分享大洋彼岸的故乡故事。",
+                "yue": "1935年，市場街街角充滿咗電車叮叮聲同商販嘅喧鬧。陳太太喺呢度經營一間細雜貨舖，曬乾嘅陳皮香味同新印嘅報紙味混埋一齊。每到黃昏，街坊都會聚埋一齊，分享大洋彼岸嘅故鄉故事。"
+            },
+            "unlockRadiusM": 50,
+            "tags": ["commerce", "oral-history", "1930s"],
+            "media": [
+                {
+                    "id": "M0000001-0001-0001-0001-000000000001",
+                    "type": "image",
+                    "localAssetName": "memory_market_street_1935",
+                    "duration": null,
+                    "thumbnailAssetName": null
+                }
+            ]
+        },
+        {
+            "id": "B2C3D4E5-F6A7-8901-BCDE-F12345678901",
+            "year": 1947,
+            "latitude": 37.7793,
+            "longitude": -122.4184,
+            "distanceMeters": 540,
+            "nameByLanguage": {
+                "en": "Civic Hall Steps",
+                "zhHans": "市政厅台阶",
+                "yue": "市政廳台階"
+            },
+            "summaryByLanguage": {
+                "en": "Community gathering memories recorded after the war.",
+                "zhHans": "战后社区集会的记忆记录。",
+                "yue": "戰後社區聚會嘅記憶紀錄。"
+            },
+            "storyByLanguage": {
+                "en": "After the war ended in 1945, San Francisco's Chinatown erupted in celebration. By 1947, community leaders organized regular gatherings on the Civic Hall steps to discuss the future of the neighborhood. These meetings planted the seeds for the community organizations that still serve the district today.",
+                "zhHans": "1945年战争结束后，旧金山唐人街爆发了庆祝活动。到1947年，社区领袖定期在市政厅台阶上组织集会，讨论社区的未来。这些会议为至今仍服务于社区的组织播下了种子。",
+                "yue": "1945年戰爭結束之後，舊金山唐人街爆發咗慶祝活動。到1947年，社區領袖定期喺市政廳台階組織集會，討論社區嘅未來。呢啲會議為到依家仲服務緊社區嘅組織播下咗種子。"
+            },
+            "unlockRadiusM": 50,
+            "tags": ["community", "postwar", "1940s"],
+            "media": [
+                {
+                    "id": "M0000002-0002-0002-0002-000000000002",
+                    "type": "image",
+                    "localAssetName": "memory_civic_hall_1947",
+                    "duration": null,
+                    "thumbnailAssetName": null
+                }
+            ]
+        },
+        {
+            "id": "C3D4E5F6-A7B8-9012-CDEF-123456789012",
+            "year": 1962,
+            "latitude": 37.7694,
+            "longitude": -122.4862,
+            "distanceMeters": 1600,
+            "nameByLanguage": {
+                "en": "Ocean View Playfield",
+                "zhHans": "海景游乐场",
+                "yue": "海景遊樂場"
+            },
+            "summaryByLanguage": {
+                "en": "Family snapshots and a neighborhood radio clip.",
+                "zhHans": "家庭照片与一段街区广播录音。",
+                "yue": "家庭相片同一段社區廣播錄音。"
+            },
+            "storyByLanguage": {
+                "en": "The Ocean View Playfield in 1962 was where families from the surrounding blocks came together every Sunday afternoon. Children played kickball while parents shared picnic lunches and listened to the neighborhood radio broadcast. A photographer captured these moments, preserving a snapshot of everyday life that would soon change forever.",
+                "zhHans": "1962年的海景游乐场，是周围街区家庭每个周日下午聚会的地方。孩子们踢球玩耍，父母们分享野餐午餐，收听社区广播。一位摄影师记录下了这些瞬间，保存了一段即将永远改变的日常生活快照。",
+                "yue": "1962年嘅海景遊樂場，係周圍街區家庭每個禮拜日下晝聚會嘅地方。細路仔踢波玩耍，父母分享野餐午餐，收聽社區廣播。一位攝影師記錄低咗呢啲時刻，保存咗一段即將永遠改變嘅日常生活快照。"
+            },
+            "unlockRadiusM": 60,
+            "tags": ["family", "radio", "1960s"],
+            "media": [
+                {
+                    "id": "M0000003-0003-0003-0003-000000000003",
+                    "type": "image",
+                    "localAssetName": "memory_ocean_view_1962",
+                    "duration": null,
+                    "thumbnailAssetName": null
+                },
+                {
+                    "id": "M0000004-0004-0004-0004-000000000004",
+                    "type": "audio",
+                    "localAssetName": "memory_ocean_view_radio_1962",
+                    "duration": 45.0,
+                    "thumbnailAssetName": null
+                }
+            ]
+        }
+    ]
+}
