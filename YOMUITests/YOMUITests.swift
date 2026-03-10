@@ -25,6 +25,17 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(app.tabBars.buttons["Map"].exists)
     }
 
+    func testMapPointPinVisibleAfterOnboarding() {
+        let app = makeApp(extraArguments: ["UITEST_FORCE_LOCATION_AUTHORIZED"])
+        app.launch()
+
+        completeOnboarding(in: app)
+
+        let pointButton = app.buttons["map_point_1935"].firstMatch
+        XCTAssertTrue(pointButton.waitForExistence(timeout: 8))
+        XCTAssertTrue(pointButton.isHittable)
+    }
+
     func testOnboardingPermissionCopyIsVisible() {
         let app = makeApp()
         app.launch()
