@@ -1449,3 +1449,115 @@ final class YOMStressTests: XCTestCase {
         return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
     }
 }
+
+final class LocalMemoryDataIntegrityTests: XCTestCase {
+    private let requiredLanguageKeys: Set<String> = ["en", "zhHans", "yue"]
+
+    func testMemoriesJSONDecodesAndUsesValidUniqueIDs() throws {
+        let url = try memoriesJSONURL()
+        let data = try Data(contentsOf: url)
+        let payload = try JSONDecoder().decode(MemoriesPayloadFixture.self, from: data)
+
+        XCTAssertFalse(payload.memoryPoints.isEmpty, "memories.json must contain at least one memory point")
+
+        let pointIDs = payload.memoryPoints.map(\.id)
+        XCTAssertEqual(Set(pointIDs).count, pointIDs.count, "MemoryPoint IDs must be unique")
+
+        let allMedia = payload.memoryPoints.flatMap(\.media)
+        XCTAssertFalse(allMedia.isEmpty, "At least one media entry is required")
+        XCTAssertEqual(Set(allMedia.map(\.id)).count, allMedia.count, "MemoryMedia IDs must be unique")
+
+        for point in payload.memoryPoints {
+            assertLanguageField(point.nameByLanguage, fieldName: "nameByLanguage", pointID: point.id)
+            assertLanguageField(point.summaryByLanguage, fieldName: "summaryByLanguage", pointID: point.id)
+            assertLanguageField(point.storyByLanguage, fieldName: "storyByLanguage", pointID: point.id)
+            XCTAssertGreaterThan(point.unlockRadiusM, 0, "unlockRadiusM must be > 0 for point \(point.id)")
+            XCTAssertFalse(point.media.isEmpty, "Each memory point must contain at least one media entry")
+
+            for media in point.media {
+                XCTAssertFalse(
+                    media.localAssetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                    "localAssetName must be non-empty for media \(media.id)"
+                )
+
+                if media.type == .audio || media.type == .video {
+                    guard let duration = media.duration else {
+                        XCTFail("duration is required for \(media.type.rawValue) media \(media.id)")
+                        continue
+                    }
+                    XCTAssertGreaterThan(duration, 0, "duration must be > 0 for \(media.type.rawValue) media \(media.id)")
+                }
+            }
+        }
+    }
+
+    private func assertLanguageField(_ map: [String: String], fieldName: String, pointID: UUID) {
+        XCTAssertEqual(
+            Set(map.keys),
+            requiredLanguageKeys,
+            "\(fieldName) must contain exactly en/zhHans/yue for point \(pointID)"
+        )
+
+        for key in requiredLanguageKeys {
+            let value = map[key]?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            XCTAssertFalse(value.isEmpty, "\(fieldName).\(key) must be non-empty for point \(pointID)")
+        }
+    }
+
+    private func memoriesJSONURL() throws -> URL {
+        let fileManager = FileManager.default
+
+        let sourceRootCandidate = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Resources/memories.json")
+        if fileManager.fileExists(atPath: sourceRootCandidate.path) {
+            return sourceRootCandidate
+        }
+
+        let cwdCandidate = URL(fileURLWithPath: fileManager.currentDirectoryPath)
+            .appendingPathComponent("Resources/memories.json")
+        if fileManager.fileExists(atPath: cwdCandidate.path) {
+            return cwdCandidate
+        }
+
+        throw NSError(
+            domain: "LocalMemoryDataIntegrityTests",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: "Resources/memories.json not found from source or working directory"]
+        )
+    }
+}
+
+private struct MemoriesPayloadFixture: Decodable {
+    let memoryPoints: [MemoryPointFixture]
+}
+
+private struct MemoryPointFixture: Decodable {
+    let id: UUID
+    let year: Int
+    let latitude: Double
+    let longitude: Double
+    let distanceMeters: Int
+    let nameByLanguage: [String: String]
+    let summaryByLanguage: [String: String]
+    let storyByLanguage: [String: String]
+    let unlockRadiusM: Double
+    let tags: [String]
+    let media: [MemoryMediaFixture]
+}
+
+private struct MemoryMediaFixture: Decodable {
+    let id: UUID
+    let type: MemoryMediaTypeFixture
+    let localAssetName: String
+    let duration: TimeInterval?
+    let thumbnailAssetName: String?
+}
+
+private enum MemoryMediaTypeFixture: String, Decodable {
+    case image
+    case audio
+    case video
+    case ar
+}

@@ -25,7 +25,7 @@
             "tags": ["commerce", "oral-history", "1930s"],
             "media": [
                 {
-                    "id": "M0000001-0001-0001-0001-000000000001",
+                    "id": "10000001-0001-0001-0001-000000000001",
                     "type": "image",
                     "localAssetName": "memory_market_street_1935",
                     "duration": null,
@@ -58,7 +58,7 @@
             "tags": ["community", "postwar", "1940s"],
             "media": [
                 {
-                    "id": "M0000002-0002-0002-0002-000000000002",
+                    "id": "10000002-0002-0002-0002-000000000002",
                     "type": "image",
                     "localAssetName": "memory_civic_hall_1947",
                     "duration": null,
@@ -91,14 +91,14 @@
             "tags": ["family", "radio", "1960s"],
             "media": [
                 {
-                    "id": "M0000003-0003-0003-0003-000000000003",
+                    "id": "10000003-0003-0003-0003-000000000003",
                     "type": "image",
                     "localAssetName": "memory_ocean_view_1962",
                     "duration": null,
                     "thumbnailAssetName": null
                 },
                 {
-                    "id": "M0000004-0004-0004-0004-000000000004",
+                    "id": "10000004-0004-0004-0004-000000000004",
                     "type": "audio",
                     "localAssetName": "memory_ocean_view_radio_1962",
                     "duration": 45.0,
