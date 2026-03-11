@@ -42,7 +42,12 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - YOMUITests
+      - Features/Memory/CardRenderer.swift
       - Features/Memory/ExplorationStore.swift
+      - Shared/Localization/AppLanguage.swift
+      - Shared/Models/MemoryMedia.swift
+      - Shared/Models/MemoryPoint.swift
+      - Shared/Models/PointOfInterest.swift
     dependencies:
       - target: YOM
     settings:
