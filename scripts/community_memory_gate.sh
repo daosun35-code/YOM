@@ -7,7 +7,7 @@ cd "$ROOT_DIR"
 GATE_ID="${1:-}"
 PROJECT="${PROJECT:-YOM.xcodeproj}"
 SCHEME="${SCHEME:-YOM}"
-SPEC_PATH="specs/002-community-memory-backend/社区记忆库后端实装规划报告.md"
+SPEC_PATH="specs/002-community-memory-backend/后端实装spec.md"
 
 usage() {
   cat <<'EOF'

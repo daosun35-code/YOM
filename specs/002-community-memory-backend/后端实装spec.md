@@ -1,7 +1,7 @@
 # 社区记忆库本地化实装规划报告（Phase 0：不连接服务器）
 
 > 创建日期：2026-03-09（America/New_York）
-> 最后更新：2026-03-10（America/New_York）
+> 最后更新：2026-03-11（America/New_York）
 > 当前约束：暂不连接任何后端服务；记忆元数据全部本地化，媒体资源允许占位并逐步补齐到本地 App。
 > 目标：先把 Active / Passive 双模式在端内跑通，再进入后端化阶段。
 
@@ -17,6 +17,8 @@
 | v0.6 | 2026-03-10 | 严格修订：新增统一门禁脚本 `scripts/community_memory_gate.sh`；新增 `GATE-UI-MAP-PIN-TEST` 并落地 `testMapPointPinVisibleAfterOnboarding`；Section 10.7 全量改为 Gate 脚本入口；PR/任务卡/DoD 的自然语言门禁改为 Gate ID；新增 `EVID-UI-MAP-PIN-ASSERT` 实测 PASS 证据 |
 | v0.7 | 2026-03-10 | 执行漏洞修复：`GATE-SNAPSHOT-BASELINE-TESTS` 补全 5 条基线（原只跑 1 条）；`GATE-I18N` 改为运行完整 `LocalMemoryDataIntegrityTests` 类（原只跑 1 个方法）；新增 `GATE-PR2-COMPOSITE` 和 `GATE-PR3-COMPOSITE`（Section 10.7 #17/#18）并更新 Section 11.1；`GATE-BG-REFRESH-GUARD-TEST` 补充模拟器 launch env 注入规范（`UITEST_SIMULATE_BG_REFRESH_UNAVAILABLE`，仅 DEBUG 生效） |
 | v0.8 | 2026-03-10 | 补齐 6 处缺口：Section 0.1 增 a11y 强制约束（第 6 条）；Section 3 增 schema 版本化策略与 SwiftData 迁移路径（3.1/3.2 小节）；Section 5 增媒体运行时缺失 fallback 规范（5.1 小节）；Section 6.2 增第 7 条后台执行时间预算约束；Section 8.1 增 NFR-TEST-01/02（测试覆盖率）与 NFR-POWER-03（后台执行预算）；Section 10.7 增 `GATE-A11Y`（#19）与 `GATE-INTERFACE-CONTRACT-FROZEN`（#20）；Section 11.2 增 T-PR1-05（a11y 基线测试）；Section 11.3 补接口契约冻结依赖；Section 15.1 补 EVID-A11Y / EVID-INTERFACE-CONTRACT |
+| v0.9 | 2026-03-11 | 文档校对：澄清 Section 3.1 的 `schemaVersion` 为预留策略而非当前仓库既成事实；调整 Section 6.2 编号与子项顺序；修复 Section 11.1 PR-1 引号笔误；统一“内容格式不兼容，请更新 App”文案引号 |
+| v0.10 | 2026-03-11 | 新增 Section 11.4“AI 分步执行流程（模块化实装）”：定义 AI-00 ~ AI-08 的执行顺序、允许改动边界、模块内推荐拆分、单步交接产物与提示模板；要求先冻结接口、再做单模块实现、最后做集成接线 |
 
 ## 0. 执行结论
 
@@ -195,12 +197,12 @@ protocol NotificationOrchestratorProtocol {
 
 > 建议：`MemoryPoint` 与 `MemoryMedia` 放只读本地包（Bundle JSON）；`ExplorationRecord` 与 `WatchRegion` 放可写本地存储（SwiftData 优先，iOS 17+ 原生支持，备选 CoreData）。
 
-### 3.1 本地 JSON Schema 版本化策略
+### 3.1 本地 JSON Schema 版本化策略（预留，当前仓库未启用）
 
-1. `memories.json` 根对象必须包含顶层字段 `"schemaVersion": <Int>`，初始值为 `1`。
-2. `LocalMemoryRepository` 加载时读取 `schemaVersion`：若值高于 App 已知最高版本，以 `.schemaVersionUnsupported` 错误失败，并在 UI 显示"内容格式不兼容，请更新 App"引导，不得静默跳过。
+1. **当前仓库状态**：`memories.json` 根对象仍仅包含 `memoryPoints`；`LocalMemoryRepository` 也尚未读取 `schemaVersion`。因此，版本化加载在本阶段属于**预留策略**，不得据此宣称仓库已实现 schema 版本校验。
+2. **启用时的目标约束**：根对象新增顶层字段 `"schemaVersion": <Int>`，初始值为 `1`；`LocalMemoryRepository` 需同步读取该字段。若值高于 App 已知最高版本，应以 `.schemaVersionUnsupported` 错误失败，并在 UI 显示“内容格式不兼容，请更新 App”引导，不得静默跳过。
 3. 向前兼容：Swift `Codable` 默认忽略未知字段，满足同版本内新增可选字段的安全追加（无需改版本号）。破坏性变更（删除字段、改字段类型、改必填语义）须将 `schemaVersion` 自增，并同步更新 `LocalMemoryDataIntegrityTests` 校验逻辑。
-4. 规则变更时同步更新 `specs/002-community-memory-backend/记忆写入指南.md`（单一真源）；本节仅描述加载策略，不复制字段表。
+4. 该策略正式落地时，需在同一 PR 同步更新 `specs/002-community-memory-backend/记忆写入指南.md`（单一真源）；本节仅描述加载策略，不复制字段表。
 
 ### 3.2 SwiftData 数据模型迁移路径（Phase 0 约束）
 
@@ -295,10 +297,10 @@ IDLE --(tap pin)--> NAVIGATING --(in range)--> IN_RANGE --(dwell ok)--> UNLOCKED
 4. 测试期阈值按“边界外至少约 200m + 持续约 20s”做验证预算；生产参数可按场景收敛，但不得低于定位噪声容忍阈值。
 5. 已知风险：iOS 18 早期版本 exit 事件可能在远处误触发，需加距离二次校验容错。
 6. `CLMonitor` 生命周期硬约束（来自 WWDC23）：
-7. **后台执行时间预算约束**：`CLMonitor` geofence enter 事件触发 App 后台执行窗口，iOS 保证约 30s（不得依赖此上限做精确计时）。`NotificationOrchestrator.scheduleNearbyReminder` 的完整执行（包括 `ExplorationStore.isArchived` 查询 + `UNUserNotificationCenter` 调度）必须在 **10s 以内**完成（保守预算，留足余量）。超出预算前未完成调度时，当次通知静默丢弃（不重试），并通过 `Logger` 记录 `[BgBudget] exceeded 10s, notification skipped`。实现时必须使用 `withTimeout`（或 `Task.checkCancellation()`）显式控制，不得依赖 OS 挂起隐式取消。
    - 同名 monitor 在任意时刻只允许一个实例；
    - App 每次启动都要重建 monitor 并恢复 `events` 异步监听任务；
    - 不建议在 widget/extension 内直接维护 monitor，避免与主 App 竞争实例。
+7. **后台执行时间预算约束**：`CLMonitor` geofence enter 事件触发 App 后台执行窗口，iOS 保证约 30s（不得依赖此上限做精确计时）。`NotificationOrchestrator.scheduleNearbyReminder` 的完整执行（包括 `ExplorationStore.isArchived` 查询 + `UNUserNotificationCenter` 调度）必须在 **10s 以内**完成（保守预算，留足余量）。超出预算前未完成调度时，当次通知静默丢弃（不重试），并通过 `Logger` 记录 `[BgBudget] exceeded 10s, notification skipped`。实现时必须使用 `withTimeout`（或等效 timeout helper）配合取消检查显式控制，不得依赖 OS 挂起隐式取消。
 
 ### 6.3 通知触发与跳转
 
@@ -599,7 +601,7 @@ scripts/community_memory_gate.sh GATE-INTERFACE-CONTRACT-FROZEN
 
 | PR | 目标 | 内容 | 前置依赖（硬约束）| 过门槛条件 |
 | --- | --- | --- | --- | --- |
-| PR-1 | 先补”可执行基础” | 补权限键配置（Always + PhotoAdd）、补 `memory_detail_title` UI Test、补 Snapshot/CI 门禁映射、补 Background App Refresh 降级门禁、补 a11y 基线测试（`AccessibilityTests`） | 无 | `GATE-PR1-COMPOSITE`（应为 PASS） |
+| PR-1 | 先补“可执行基础” | 补权限键配置（Always + PhotoAdd）、补 `memory_detail_title` UI Test、补 Snapshot/CI 门禁映射、补 Background App Refresh 降级门禁、补 a11y 基线测试（`AccessibilityTests`） | 无 | `GATE-PR1-COMPOSITE`（应为 PASS） |
 | PR-2 | 完成 Phase 0B | 实现 `ExplorationStore` + `CardRenderer` + 档案页最小闭环 | **PR-1 已合入 main** | `GATE-PR2-COMPOSITE`（应为 PASS） |
 | PR-3 | 完成 Phase 0C | 实现 `GeofenceMonitor` + `NotificationOrchestrator`（Top-N、冷却、去重） | **PR-2 已合入 main**；RISK-06 缓解措施已落地 | `GATE-PR3-COMPOSITE`（应为 PASS） |
 
@@ -635,6 +637,82 @@ scripts/community_memory_gate.sh GATE-INTERFACE-CONTRACT-FROZEN
 | T-PR3-02 | T-PR3-01 | `NotificationOrchestrator` 依赖 `GeofenceMonitor.startEventStream()` 提供的 `AsyncStream<GeofenceEvent>` |
 
 > **并行开发白名单**：T-PR2-01 与 T-PR2-02 可在 T-PR2-01 接口契约冻结（Section 2.2）后并行实现，但 T-PR2-02 不得提前合入。
+
+### 11.4 AI 分步执行流程（模块化实装）
+
+> 目的：为 AI coding agent 提供可直接执行的最小闭环顺序，避免一次性横切 `Store / Renderer / Geofence / Notification / UI` 导致大 PR、上下文污染和回归面失控。AI 执行时默认遵循本节；若与 Section 11.2 任务卡冲突，以“更小步、更窄边界”的本节流程为准，但不得突破任务卡中的“禁止改动”约束。
+
+#### 11.4.1 执行铁律（AI 必须遵守）
+
+1. **先冻结接口，再写实现，最后做集成接线**；不得在同一步同时改协议签名、持久化实现和 UI 调用方。
+2. **每一步只收敛一个核心模块**，最多允许顺带改动其测试夹具与最小依赖类型；跨模块协作优先使用 stub / mock / adapter，不得“顺手一起做完”。
+3. **每一步结束必须满足三件事**：`xcodebuild build` 通过、对应 Gate 通过、能明确交接到下一步；三者缺一不可。
+4. 现有 `LocalMemoryRepository` / `UnlockEvaluator` / `MemoryPoint` / `MemoryDetailView` 默认视为上游冻结依赖；除非阻塞当前 Gate，否则 AI 不得顺手重构。
+5. UI 只允许做“接线式改动”：注入 protocol、view model、helper 或 accessibility 标识；禁止在 View body 内直接堆叠存储、地理围栏或通知逻辑。
+6. 新类型优先按 `Protocol -> Error/Result -> Implementation -> Tests` 顺序落地；若某步新增公共类型，优先放在 `Features/Memory/` 下，避免过早扩散到多个目录。
+7. 任一步若失败，应先缩步而不是扩面：把失败步骤继续拆为“纯逻辑层”和“系统桥接层”两个子步骤，再重新执行。
+
+#### 11.4.2 AI 执行顺序表（推荐严格串行）
+
+| Step ID | 对应任务 / PR | 本步目标 | 允许改动文件 | 本步产出 | 必跑门禁 | 进入下一步条件 |
+| --- | --- | --- | --- | --- | --- | --- |
+| AI-00 | PR-1 / PR-2 开工前 | 基线核验与上下文装载，不写业务代码 | 只读：本 spec、`记忆写入指南.md`、`project.yml`、`scripts/community_memory_gate.sh`、相关现有实现 | 基线状态：哪些 Gate 已 PASS / FAIL；明确当前阻塞点 | `GATE-BUILD` + `GATE-DATA-INTEGRITY` | 明确当前基线无新增未知失败 |
+| AI-01 | PR-2 / PR-3 前置 | 冻结四个后续模块的代码边界与脚手架 | `Features/Memory/ExplorationStore.swift`、`CardRenderer.swift`、`GeofenceMonitor.swift`、`NotificationOrchestrator.swift`、对应测试文件 | 协议、错误类型、结果类型、空实现 / stub、测试壳 | `GATE-BUILD` + `GATE-MODULE-0B0C-IMPLEMENTED` + `GATE-INTERFACE-CONTRACT-FROZEN` | 四个模块文件与测试壳齐备，接口签名不再漂移 |
+| AI-02 | T-PR2-01 | 实现 `ExplorationStore` 的纯存储闭环 | `Features/Memory/ExplorationStore.swift`、必要 model / test 文件 | `upsertArchive` / `fetch` / `isArchived` 真正可用，幂等通过 | `GATE-BUILD` + `GATE-EXPLORATIONSTORE-TESTS` | `ExplorationStore` 可独立验证，不依赖 UI |
+| AI-03 | T-PR2-02（第 1 步） | 实现 `CardRenderer` 的纯渲染闭环 | `Features/Memory/CardRenderer.swift`、模板 view / helper、对应测试 | 输出 PNG 到沙盒、素材缺失与渲染失败可分型 | `GATE-BUILD` + `GATE-CARDRENDERER-TESTS` | `render()` 可独立产图，不依赖分享 / 相册 UI |
+| AI-04 | PR-2 集成 | 把 `ExplorationStore` + `CardRenderer` 接进 Active 完成链路与最小档案页 | `Features/Memory/*`、`Features/Retrieval/*`、必要时新增 `Features/Archive/*`、`YOMUITests/*` | `UNLOCKED -> ARCHIVED` 真正写档，档案可见，分享/保存最小闭环 | `GATE-PR2-COMPOSITE` + `GATE-A11Y` + `GATE-SNAPSHOT-BASELINE-TESTS` | Phase 0B DoD 全 PASS |
+| AI-05 | T-PR3-01（第 1 步） | 实现 `GeofenceMonitor` 的纯围栏闭环 | `Features/Memory/GeofenceMonitor.swift`、候选点筛选 helper、对应测试 | Top-N 选择、`CLMonitor` 注册轮换、事件流输出 | `GATE-BUILD` + `GATE-GEOFENCE-TESTS` | `refreshMonitors()` 与事件流稳定，不触碰通知层 |
+| AI-06 | T-PR3-02（第 1 步） | 实现 `NotificationOrchestrator` 的纯通知闭环 | `Features/Memory/NotificationOrchestrator.swift`、payload/cooldown helper、对应测试 | 调度、去重、24h 冷却、userInfo 反解 | `GATE-BUILD` + `GATE-NOTIFICATION-TESTS` | 通知层独立可测，不依赖页面跳转 |
+| AI-07 | PR-3 集成 | 将 `GeofenceMonitor` + `NotificationOrchestrator` 接入 Passive 权限与跳转主线 | `Features/Memory/*`、权限编排相关 `Features/*`、`YOMUITests/*` | Passive 开关、围栏触发、通知点击回到记忆详情、BGRefresh 降级 | `GATE-BG-REFRESH-GUARD-TEST` + `GATE-PR3-COMPOSITE` + `GATE-A11Y` | Phase 0C DoD 全 PASS |
+| AI-08 | 每步收口 | 回填文档、证据、风险状态，收敛到可交接状态 | 本 spec 的 Section 10.6 / 15.1 / 8.3（如有状态变化） | DoD 状态、EVID 引用、风险缓解状态同步 | 与本步对应 Gate 保持 PASS | 文档状态与代码状态一致，无“已完成但无证据”项 |
+
+#### 11.4.3 推荐模块内拆分（尽可能避免大文件）
+
+1. `ExplorationStore` 推荐拆分为 5 层：
+   `ExplorationStoreProtocol`、`ExplorationStoreError`、`ExplorationRecord` / `ExplorationSource`、`SwiftDataExplorationStore`、`ExplorationStoreTests`
+2. `CardRenderer` 推荐拆分为 6 层：
+   `CardRendererProtocol`、`CardRenderError`、`CardTemplateView`、`CardAssetResolver`、`DefaultCardRenderer`、`CardRendererTests`
+3. `GeofenceMonitor` 推荐拆分为 6 层：
+   `GeofenceMonitorProtocol`、`GeofenceEvent`、`GeofenceCandidateSelector`、`CLMonitorDriver`、`DefaultGeofenceMonitor`、`GeofenceMonitorTests`
+4. `NotificationOrchestrator` 推荐拆分为 6 层：
+   `NotificationOrchestratorProtocol`、`NotificationScheduleResult`、`NotificationPayloadBuilder`、`NotificationCooldownPolicy`、`DefaultNotificationOrchestrator`、`NotificationOrchestratorTests`
+5. **跨模块共享类型最小化**：
+   除 `ExplorationRecord`、`ExplorationSource`、`GeofenceEvent`、`NotificationScheduleResult` 外，不新增跨模块共享 model；其余依赖优先通过协议输入输出解耦。
+6. **系统桥接单独封装**：
+   `CLMonitor`、`UNUserNotificationCenter`、相册保存、系统分享都应有独立 adapter / helper；上层模块只依赖协议，不直接碰系统对象。
+
+#### 11.4.4 每一步的最小交接包（AI 完成后必须具备）
+
+1. 变更文件列表：只列本步真正改动的文件，不夹带与当前步骤无关的整理。
+2. 本步通过的 Gate：至少列出 Gate ID，不得只说“测试通过”。
+3. 尚未处理的边界：明确说明哪些能力故意留给下一步，例如“当前仅完成纯渲染，未接入分享 Sheet”。
+4. 下一步建议入口：指出应该从哪个文件、哪个协议、哪个 Gate 开始，不得让下一个 AI 重新从全仓扫描。
+
+#### 11.4.5 AI 单步提示模板（可直接复用）
+
+```text
+你现在只执行 Step <AI-XX>，不要跨步。
+
+目标：
+- <只写一个核心目标，例如：实现 ExplorationStore 幂等持久化>
+
+允许改动：
+- <文件 1>
+- <文件 2>
+
+禁止改动：
+- 地图主流程状态机
+- 非本步骤对应的其他模块
+- 视觉样式与 DS Token
+
+必须满足：
+- 协议签名保持与 Section 2.2 一致
+- 完成后运行 <GATE-...>
+- 输出“已完成 / 未完成 / 留给下一步”的边界说明
+
+如果实现过程中需要第二个模块配合：
+- 先使用 stub / mock，不得直接跳去实现下一模块
+```
 
 ## 12. 后续迁移到后端（保留位）
 
