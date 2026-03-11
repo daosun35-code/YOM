@@ -87,6 +87,16 @@ extension AppStrings {
             .zhHans: "暂不授权，立即继续进入地图",
             .yue: "暫不授權，立即繼續進入地圖"
         ],
+        "backgroundRefreshUnavailableTitle": [
+            .en: "Background App Refresh Needed",
+            .zhHans: "需要开启后台应用刷新",
+            .yue: "需要開啟背景 App 重新整理"
+        ],
+        "backgroundRefreshUnavailableBody": [
+            .en: "Turn on Background App Refresh in Settings before enabling nearby memory reminders.",
+            .zhHans: "请先在设置中开启后台应用刷新，再启用附近记忆提醒。",
+            .yue: "請先喺設定開啟背景 App 重新整理，再啟用附近記憶提醒。"
+        ],
         "closeText": [
             .en: "Close",
             .zhHans: "关闭",
@@ -141,6 +151,8 @@ extension AppStrings {
     var onboardingPermissionOptionalHint: String { text("onboardingPermissionOptionalHint") }
     var onboardingAllowPermissionHint: String { text("onboardingAllowPermissionHint") }
     var onboardingSkipPermissionHint: String { text("onboardingSkipPermissionHint") }
+    var backgroundRefreshUnavailableTitle: String { text("backgroundRefreshUnavailableTitle") }
+    var backgroundRefreshUnavailableBody: String { text("backgroundRefreshUnavailableBody") }
     var closeText: String { text("closeText") }
     var clearText: String { text("clearText") }
     var demoNotesTitle: String { text("demoNotesTitle") }

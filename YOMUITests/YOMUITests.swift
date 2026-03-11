@@ -12,6 +12,7 @@ final class YOMUITests: XCTestCase {
 
     private let snapshotDiffTolerance: Double = 0.01
     private let snapshotChannelDeltaTolerance: Int = 8
+    private let mapSnapshotTopNoiseCropRows: Int = 55
 
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -777,6 +778,52 @@ final class YOMUITests: XCTestCase {
         assertBaselineSnapshot(named: .retrieval)
     }
 
+    func testMemoryDetailTitleAssertion() {
+        let app = makeApp(extraArguments: ["UITEST_FORCE_MEMORY_DETAIL_VIEW"])
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["Choose your language"].waitForExistence(timeout: 8))
+        let continueButton = app.buttons["onboarding_continue"]
+        XCTAssertTrue(continueButton.waitForExistence(timeout: 5))
+        continueButton.tap()
+
+        let skipButton = app.buttons["onboarding_skip"]
+        XCTAssertTrue(skipButton.waitForExistence(timeout: 5))
+        skipButton.tap()
+
+        let memoryTitle = app.staticTexts["memory_detail_title"]
+        XCTAssertTrue(memoryTitle.waitForExistence(timeout: 8))
+        XCTAssertEqual(memoryTitle.label, "Market Street Corner")
+        XCTAssertTrue(app.navigationBars["Memory Detail"].waitForExistence(timeout: 5))
+    }
+
+    func testBackgroundRefreshUnavailableShowsGuidance() {
+        let app = makeApp(extraEnvironment: ["UITEST_SIMULATE_BG_REFRESH_UNAVAILABLE": "1"])
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["Choose your language"].waitForExistence(timeout: 8))
+        let continueButton = app.buttons["onboarding_continue"]
+        XCTAssertTrue(continueButton.waitForExistence(timeout: 5))
+        continueButton.tap()
+
+        let allowButton = app.buttons["onboarding_allow_permission"]
+        XCTAssertTrue(allowButton.waitForExistence(timeout: 5))
+        allowButton.tap()
+
+        let guidanceAlert = app.alerts["Background App Refresh Needed"]
+        XCTAssertTrue(guidanceAlert.waitForExistence(timeout: 5))
+        XCTAssertTrue(
+            guidanceAlert.staticTexts["Turn on Background App Refresh in Settings before enabling nearby memory reminders."]
+                .exists
+        )
+        XCTAssertTrue(guidanceAlert.buttons["Open Settings"].exists)
+        XCTAssertTrue(guidanceAlert.buttons["Not Now"].exists)
+        guidanceAlert.buttons["Not Now"].tap()
+
+        XCTAssertTrue(allowButton.waitForExistence(timeout: 5))
+        XCTAssertFalse(app.tabBars.buttons["Map"].exists)
+    }
+
     func testAccessibilityDynamicTypeMaximumKeepsCoreActionsReachable() {
         let app = makeApp(extraArguments: ["UITEST_FORCE_DYNAMIC_TYPE_ACCESSIBILITY_XXXL"])
         app.launch()
@@ -952,8 +999,8 @@ final class YOMUITests: XCTestCase {
             return
         }
 
-        let normalizedCurrent = cropUnsafeAreas(from: currentImage)
-        let normalizedBaseline = cropUnsafeAreas(from: baselineImage)
+        let normalizedCurrent = normalizeSnapshotImage(named: page, from: currentImage)
+        let normalizedBaseline = normalizeSnapshotImage(named: page, from: baselineImage)
 
         guard normalizedCurrent.width == normalizedBaseline.width,
               normalizedCurrent.height == normalizedBaseline.height
@@ -1006,6 +1053,14 @@ final class YOMUITests: XCTestCase {
             .appendingPathComponent("SnapshotBaselines", isDirectory: true)
     }
 
+    private func normalizeSnapshotImage(named page: SnapshotPage, from image: CGImage) -> CGImage {
+        let unsafeAreaCropped = cropUnsafeAreas(from: image)
+        guard page == .map else { return unsafeAreaCropped }
+        // The static map shell exposes a simulator-only top band (time/location indicator),
+        // which is outside the app UI and drifts between runs.
+        return cropTopRows(mapSnapshotTopNoiseCropRows, from: unsafeAreaCropped)
+    }
+
     private func cropUnsafeAreas(from image: CGImage) -> CGImage {
         let width = image.width
         let height = image.height
@@ -1016,6 +1071,12 @@ final class YOMUITests: XCTestCase {
         let cropHeight = max(1, height - topInset - bottomInset)
         let cropRect = CGRect(x: 0, y: topInset, width: width, height: cropHeight)
 
+        return image.cropping(to: cropRect) ?? image
+    }
+
+    private func cropTopRows(_ rows: Int, from image: CGImage) -> CGImage {
+        guard rows > 0, image.height > rows else { return image }
+        let cropRect = CGRect(x: 0, y: rows, width: image.width, height: image.height - rows)
         return image.cropping(to: cropRect) ?? image
     }
 

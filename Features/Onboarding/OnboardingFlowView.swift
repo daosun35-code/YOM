@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import UserNotifications
 
 struct OnboardingFlowView: View {
@@ -9,12 +10,14 @@ struct OnboardingFlowView: View {
 
     @EnvironmentObject private var languageStore: LanguageStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.openURL) private var openURL
     private let launchArguments = ProcessInfo.processInfo.arguments
 
     let onFinish: () -> Void
 
     @State private var step: Step = .language
     @State private var isRequestingNotificationPermission = false
+    @State private var showsBackgroundRefreshAlert = false
 
     private var strings: AppStrings { AppStrings(language: languageStore.language) }
 
@@ -73,6 +76,19 @@ struct OnboardingFlowView: View {
                 Spacer(minLength: DSSpacing.space12)
             }
         }
+        .alert(
+            strings.backgroundRefreshUnavailableTitle,
+            isPresented: $showsBackgroundRefreshAlert,
+            actions: {
+                Button(strings.openSettingsText) {
+                    openAppSettings()
+                }
+                Button(strings.notNowText, role: .cancel) {}
+            },
+            message: {
+                Text(strings.backgroundRefreshUnavailableBody)
+            }
+        )
     }
 
     private var stepTitle: String {
@@ -149,7 +165,7 @@ struct OnboardingFlowView: View {
     private var permissionStep: some View {
         VStack(spacing: DSSpacing.space12) {
             Button(strings.allowPermission) {
-                requestNotificationPermissionAndFinish()
+                handlePermissionAction()
             }
             .dsPrimaryCTAStyle()
             .accessibilityIdentifier("onboarding_allow_permission")
@@ -175,6 +191,29 @@ struct OnboardingFlowView: View {
 
     private var stepAnimation: Animation {
         DSMotion.shell(reduceMotion: reduceMotion || launchArguments.contains("UITEST_FORCE_REDUCE_MOTION"))
+    }
+
+    private func handlePermissionAction() {
+        guard isBackgroundRefreshAvailableForPassiveFlow else {
+            showsBackgroundRefreshAlert = true
+            return
+        }
+
+        requestNotificationPermissionAndFinish()
+    }
+
+    private var isBackgroundRefreshAvailableForPassiveFlow: Bool {
+#if DEBUG
+        if ProcessInfo.processInfo.environment["UITEST_SIMULATE_BG_REFRESH_UNAVAILABLE"] == "1" {
+            return false
+        }
+#endif
+        return UIApplication.shared.backgroundRefreshStatus == .available
+    }
+
+    private func openAppSettings() {
+        guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else { return }
+        openURL(settingsURL)
     }
 
     private func requestNotificationPermissionAndFinish() {

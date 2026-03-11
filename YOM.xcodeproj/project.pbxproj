@@ -40,6 +40,7 @@
 		B14636EEE3FE576D94B574FC /* MapSearchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29B05BBE33799E95F538C33E /* MapSearchModel.swift */; };
 		B2FBED56AED2D4DC6377871D /* AppShellState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 330C4CF0526472DBA280F754 /* AppShellState.swift */; };
 		B5B32F591194C137C1175308 /* UserLocationProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 654C28D6805118895B1FE18B /* UserLocationProvider.swift */; };
+		B9E5CE9B636F85E80F71A0FF /* AccessibilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2931891EB613F90AF248C7A /* AccessibilityTests.swift */; };
 		BA228EF987DAA1271F761E13 /* DSTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8AFC57212BDA90BF498EF20 /* DSTypography.swift */; };
 		C6A65EA6A27178F5A68CD3F9 /* AppStrings+Map.swift in Sources */ = {isa = PBXBuildFile; fileRef = 874A2A87D3A8C8B0C16D602D /* AppStrings+Map.swift */; };
 		C7929043832825A6D91E6580 /* MapSearchOverlayCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11479DCBF57389B366329360 /* MapSearchOverlayCard.swift */; };
@@ -94,6 +95,7 @@
 		9393F47E91684A0D2B4E648F /* onboarding.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = onboarding.png; sourceTree = "<group>"; };
 		9EEC5CF1D0E364422DB2B5A4 /* MapTabRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapTabRootView.swift; sourceTree = "<group>"; };
 		A135E5110EE95B03984F7F5B /* MemoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryDetailView.swift; sourceTree = "<group>"; };
+		A2931891EB613F90AF248C7A /* AccessibilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityTests.swift; sourceTree = "<group>"; };
 		A2F79C7D76B758867CF0795D /* ArchiveTabRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveTabRootView.swift; sourceTree = "<group>"; };
 		AEB87C6F11C9CD08D683B7ED /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
 		AEC4529220376050821E902A /* archive.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = archive.png; sourceTree = "<group>"; };
@@ -157,6 +159,7 @@
 		22B1E8BDF142DAF10810D39E /* YOMUITests */ = {
 			isa = PBXGroup;
 			children = (
+				A2931891EB613F90AF248C7A /* AccessibilityTests.swift */,
 				F4CD603EFFFA6C72C1051A20 /* YOMUITests.swift */,
 				B44D45F7FCD76A4AEF893E41 /* SnapshotBaselines */,
 			);
@@ -411,6 +414,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B9E5CE9B636F85E80F71A0FF /* AccessibilityTests.swift in Sources */,
 				922815F7B002ED3086F72266 /* YOMUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -489,7 +493,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "We use your location to deliver nearby memory reminders while you explore.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use your location to show your position on the map.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "We save generated memory cards to your photo library when you choose Save to Photos.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
@@ -509,7 +515,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "We use your location to deliver nearby memory reminders while you explore.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use your location to show your position on the map.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "We save generated memory cards to your photo library when you choose Save to Photos.";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;

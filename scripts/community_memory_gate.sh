@@ -73,6 +73,24 @@ require_test_class() {
   rg -n "final class ${class_name}" YOMUITests >/dev/null
 }
 
+require_test_methods() {
+  local method_name
+  for method_name in "$@"; do
+    require_test_method "${method_name}"
+  done
+}
+
+run_gate_interface_contract_frozen() {
+  test -f Features/Memory/ExplorationStore.swift
+  test -f Features/Memory/CardRenderer.swift
+  test -f Features/Memory/GeofenceMonitor.swift
+  test -f Features/Memory/NotificationOrchestrator.swift
+  rg -n "func upsertArchive\\(memoryPointId:" Features/Memory/ExplorationStore.swift
+  rg -n "func render\\(memory:" Features/Memory/CardRenderer.swift
+  rg -n "func refreshMonitors\\(currentLocation:" Features/Memory/GeofenceMonitor.swift
+  rg -n "func scheduleNearbyReminder\\(memoryId:" Features/Memory/NotificationOrchestrator.swift
+}
+
 run_gate_config_plist_keys() {
   local settings
   settings="$(xcodebuild -project "${PROJECT}" -target YOM -showBuildSettings)"
@@ -89,7 +107,10 @@ run_gate_module_0b0c_implemented() {
   rg -n "protocol CardRendererProtocol" Features/Memory/CardRenderer.swift
   rg -n "protocol GeofenceMonitorProtocol" Features/Memory/GeofenceMonitor.swift
   rg -n "protocol NotificationOrchestratorProtocol" Features/Memory/NotificationOrchestrator.swift
-  rg -n "final class ExplorationStoreTests|final class CardRendererTests|final class GeofenceMonitorTests|final class NotificationOrchestratorTests" YOMUITests
+  rg -n "final class ExplorationStoreTests" YOMUITests
+  rg -n "final class CardRendererTests" YOMUITests
+  rg -n "final class GeofenceMonitorTests" YOMUITests
+  rg -n "final class NotificationOrchestratorTests" YOMUITests
 }
 
 run_gate_owner_placeholder() {
@@ -129,8 +150,19 @@ case "${GATE_ID}" in
     ;;
   GATE-SNAPSHOT-BASELINE-TESTS)
     DEST_RESOLVED="$(require_destination)"
-    require_test_method "testSnapshotBaselineRetrievalPage"
-    run_xcodebuild_with_dest "${DEST_RESOLVED}" -only-testing:YOMUITests/YOMUITests/testSnapshotBaselineRetrievalPage test
+    require_test_methods \
+      "testSnapshotBaselineOnboardingPage" \
+      "testSnapshotBaselineMapPage" \
+      "testSnapshotBaselineArchivePage" \
+      "testSnapshotBaselineSettingsPage" \
+      "testSnapshotBaselineRetrievalPage"
+    run_xcodebuild_with_dest "${DEST_RESOLVED}" \
+      -only-testing:YOMUITests/YOMUITests/testSnapshotBaselineOnboardingPage \
+      -only-testing:YOMUITests/YOMUITests/testSnapshotBaselineMapPage \
+      -only-testing:YOMUITests/YOMUITests/testSnapshotBaselineArchivePage \
+      -only-testing:YOMUITests/YOMUITests/testSnapshotBaselineSettingsPage \
+      -only-testing:YOMUITests/YOMUITests/testSnapshotBaselineRetrievalPage \
+      test
     ;;
   GATE-SNAPSHOT-THRESHOLD-CONFIG)
     rg -n "snapshotDiffTolerance: Double = 0.01|snapshotChannelDeltaTolerance: Int = 8" YOMUITests/YOMUITests.swift
@@ -146,8 +178,8 @@ case "${GATE_ID}" in
   GATE-I18N)
     DEST_RESOLVED="$(require_destination)"
     rg -n "case en|case zhHans|case yue" Shared/Localization/AppLanguage.swift
-    require_test_method "testMemoriesJSONDecodesAndUsesValidUniqueIDs"
-    run_xcodebuild_with_dest "${DEST_RESOLVED}" -only-testing:YOMUITests/LocalMemoryDataIntegrityTests/testMemoriesJSONDecodesAndUsesValidUniqueIDs test
+    require_test_class "LocalMemoryDataIntegrityTests"
+    run_xcodebuild_with_dest "${DEST_RESOLVED}" -only-testing:YOMUITests/LocalMemoryDataIntegrityTests test
     ;;
   GATE-EXPLORATIONSTORE-TESTS)
     DEST_RESOLVED="$(require_destination)"
@@ -177,8 +209,31 @@ case "${GATE_ID}" in
     "$0" GATE-SNAPSHOT-BASELINE-TESTS
     "$0" GATE-SNAPSHOT-THRESHOLD-CONFIG
     "$0" GATE-BG-REFRESH-GUARD-TEST
+    "$0" GATE-A11Y
     "$0" GATE-CONFIG-PLIST-KEYS
     "$0" GATE-OWNER-PLACEHOLDER
+    ;;
+  GATE-PR2-COMPOSITE)
+    "$0" GATE-PR1-COMPOSITE
+    "$0" GATE-EXPLORATIONSTORE-TESTS
+    "$0" GATE-CARDRENDERER-TESTS
+    "$0" GATE-INTERFACE-CONTRACT-FROZEN
+    "$0" GATE-A11Y
+    "$0" GATE-SNAPSHOT-BASELINE-TESTS
+    ;;
+  GATE-PR3-COMPOSITE)
+    "$0" GATE-PR2-COMPOSITE
+    "$0" GATE-GEOFENCE-TESTS
+    "$0" GATE-NOTIFICATION-TESTS
+    "$0" GATE-BG-REFRESH-GUARD-TEST
+    ;;
+  GATE-A11Y)
+    require_test_class "AccessibilityTests"
+    DEST_RESOLVED="$(require_destination)"
+    run_xcodebuild_with_dest "${DEST_RESOLVED}" -only-testing:YOMUITests/AccessibilityTests test
+    ;;
+  GATE-INTERFACE-CONTRACT-FROZEN)
+    run_gate_interface_contract_frozen
     ;;
   *)
     echo "Unknown gate: ${GATE_ID}"
