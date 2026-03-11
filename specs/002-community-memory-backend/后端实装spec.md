@@ -20,6 +20,7 @@
 | v0.9 | 2026-03-11 | 文档校对：澄清 Section 3.1 的 `schemaVersion` 为预留策略而非当前仓库既成事实；调整 Section 6.2 编号与子项顺序；修复 Section 11.1 PR-1 引号笔误；统一“内容格式不兼容，请更新 App”文案引号 |
 | v0.10 | 2026-03-11 | 新增 Section 11.4“AI 分步执行流程（模块化实装）”：定义 AI-00 ~ AI-08 的执行顺序、允许改动边界、模块内推荐拆分、单步交接产物与提示模板；要求先冻结接口、再做单模块实现、最后做集成接线 |
 | v0.11 | 2026-03-11 | 执行 AI-02：`ExplorationStore` 完成 SwiftData 纯存储闭环与 `ExplorationStoreTests`；`GATE-EXPLORATIONSTORE-TESTS`、`GATE-BUILD`、`GATE-MODULE-0B0C-IMPLEMENTED`、`GATE-INTERFACE-CONTRACT-FROZEN` 均转 PASS，并回填 Section 10.6 / 15.1 状态 |
+| v0.12 | 2026-03-11 | 将 SwiftLens MCP 研究整合入 Section 11.4：新增“强制使用 SwiftLens”执行铁律、AI-00 ~ AI-08 逐步必跑工具链、交接包 SwiftLens 证据要求与提示模板约束；若 SwiftLens 环境或索引未就绪，开发会话不得继续编码 |
 
 ## 0. 执行结论
 
@@ -652,6 +653,11 @@ scripts/community_memory_gate.sh GATE-INTERFACE-CONTRACT-FROZEN
 5. UI 只允许做“接线式改动”：注入 protocol、view model、helper 或 accessibility 标识；禁止在 View body 内直接堆叠存储、地理围栏或通知逻辑。
 6. 新类型优先按 `Protocol -> Error/Result -> Implementation -> Tests` 顺序落地；若某步新增公共类型，优先放在 `Features/Memory/` 下，避免过早扩散到多个目录。
 7. 任一步若失败，应先缩步而不是扩面：把失败步骤继续拆为“纯逻辑层”和“系统桥接层”两个子步骤，再重新执行。
+8. **AI-00 ~ AI-08 必须显式使用 SwiftLens MCP**：凡涉及 Swift 代码、Swift 测试、协议签名、引用影响面、a11y 标识落点、证据回填的步骤，不得仅靠全文检索或人工猜测；若未运行本节指定的 SwiftLens 工具，不得宣称“上下文已装载”“接口已冻结”“影响面已确认”。
+9. **SwiftLens 预热是编码前置条件**：AI-00 必须先执行 `swift_check_environment`、`swift_lsp_diagnostics(project_path)`、`swift_build_index(project_path[, scheme])`；若任一失败、LSP 健康状态异常、或索引未生成，则本次开发会话状态记为 `BLOCKED-SWIFTLENS`，除修复工具链外不得继续写业务代码。
+10. **每步遵循“索引 -> 定义 -> 引用 -> 校验”闭环**：编码前至少运行 `swift_analyze_files`、`swift_get_symbol_definition`、`swift_find_symbol_references_files` 中与本步匹配的最小组合；编码后必须对本步改动的 Swift 文件执行 `swift_validate_file`。若仅需替换已有 symbol 的实现体，优先使用 `swift_replace_symbol_body` 以保持签名稳定。
+11. **SwiftLens 结果用于缩小改动面，而不是替代 Gate**：SwiftLens 负责语义导航、引用分析、类型校验、符号级改写；`xcodebuild build`、`xcodebuild test`、`scripts/community_memory_gate.sh`、Snapshot/a11y/UI 断言仍是验收真源，二者缺一不可。
+12. **交接包必须包含 SwiftLens 证据**：至少列出本步运行过的 SwiftLens tool 名称、核验过的关键 symbol / file、由引用分析确认的影响面，以及仍未被 LSP 覆盖的盲区；缺失任一项，视为交接不完整。
 
 #### 11.4.2 AI 执行顺序表（推荐严格串行）
 
@@ -666,6 +672,53 @@ scripts/community_memory_gate.sh GATE-INTERFACE-CONTRACT-FROZEN
 | AI-06 | T-PR3-02（第 1 步） | 实现 `NotificationOrchestrator` 的纯通知闭环 | `Features/Memory/NotificationOrchestrator.swift`、payload/cooldown helper、对应测试 | 调度、去重、24h 冷却、userInfo 反解 | `GATE-BUILD` + `GATE-NOTIFICATION-TESTS` | 通知层独立可测，不依赖页面跳转 |
 | AI-07 | PR-3 集成 | 将 `GeofenceMonitor` + `NotificationOrchestrator` 接入 Passive 权限与跳转主线 | `Features/Memory/*`、权限编排相关 `Features/*`、`YOMUITests/*` | Passive 开关、围栏触发、通知点击回到记忆详情、BGRefresh 降级 | `GATE-BG-REFRESH-GUARD-TEST` + `GATE-PR3-COMPOSITE` + `GATE-A11Y` | Phase 0C DoD 全 PASS |
 | AI-08 | 每步收口 | 回填文档、证据、风险状态，收敛到可交接状态 | 本 spec 的 Section 10.6 / 15.1 / 8.3（如有状态变化） | DoD 状态、EVID 引用、风险缓解状态同步 | 与本步对应 Gate 保持 PASS | 文档状态与代码状态一致，无“已完成但无证据”项 |
+
+#### 11.4.2A SwiftLens MCP 强制动作（逐步）
+
+1. `AI-00`
+   必跑：`swift_check_environment` -> `swift_lsp_diagnostics(project_path)` -> `swift_build_index(project_path[, scheme])`。
+   然后：对 `Features/Memory/*.swift`、`Features/Retrieval/MemoryDetailView.swift`、相关测试文件执行 `swift_analyze_files` 或 `swift_get_symbols_overview`，建立当前 symbol 基线。
+   交付：明确记录 SwiftLens 环境是否健康、索引是否可用、哪些核心 symbol 已存在、哪些步骤将依赖这些 symbol；若预热失败，本步唯一允许动作是修复 SwiftLens 工具链。
+
+2. `AI-01`
+   必跑：`swift_search_pattern` + `swift_get_symbol_definition` + `swift_get_declaration_context`。
+   用途：逐一核对 Section 2.2 的四个 protocol、错误类型、结果类型、测试壳是否已在代码中落地，禁止仅依赖 `rg` 判定“接口已冻结”。
+   收口：对 `ExplorationStore.swift`、`CardRenderer.swift`、`GeofenceMonitor.swift`、`NotificationOrchestrator.swift` 跑 `swift_validate_file`；若需要替换 stub 实现，优先 `swift_replace_symbol_body`，不得顺手改签名。
+
+3. `AI-02`
+   必跑：`swift_analyze_files(['Features/Memory/ExplorationStore.swift'])`。
+   然后：用 `swift_get_symbol_definition` 定位 `ExplorationRecord` / `ExplorationSource` / `ExplorationStoreProtocol` 真正声明位置；用 `swift_find_symbol_references_files` 追踪 `upsertArchive`、`fetchAllRecords`、`isArchived` 的调用面与测试覆盖面。
+   收口：对本步改动的 store / model / test 文件逐个执行 `swift_validate_file`，确认幂等逻辑、SwiftData 包装层和测试夹具在语义上闭合。
+
+4. `AI-03`
+   必跑：`swift_analyze_files(['Features/Memory/CardRenderer.swift', 'YOMUITests/CardRendererTests.swift'])`。
+   然后：用 `swift_get_file_imports` 审视渲染桥接依赖；对关键类型位置运行 `swift_get_hover_info`，确认 `ImageRenderer` / `SwiftUI` / `UIKit` 相关类型签名与预期一致；用 `swift_find_symbol_references_files` 检查 `CardRendererProtocol.render(...)` 的测试与调用落点。
+   收口：对 renderer、模板 view、asset resolver 与测试文件执行 `swift_validate_file`；SwiftLens 可证明语义正确，但不能替代 PNG 产物与 Snapshot 验证。
+
+5. `AI-04`
+   必跑：`swift_build_index(project_path[, scheme])` 重新建索引，避免上一轮单模块实现后的引用结果陈旧。
+   然后：用 `swift_find_symbol_references_files` 串起 `ExplorationStoreProtocol`、`CardRendererProtocol`、完成动作回调、档案页入口的跨文件接线；用 `swift_get_symbol_definition` 精确定位 `MemoryDetailView`、Archive 入口、最小分享/保存 helper 应落到哪个 symbol；用 `swift_search_pattern` 审计 `accessibilityLabel` / `accessibilityIdentifier` 是否落在正确 view。
+   收口：对所有接线改动文件执行 `swift_validate_file`；若引用分析显示影响面超出 Active 链路，必须先缩步，不得继续扩展到 Passive。
+
+6. `AI-05`
+   必跑：`swift_analyze_files(['Features/Memory/GeofenceMonitor.swift', 'YOMUITests/GeofenceMonitorTests.swift'])`。
+   然后：用 `swift_get_file_imports` / `swift_get_hover_info` 核对 `CLMonitor`、`CLCircularGeographicCondition`、`AsyncStream<GeofenceEvent>` 的类型与 API 形态；用 `swift_find_symbol_references_files` 追踪 `refreshMonitors(...)`、`startEventStream()`、候选点筛选 helper 的消费方。
+   收口：对 monitor、driver、selector、tests 运行 `swift_validate_file`；SwiftLens 负责确保符号边界稳定，不负责证明系统围栏事件一定会在真机/模拟器触发。
+
+7. `AI-06`
+   必跑：`swift_analyze_files(['Features/Memory/NotificationOrchestrator.swift', 'YOMUITests/NotificationOrchestratorTests.swift'])`。
+   然后：用 `swift_get_hover_info` 核对 `UNUserNotificationCenter`、通知 request/content/userInfo 相关类型；用 `swift_find_symbol_references_files` 追踪 `NotificationScheduleResult`、`scheduleNearbyReminder(...)`、`extractMemoryId(from:)` 的测试与调用面；必要时用 `swift_search_pattern` 固化 payload key 与 cooldown 分支的字符串/枚举使用点。
+   收口：对 orchestrator、payload builder、cooldown policy、tests 运行 `swift_validate_file`；SwiftLens 不能替代通知权限与真实投递链路验证。
+
+8. `AI-07`
+   必跑：`swift_build_index(project_path[, scheme])`，然后用 `swift_find_symbol_references_files` 横向串起权限编排、`GeofenceMonitor` 事件、`NotificationOrchestrator` 调度、通知点击回跳、`MemoryDetailView` 入口。
+   然后：用 `swift_get_symbol_definition` 定位 Passive 开关、权限说明、BGRefresh 降级展示 helper 的真实入口；用 `swift_search_pattern` 审计 `accessibilityIdentifier`、BGRefresh 引导文案与仅 DEBUG 生效的测试注入点。
+   收口：对 Passive 主线改动文件全部执行 `swift_validate_file`；若引用图显示依赖扩散到非授权范围页面，必须回退到 adapter / helper 分层。
+
+9. `AI-08`
+   必跑：`swift_search_pattern` / `swift_analyze_files` 复核本步声称完成的协议、实现类、测试类、a11y 标识、EVID 所引用 symbol 是否真实存在。
+   然后：交接包中必须写明“本步用过哪些 SwiftLens 工具、分析过哪些 file/symbol、哪些断言仍依赖 xcodebuild / Gate / UI 测试而非 LSP”。
+   例外：若本步仅改文档且无任何代码状态变化，可跳过 `swift_validate_file`；但只要引用了代码状态，就必须先用 SwiftLens 复核，不得手写“已完成”。
 
 #### 11.4.3 推荐模块内拆分（尽可能避免大文件）
 
@@ -688,6 +741,8 @@ scripts/community_memory_gate.sh GATE-INTERFACE-CONTRACT-FROZEN
 2. 本步通过的 Gate：至少列出 Gate ID，不得只说“测试通过”。
 3. 尚未处理的边界：明确说明哪些能力故意留给下一步，例如“当前仅完成纯渲染，未接入分享 Sheet”。
 4. 下一步建议入口：指出应该从哪个文件、哪个协议、哪个 Gate 开始，不得让下一个 AI 重新从全仓扫描。
+5. SwiftLens 证据：列出本步实际运行过的 SwiftLens tool 名称，以及它们分别核验了哪些关键 file / symbol。
+6. SwiftLens 盲区：明确哪些结论仍需依赖 `xcodebuild`、Gate、Snapshot、UI Test、真机/模拟器行为，而不是被 LSP 直接证明。
 
 #### 11.4.5 AI 单步提示模板（可直接复用）
 
@@ -708,8 +763,10 @@ scripts/community_memory_gate.sh GATE-INTERFACE-CONTRACT-FROZEN
 
 必须满足：
 - 协议签名保持与 Section 2.2 一致
+- 先按 Section 11.4.2A 跑完本步要求的 SwiftLens MCP 工具；若 `swift_check_environment` / `swift_lsp_diagnostics` / `swift_build_index` 未通过，不得继续编码
 - 完成后运行 <GATE-...>
 - 输出“已完成 / 未完成 / 留给下一步”的边界说明
+- 输出 `SwiftLens 证据`：本步使用的 tools、核验的 files/symbols、未覆盖盲区
 
 如果实现过程中需要第二个模块配合：
 - 先使用 stub / mock，不得直接跳去实现下一模块
