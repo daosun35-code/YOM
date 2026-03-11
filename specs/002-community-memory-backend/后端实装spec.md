@@ -19,6 +19,7 @@
 | v0.8 | 2026-03-10 | 补齐 6 处缺口：Section 0.1 增 a11y 强制约束（第 6 条）；Section 3 增 schema 版本化策略与 SwiftData 迁移路径（3.1/3.2 小节）；Section 5 增媒体运行时缺失 fallback 规范（5.1 小节）；Section 6.2 增第 7 条后台执行时间预算约束；Section 8.1 增 NFR-TEST-01/02（测试覆盖率）与 NFR-POWER-03（后台执行预算）；Section 10.7 增 `GATE-A11Y`（#19）与 `GATE-INTERFACE-CONTRACT-FROZEN`（#20）；Section 11.2 增 T-PR1-05（a11y 基线测试）；Section 11.3 补接口契约冻结依赖；Section 15.1 补 EVID-A11Y / EVID-INTERFACE-CONTRACT |
 | v0.9 | 2026-03-11 | 文档校对：澄清 Section 3.1 的 `schemaVersion` 为预留策略而非当前仓库既成事实；调整 Section 6.2 编号与子项顺序；修复 Section 11.1 PR-1 引号笔误；统一“内容格式不兼容，请更新 App”文案引号 |
 | v0.10 | 2026-03-11 | 新增 Section 11.4“AI 分步执行流程（模块化实装）”：定义 AI-00 ~ AI-08 的执行顺序、允许改动边界、模块内推荐拆分、单步交接产物与提示模板；要求先冻结接口、再做单模块实现、最后做集成接线 |
+| v0.11 | 2026-03-11 | 执行 AI-02：`ExplorationStore` 完成 SwiftData 纯存储闭环与 `ExplorationStoreTests`；`GATE-EXPLORATIONSTORE-TESTS`、`GATE-BUILD`、`GATE-MODULE-0B0C-IMPLEMENTED`、`GATE-INTERFACE-CONTRACT-FROZEN` 均转 PASS，并回填 Section 10.6 / 15.1 状态 |
 
 ## 0. 执行结论
 
@@ -45,7 +46,7 @@
 1. `xcodebuild build`（iOS Simulator）可通过（证据 `EVID-BUILD`）。
 2. `LocalMemoryDataIntegrityTests` 可通过（当前位于 `YOMUITests` target，证据 `EVID-TEST-DATA`）。
 3. Phase 0A 尚缺 1 条 UI 断言测试：进入 `MemoryDetailView` 后验证 `memory_detail_title`（证据 `EVID-UI-TITLE-ASSERT`）。
-4. Phase 0B / 0C 暂不可端到端执行：`ExplorationStore` / `CardRenderer` / `GeofenceMonitor` / `NotificationOrchestrator` 仍待实现（证据 `EVID-MODULE-0B0C`）。
+4. Phase 0B / 0C 仍暂不可端到端执行：`ExplorationStore` 已完成纯存储闭环（证据 `EVID-EXPLORATIONSTORE`），但 `CardRenderer` / `GeofenceMonitor` / `NotificationOrchestrator` 仍待实现，且 Active / Passive 集成尚未接线（证据 `EVID-MODULE-0B0C`）。
 5. Passive 与相册链路仍有配置缺口：`NSLocationAlwaysAndWhenInUseUsageDescription` 与 `NSPhotoLibraryAddUsageDescription` 需补齐（证据 `EVID-CONFIG-KEYS`）。
 6. Passive 运行时前置条件 `Background App Refresh` 降级保护测试尚未落地（证据 `EVID-BGREFRESH-GUARD`）。
 
@@ -93,7 +94,7 @@
   -> LocalMemoryRepository (本地记忆数据 + 媒体索引，代码已实现[EVID-CODE-LMR]；依赖 memories.json 解码校验通过[EVID-TEST-DATA])
   -> UnlockEvaluator (距离判定 + dwell 计时，已实现[EVID-CODE-UE])
   -> GeofenceMonitor (CLMonitor geofence 轮换，待实现)
-  -> ExplorationStore (已探索记录，待实现)
+  -> ExplorationStore (已探索记录，纯存储闭环已实现[EVID-EXPLORATIONSTORE]；UI 接线待 AI-04)
   -> CardRenderer (端上卡片渲染，待实现)
   -> NotificationOrchestrator (本地通知编排，待实现)
 ```
@@ -103,7 +104,7 @@
 1. `LocalMemoryRepository`：加载本地记忆数据（Bundle JSON）；`MemoryPoint.media` 数组即媒体索引，无需独立 `LocalMediaCatalog`。**代码已实现**（`Features/Memory/LocalMemoryRepository.swift`，证据 `EVID-CODE-LMR`），并要求 `Resources/memories.json` 通过 UUID/解码校验（见 Section 10.1，证据 `EVID-TEST-DATA`）。
 2. `UnlockEvaluator`：进入范围判定（`distance <= unlockRadius`）+ 容错累计 dwell 计时。**已实现（当前为采样驱动版本）**（`Features/Memory/UnlockEvaluator.swift`，证据 `EVID-CODE-UE`）。
 3. `GeofenceMonitor`：最近点计算（Top-N）、`CLMonitor` 条件注册与轮换。**待实现**。
-4. `ExplorationStore`：记录探索状态、完成时间、来源（active/passive）。**待实现**。
+4. `ExplorationStore`：记录探索状态、完成时间、来源（active/passive）。**已实现纯存储闭环**（`Features/Memory/ExplorationStore.swift` + `YOMUITests/ExplorationStoreTests.swift`，证据 `EVID-EXPLORATIONSTORE`）；Active 链路接线留待 AI-04。
 5. `CardRenderer`：把记忆内容渲染为图片（卡片模板）。**待实现**。
 6. `NotificationOrchestrator`：注册本地提醒、去重与冷却。**待实现**。
 
@@ -480,7 +481,7 @@ xcodebuild -scheme YOM -destination "$DEST" \
 | --- | --- | --- | --- | --- |
 | DOD-0A-01 | 本地 JSON 可加载且 pin 正常渲染 | 自动化 + UI 自动化 | `GATE-DATA-INTEGRITY` + `GATE-UI-MAP-PIN-TEST` | PASS（证据 `EVID-TEST-DATA` + `EVID-UI-MAP-PIN-ASSERT`） |
 | DOD-0A-02 | Active 链路可达详情并展示核心字段 | UI 自动化 | `GATE-UI-MEMORY-TITLE-TEST` | TODO |
-| DOD-0B-01 | 完成体验后归档可持久化 | 单测 + UI 流程 | `GATE-EXPLORATIONSTORE-TESTS` + 重启验证 | TODO |
+| DOD-0B-01 | 完成体验后归档可持久化 | 单测 + UI 流程 | `GATE-EXPLORATIONSTORE-TESTS` + 重启验证 | PARTIAL（证据 `EVID-EXPLORATIONSTORE`；纯存储已通过，UI 接线待 AI-04） |
 | DOD-0B-02 | 卡片可生成并可保存/分享 | 集成测试 | `GATE-CARDRENDERER-TESTS` | TODO |
 | DOD-0C-01 | Passive 围栏提醒可触发 | 集成测试 | `GATE-GEOFENCE-TESTS` + `GATE-NOTIFICATION-TESTS` | TODO |
 | DOD-0C-02 | 去重/冷却生效 | 单测 | `GATE-NOTIFICATION-TESTS` | TODO |
@@ -542,7 +543,7 @@ scripts/community_memory_gate.sh GATE-OWNER-PLACEHOLDER
 ```bash
 scripts/community_memory_gate.sh GATE-I18N
 ```
-12. `GATE-EXPLORATIONSTORE-TESTS`（当前应为 FAIL，直到实现）
+12. `GATE-EXPLORATIONSTORE-TESTS`（AI-02 已通过）
 ```bash
 scripts/community_memory_gate.sh GATE-EXPLORATIONSTORE-TESTS
 ```
@@ -575,7 +576,7 @@ scripts/community_memory_gate.sh GATE-PR3-COMPOSITE
 scripts/community_memory_gate.sh GATE-A11Y
 ```
 > 校验内容：① `AccessibilityTests` 类存在性；② 运行 `AccessibilityTests` 用例集（含超大字体下截断断言、核心交互元素 `accessibilityLabel` 非空断言）。
-20. `GATE-INTERFACE-CONTRACT-FROZEN`（T-PR2-02 合入前必须通过；Protocol 签名与 Section 2.2 保持一致）
+20. `GATE-INTERFACE-CONTRACT-FROZEN`（当前已通过；T-PR2-02 合入前仍必须复跑，确保 Protocol 签名与 Section 2.2 保持一致）
 ```bash
 scripts/community_memory_gate.sh GATE-INTERFACE-CONTRACT-FROZEN
 ```
@@ -587,7 +588,7 @@ scripts/community_memory_gate.sh GATE-INTERFACE-CONTRACT-FROZEN
 2. ~~新建 `LocalMemoryRepository`，先从本地 `JSON` 读取记忆与媒体元数据。~~ **已完成**（`Features/Memory/LocalMemoryRepository.swift`，前提：数据门禁通过，证据 `EVID-CODE-LMR` + `EVID-TEST-DATA`）
 3. 定义 `MemoryMedia.type` 与本地资源命名规范（含 `usdz`）。**已完成**（见 `specs/002-community-memory-backend/记忆写入指南.md`，证据 `EVID-WRITE-GUIDE`）
 4. ~~实现 `UnlockEvaluator`（距离 + 停留时长）。~~ **已完成**（`Features/Memory/UnlockEvaluator.swift`，证据 `EVID-CODE-UE`）
-5. 实现 `ExplorationStore`（SwiftData 优先，iOS 17+）。
+5. ~~实现 `ExplorationStore`（SwiftData 优先，iOS 17+）。~~ **已完成纯存储闭环**（`Features/Memory/ExplorationStore.swift`、`YOMUITests/ExplorationStoreTests.swift`，证据 `EVID-EXPLORATIONSTORE`；Active 链路接线留待 AI-04）
 6. 实现 `CardRenderer`（固定模板 1 套即可）。
 7. 实现 `GeofenceMonitor`：`CLMonitor` + 最近点 Top-N 轮换。
 8. 实现 `NotificationOrchestrator`：本地通知触发、去重、冷却。
@@ -768,7 +769,7 @@ https://developer.apple.com/news/?id=3xpv8r2m
 | EVID-ID | 核验时间（America/New_York） | 检查项 | 核验命令 | 结果 | 说明 |
 | --- | --- | --- | --- | --- | --- |
 | EVID-DEST | 2026-03-09 23:05 | 可用 destination 列表 | `xcodebuild -scheme YOM -showdestinations` | PASS | `iPhone 17 (iOS 26.2)` 可用 |
-| EVID-BUILD | 2026-03-09 23:05 | 构建门禁 | `xcodebuild -scheme YOM -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.2' build` | PASS | 构建成功 |
+| EVID-BUILD | 2026-03-11 18:41 | 构建门禁 | `scripts/community_memory_gate.sh GATE-BUILD` | PASS | AI-02 收口后整体编译通过 |
 | EVID-TEST-DATA | 2026-03-09 23:05 | 数据门禁 | `xcodebuild -scheme YOM -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.2' -only-testing:YOMUITests/LocalMemoryDataIntegrityTests test` | PASS | 1/1 通过 |
 | EVID-TEST-CLASS | 2026-03-09 23:03 | `LocalMemoryDataIntegrityTests` 类存在 | `rg -n "final class LocalMemoryDataIntegrityTests" YOMUITests/YOMUITests.swift` | PASS | 测试类已落地 |
 | EVID-CODE-LMR | 2026-03-09 23:03 | `LocalMemoryRepository` 实现存在 | `test -f Features/Memory/LocalMemoryRepository.swift` | PASS | 文件存在 |
@@ -784,9 +785,10 @@ https://developer.apple.com/news/?id=3xpv8r2m
 | EVID-UI-TITLE-ASSERT | 2026-03-10 13:24 | 详情页标题 UI 断言用例 | `scripts/community_memory_gate.sh GATE-UI-MEMORY-TITLE-TEST` | FAIL（预期） | 严格门禁已加入“测试方法存在性”校验，当前方法未落地（T-PR1-02） |
 | EVID-BGREFRESH-GUARD | 2026-03-10 13:24 | Background App Refresh 降级保护用例 | `scripts/community_memory_gate.sh GATE-BG-REFRESH-GUARD-TEST` | FAIL（预期） | 严格门禁已加入“测试方法存在性”校验，当前方法未落地（T-PR1-04） |
 | EVID-CONFIG-KEYS | 2026-03-10 13:24 | Passive/相册权限键（Build Settings 生效） | `scripts/community_memory_gate.sh GATE-CONFIG-PLIST-KEYS` | FAIL（预期） | 目前两键未对 App Target 生效（T-PR1-01） |
-| EVID-MODULE-0B0C | 2026-03-10 13:24 | 0B/0C 核心模块实现度（文件 + 协议 + 测试类） | `scripts/community_memory_gate.sh GATE-MODULE-0B0C-IMPLEMENTED` | FAIL（预期） | 文件/协议/测试类尚未齐备（PR-2/PR-3） |
+| EVID-MODULE-0B0C | 2026-03-11 18:41 | 0B/0C 核心模块实现度（文件 + 协议 + 测试类） | `scripts/community_memory_gate.sh GATE-MODULE-0B0C-IMPLEMENTED` | PASS | 四个模块文件、协议与测试类均已齐备；真实实现进度以各自 Gate 为准 |
+| EVID-EXPLORATIONSTORE | 2026-03-11 18:40 | `ExplorationStore` 纯存储闭环 | `scripts/community_memory_gate.sh GATE-EXPLORATIONSTORE-TESTS` | PASS | 4/4 通过，覆盖幂等更新、重启后持久化、非法 ID、损坏数据错误路径 |
 | EVID-A11Y | — | a11y 基线测试（AccessibilityTests 类 + XXXL 字体断言） | `scripts/community_memory_gate.sh GATE-A11Y` | FAIL（预期） | T-PR1-05 未落地（AccessibilityTests 类不存在） |
-| EVID-INTERFACE-CONTRACT | — | 接口契约冻结（4 个 Protocol 签名存在于源码） | `scripts/community_memory_gate.sh GATE-INTERFACE-CONTRACT-FROZEN` | FAIL（预期） | PR-2 尚未实现协议文件 |
+| EVID-INTERFACE-CONTRACT | 2026-03-11 18:41 | 接口契约冻结（4 个 Protocol 签名存在于源码） | `scripts/community_memory_gate.sh GATE-INTERFACE-CONTRACT-FROZEN` | PASS | Section 2.2 的 4 个核心方法签名已在源码中落地 |
 
 ### 15.2 文档交叉验证结果
 
