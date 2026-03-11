@@ -20,7 +20,7 @@ struct SettingsTabRootView: View {
     }
 
     var body: some View {
-        NavigationStack(path: $shellState.settingsPath) {
+        NavigationStack(path: $shellState.settingsRoutes) {
             Form {
                 Section(strings.languageSection) {
                     Picker(strings.languageSection, selection: $languageStore.language) {
@@ -77,7 +77,7 @@ struct SettingsTabRootView: View {
     }
 
     private func resetOnboardingStateForBeta() {
-        shellState.settingsPath = NavigationPath()
+        shellState.settingsRoutes = []
         shellState.selectedTab = .map
         languageStore.resetOnboardingForBeta()
     }
@@ -91,32 +91,30 @@ struct AboutView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: DSSpacing.space24) {
-                readableSection {
-                    VStack(alignment: .leading, spacing: DSSpacing.space12) {
-                        Text(strings.aboutText)
-                            .dsTextStyle(.title, weight: .semibold)
-                            .foregroundStyle(DSColor.textPrimary)
-                            .accessibilityAddTraits(.isHeader)
+                VStack(alignment: .leading, spacing: DSSpacing.space12) {
+                    Text(strings.aboutText)
+                        .dsTextStyle(.title, weight: .semibold)
+                        .foregroundStyle(DSColor.textPrimary)
+                        .accessibilityAddTraits(.isHeader)
 
-                        Text(strings.aboutBody)
-                            .dsTextStyle(.body)
-                            .foregroundStyle(DSColor.textPrimary)
-                            .lineSpacing(DSLineSpacing.body)
-                    }
+                    Text(strings.aboutBody)
+                        .dsTextStyle(.body)
+                        .foregroundStyle(DSColor.textPrimary)
+                        .lineSpacing(DSLineSpacing.body)
                 }
+                .dsReadableContent()
 
-                readableSection {
-                    GroupBox {
-                        Text(strings.demoNotesBody)
-                            .dsTextStyle(.caption)
-                            .foregroundStyle(DSColor.textSecondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.vertical, DSSpacing.space4)
-                    } label: {
-                        Text(strings.demoNotesTitle)
-                            .dsTextStyle(.headline)
-                    }
+                GroupBox {
+                    Text(strings.demoNotesBody)
+                        .dsTextStyle(.caption)
+                        .foregroundStyle(DSColor.textSecondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, DSSpacing.space4)
+                } label: {
+                    Text(strings.demoNotesTitle)
+                        .dsTextStyle(.headline)
                 }
+                .dsReadableContent()
             }
             .padding(.horizontal, DSSpacing.space24)
             .padding(.vertical, DSSpacing.space16)
@@ -124,11 +122,5 @@ struct AboutView: View {
         .navigationTitle(strings.aboutText)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
-    }
-
-    private func readableSection<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        content()
-            .frame(maxWidth: DSLayout.readableContentMaxWidth, alignment: .leading)
-            .frame(maxWidth: .infinity, alignment: .center)
     }
 }

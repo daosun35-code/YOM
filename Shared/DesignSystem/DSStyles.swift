@@ -66,6 +66,14 @@ struct DSSurfaceCardModifier: ViewModifier {
     }
 }
 
+struct DSReadableContentModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .frame(maxWidth: DSLayout.readableContentMaxWidth, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .center)
+    }
+}
+
 extension View {
     func dsPrimaryCTAStyle() -> some View {
         buttonStyle(DSPrimaryCTAButtonStyle())
@@ -77,5 +85,9 @@ extension View {
 
     func dsSurfaceCard(isSelected: Bool = false) -> some View {
         modifier(DSSurfaceCardModifier(isSelected: isSelected))
+    }
+
+    func dsReadableContent() -> some View {
+        modifier(DSReadableContentModifier())
     }
 }

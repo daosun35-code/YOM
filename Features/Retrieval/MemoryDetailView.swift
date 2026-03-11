@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct MemoryDetailView: View {
     @EnvironmentObject private var languageStore: LanguageStore
@@ -27,63 +28,61 @@ struct MemoryDetailView: View {
     // MARK: - Hero
 
     private var heroSection: some View {
-        readableSection {
-            VStack {
-                Spacer(minLength: 0)
-                Text(memoryPoint.title(in: languageStore.language))
-                    .dsTextStyle(.title, weight: .semibold)
-                    .foregroundStyle(DSColor.textPrimary)
-                    .padding(DSSpacing.space16)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .frame(height: DSControl.detailHeroHeight)
-            .dsSurfaceCard()
-            .accessibilityHidden(true)
+        VStack {
+            Spacer(minLength: 0)
+            Text(memoryPoint.title(in: languageStore.language))
+                .dsTextStyle(.title, weight: .semibold)
+                .foregroundStyle(DSColor.textPrimary)
+                .padding(DSSpacing.space16)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(height: DSControl.detailHeroHeight)
+        .dsSurfaceCard()
+        .accessibilityHidden(true)
+        .dsReadableContent()
     }
 
     // MARK: - Info
 
     private var infoSection: some View {
-        readableSection {
-            VStack(alignment: .leading, spacing: DSSpacing.space12) {
-                Text(memoryPoint.title(in: languageStore.language))
-                    .dsTextStyle(.title, weight: .semibold)
+        VStack(alignment: .leading, spacing: DSSpacing.space12) {
+            Text(memoryPoint.title(in: languageStore.language))
+                .dsTextStyle(.title, weight: .semibold)
+                .foregroundStyle(DSColor.textPrimary)
+                .accessibilityAddTraits(.isHeader)
+                .accessibilityIdentifier("memory_detail_title")
+
+            Text("\(memoryPoint.year)")
+                .dsTextStyle(.caption, weight: .semibold)
+                .foregroundStyle(DSColor.textSecondary)
+
+            Text(memoryPoint.summary(in: languageStore.language))
+                .dsTextStyle(.body)
+                .foregroundStyle(DSColor.textPrimary)
+                .lineSpacing(DSLineSpacing.body)
+
+            let story = memoryPoint.story(in: languageStore.language)
+            if !story.isEmpty {
+                Divider()
+                    .padding(.vertical, DSSpacing.space4)
+
+                Text(strings.memoryDetailStorySection)
+                    .dsTextStyle(.headline, weight: .semibold)
                     .foregroundStyle(DSColor.textPrimary)
-                    .accessibilityAddTraits(.isHeader)
-                    .accessibilityIdentifier("memory_detail_title")
 
-                Text("\(memoryPoint.year)")
-                    .dsTextStyle(.caption, weight: .semibold)
-                    .foregroundStyle(DSColor.textSecondary)
-
-                Text(memoryPoint.summary(in: languageStore.language))
+                Text(story)
                     .dsTextStyle(.body)
                     .foregroundStyle(DSColor.textPrimary)
                     .lineSpacing(DSLineSpacing.body)
-
-                let story = memoryPoint.story(in: languageStore.language)
-                if !story.isEmpty {
-                    Divider()
-                        .padding(.vertical, DSSpacing.space4)
-
-                    Text(strings.memoryDetailStorySection)
-                        .dsTextStyle(.headline, weight: .semibold)
-                        .foregroundStyle(DSColor.textPrimary)
-
-                    Text(story)
-                        .dsTextStyle(.body)
-                        .foregroundStyle(DSColor.textPrimary)
-                        .lineSpacing(DSLineSpacing.body)
-                }
             }
         }
+        .dsReadableContent()
     }
 
     // MARK: - Media
 
     private var mediaSection: some View {
-        readableSection {
+        Group {
             let imageMedia = memoryPoint.media.filter { $0.type == .image }
             if !imageMedia.isEmpty {
                 VStack(alignment: .leading, spacing: DSSpacing.space12) {
@@ -106,6 +105,7 @@ struct MemoryDetailView: View {
                 }
             }
         }
+        .dsReadableContent()
     }
 
     @ViewBuilder
@@ -170,7 +170,7 @@ struct MemoryDetailView: View {
     // MARK: - Complete
 
     private var completeSection: some View {
-        readableSection {
+        Group {
             if let onComplete = onComplete {
                 Button(strings.memoryExperienceComplete) {
                     onComplete()
@@ -179,14 +179,7 @@ struct MemoryDetailView: View {
                 .accessibilityIdentifier("memory_experience_complete")
             }
         }
-    }
-
-    // MARK: - Helpers
-
-    private func readableSection<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        content()
-            .frame(maxWidth: DSLayout.readableContentMaxWidth, alignment: .leading)
-            .frame(maxWidth: .infinity, alignment: .center)
+        .dsReadableContent()
     }
 
     private func iconName(for type: MemoryMedia.MediaType) -> String {

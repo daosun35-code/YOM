@@ -9,17 +9,16 @@ struct ArchiveTabRootView: View {
 
     @EnvironmentObject private var shellState: AppShellState
     @EnvironmentObject private var languageStore: LanguageStore
+    @EnvironmentObject private var memoryRepository: LocalMemoryRepository
     @State private var selectedSubmenu: ArchiveSubmenu = .explored
 
-    private let points = PointOfInterest.samples
     private let favoriteYears: Set<Int> = [1935, 1962]
-    // PERF-001: computed→let，避免每次 body 执行重建字典
-    private let pointsByID = Dictionary(uniqueKeysWithValues: PointOfInterest.samples.map { ($0.id, $0) })
-    private var exploredPoints: [PointOfInterest] { points }
-    private var favoritePoints: [PointOfInterest] {
-        points.filter { favoriteYears.contains($0.year) }
+    private var memoryPoints: [MemoryPoint] { memoryRepository.memoryPoints }
+    private var exploredPoints: [MemoryPoint] { memoryPoints }
+    private var favoritePoints: [MemoryPoint] {
+        memoryPoints.filter { favoriteYears.contains($0.year) }
     }
-    private var visiblePoints: [PointOfInterest] {
+    private var visiblePoints: [MemoryPoint] {
         switch selectedSubmenu {
         case .explored:
             return exploredPoints
@@ -42,7 +41,7 @@ struct ArchiveTabRootView: View {
     private var strings: AppStrings { AppStrings(language: languageStore.language) }
 
     var body: some View {
-        NavigationStack(path: $shellState.archivePath) {
+        NavigationStack(path: $shellState.archiveRoutes) {
             List {
                 Section(visibleSectionHeader) {
                     if visiblePoints.isEmpty {
@@ -61,9 +60,9 @@ struct ArchiveTabRootView: View {
                         )
                         .listRowSeparator(.hidden)
                     } else {
-                        ForEach(visiblePoints) { point in
+                        ForEach(visiblePoints) { memoryPoint in
                             Button {
-                                shellState.archivePath.append(ArchiveRoute.retrieval(point.id))
+                                shellState.archiveRoutes.append(ArchiveRoute.retrieval(memoryPoint.id))
                             } label: {
                                 VStack(alignment: .leading, spacing: DSSpacing.space12) {
                                     HStack(spacing: DSSpacing.space12) {
@@ -71,20 +70,20 @@ struct ArchiveTabRootView: View {
                                             .fill(DSColor.surfaceSecondary)
                                             .frame(width: DSControl.listThumbnailSize, height: DSControl.listThumbnailSize)
                                             .overlay {
-                                                Text("\(point.year)")
+                                                Text("\(memoryPoint.year)")
                                                     .dsTextStyle(.caption, weight: .semibold)
                                             }
                                             .accessibilityHidden(true)
 
                                         VStack(alignment: .leading, spacing: DSSpacing.space4) {
-                                            Text(point.title(in: languageStore.language))
+                                            Text(memoryPoint.title(in: languageStore.language))
                                                 .dsTextStyle(.body, weight: .medium)
                                                 .foregroundStyle(DSColor.textPrimary)
-                                            Text(point.summary(in: languageStore.language))
+                                            Text(memoryPoint.summary(in: languageStore.language))
                                                 .dsTextStyle(.caption)
                                                 .foregroundStyle(DSColor.textSecondary)
                                                 .lineLimit(2)
-                                            if favoriteYears.contains(point.year) {
+                                            if favoriteYears.contains(memoryPoint.year) {
                                                 Label(strings.archiveFavoriteTag, systemImage: "star.fill")
                                                     .dsTextStyle(.caption, weight: .semibold)
                                                     .foregroundStyle(DSColor.statusWarning)
@@ -124,8 +123,8 @@ struct ArchiveTabRootView: View {
                                 )
                             )
                             .listRowSeparator(.hidden)
-                            .accessibilityIdentifier("archive_item_\(point.year)")
-                            .accessibilityLabel(point.accessibilityLabel(in: languageStore.language))
+                            .accessibilityIdentifier("archive_item_\(memoryPoint.year)")
+                            .accessibilityLabel(memoryPoint.poi.accessibilityLabel(in: languageStore.language))
                             .accessibilityHint(strings.archiveOpenRetrievalHint)
                         }
                     }
@@ -141,8 +140,8 @@ struct ArchiveTabRootView: View {
             .navigationDestination(for: ArchiveRoute.self) { route in
                 switch route {
                 case .retrieval(let pointID):
-                    if let point = pointsByID[pointID] {
-                        RetrievalView(point: point, showsCloseButton: false, onClose: nil)
+                    if let memoryPoint = memoryRepository.memoryPoint(by: pointID) {
+                        RetrievalView(memoryPoint: memoryPoint, showsCloseButton: false, onClose: nil)
                     } else {
                         ContentUnavailableView(
                             strings.archiveTitle,

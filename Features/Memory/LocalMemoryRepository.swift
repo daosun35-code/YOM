@@ -12,7 +12,7 @@ final class LocalMemoryRepository: ObservableObject {
         loadFromBundle()
     }
 
-    func point(by id: UUID) -> MemoryPoint? {
+    func memoryPoint(by id: UUID) -> MemoryPoint? {
         pointsByID[id]
     }
 

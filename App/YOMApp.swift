@@ -4,6 +4,7 @@ import SwiftUI
 struct YOMApp: App {
     @StateObject private var shellState = AppShellState()
     @StateObject private var languageStore = LanguageStore()
+    @StateObject private var memoryRepository = LocalMemoryRepository()
     private let launchArguments = ProcessInfo.processInfo.arguments
 
     init() {
@@ -21,6 +22,7 @@ struct YOMApp: App {
             AppRootView()
                 .environmentObject(shellState)
                 .environmentObject(languageStore)
+                .environmentObject(memoryRepository)
                 .environment(\.locale, languageStore.language.locale)
                 .transformEnvironment(\.dynamicTypeSize) { value in
                     guard launchArguments.contains("UITEST_FORCE_DYNAMIC_TYPE_ACCESSIBILITY_XXXL") else { return }

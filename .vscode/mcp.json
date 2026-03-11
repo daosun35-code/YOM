@@ -1,0 +1,22 @@
+{
+  "servers": {
+    "swiftlens": {
+      "type": "stdio",
+      "command": "/opt/homebrew/bin/uvx",
+      "args": [
+        "--python",
+        "3.13",
+        "swiftlens"
+      ]
+    },
+    "sqlite": {
+      "type": "stdio",
+      "command": "/usr/local/bin/npx",
+      "args": [
+        "-y",
+        "mcp-sqlite-server",
+        "/Users/xiangkaisun/Documents/YOM/YOM.sqlite"
+      ]
+    }
+  }
+}
