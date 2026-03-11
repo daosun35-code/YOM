@@ -3,8 +3,10 @@ import SwiftUI
 import UIKit
 
 struct MapTabRootView: View {
+    @EnvironmentObject private var shellState: AppShellState
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var memoryRepository: LocalMemoryRepository
+    @EnvironmentObject private var archiveCoordinator: MemoryArchiveCoordinator
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.openURL) private var openURL
 
@@ -19,6 +21,8 @@ struct MapTabRootView: View {
     @State private var isSearchCardVisible = false
     @State private var searchCardVisibilityTask: Task<Void, Never>?
     @State private var mapContainerWidth: CGFloat = 0
+    @State private var unlockEvaluator: UnlockEvaluator?
+    @State private var unlockedMemoryPoint: MemoryPoint?
 
     private var points: [PointOfInterest] { memoryRepository.allPOIs }
 
@@ -42,6 +46,9 @@ struct MapTabRootView: View {
     private var forcePreviewExpandedForUITests: Bool {
         launchArguments.contains("UITEST_FORCE_PREVIEW_EXPANDED")
     }
+    private var forceUnlockedMemoryDetailForUITests: Bool {
+        launchArguments.contains("UITEST_FORCE_UNLOCKED_MEMORY_DETAIL")
+    }
     private var clampedPreviewContentHeight: CGFloat {
         min(
             max(measuredPreviewContentHeight, DSControl.previewSheetCompactMinHeight),
@@ -58,6 +65,7 @@ struct MapTabRootView: View {
     private enum MapFeedbackAlert: Identifiable {
         case searchNoResults(query: String)
         case locationPermissionDenied
+        case archiveActionFailed(message: String)
 
         var id: String {
             switch self {
@@ -65,6 +73,8 @@ struct MapTabRootView: View {
                 return "search-no-results-\(query)"
             case .locationPermissionDenied:
                 return "location-permission-denied"
+            case .archiveActionFailed(let message):
+                return "archive-action-failed-\(message)"
             }
         }
     }
@@ -138,6 +148,26 @@ struct MapTabRootView: View {
                             }),
                             secondaryButton: .cancel(Text(strings.notNowText))
                         )
+                    case .archiveActionFailed(let message):
+                        return Alert(
+                            title: Text(strings.archiveActionErrorTitle),
+                            message: Text(message),
+                            dismissButton: .default(Text(strings.closeText))
+                        )
+                    }
+                }
+                .sheet(item: $unlockedMemoryPoint) { memoryPoint in
+                    NavigationStack {
+                        MemoryDetailView(memoryPoint: memoryPoint) {
+                            handleExperienceComplete(for: memoryPoint)
+                        }
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button(strings.closeText) {
+                                    dismissUnlockedMemoryDetail()
+                                }
+                            }
+                        }
                     }
                 }
         }
@@ -275,10 +305,19 @@ struct MapTabRootView: View {
         .onAppear {
             syncLocationUpdates()
             applyUITestOverridesIfNeeded()
+            configureUnlockEvaluatorIfNeeded()
+            updateUnlockProgressIfNeeded()
         }
         .onChange(of: languageStore.hasCompletedOnboarding) { _, _ in
             syncLocationUpdates()
             applyUITestOverridesIfNeeded()
+        }
+        .onChange(of: state.navigationPoint?.id) { _, _ in
+            configureUnlockEvaluatorIfNeeded()
+            updateUnlockProgressIfNeeded()
+        }
+        .onChange(of: locationProvider.coordinateKey) { _, _ in
+            updateUnlockProgressIfNeeded()
         }
         // SHEET-001: 任意关闭路径（Close、下滑、Go动作）和新 pin 切入均重置 detent/高度
         .onChange(of: state.previewPoint?.id) { _, _ in
@@ -776,6 +815,62 @@ struct MapTabRootView: View {
         openURL(settingsURL)
     }
 
+    private func configureUnlockEvaluatorIfNeeded() {
+        guard let memoryPoint = activeNavigationMemoryPoint else {
+            unlockEvaluator = nil
+            return
+        }
+
+        let evaluator = UnlockEvaluator(target: memoryPoint)
+        unlockEvaluator = evaluator
+
+        if forceUnlockedMemoryDetailForUITests {
+            evaluator.forceUnlock()
+            presentUnlockedMemoryDetailIfNeeded(for: memoryPoint)
+        }
+    }
+
+    private func updateUnlockProgressIfNeeded() {
+        guard let memoryPoint = activeNavigationMemoryPoint,
+              let evaluator = unlockEvaluator,
+              let coordinate = locationProvider.coordinate else {
+            return
+        }
+
+        evaluator.updateLocation(coordinate)
+        if evaluator.isUnlocked {
+            presentUnlockedMemoryDetailIfNeeded(for: memoryPoint)
+        }
+    }
+
+    private func presentUnlockedMemoryDetailIfNeeded(for memoryPoint: MemoryPoint) {
+        guard unlockedMemoryPoint?.id != memoryPoint.id else { return }
+        unlockedMemoryPoint = memoryPoint
+    }
+
+    private func dismissUnlockedMemoryDetail() {
+        unlockedMemoryPoint = nil
+        withAnimation(shellAnimation) {
+            state.endNavigation()
+        }
+        unlockEvaluator = nil
+    }
+
+    private func handleExperienceComplete(for memoryPoint: MemoryPoint) {
+        do {
+            _ = try archiveCoordinator.completeExperience(for: memoryPoint, source: .active)
+            unlockedMemoryPoint = nil
+            withAnimation(shellAnimation) {
+                state.endNavigation()
+                shellState.archiveRoutes = []
+                shellState.selectedTab = .archive
+            }
+            unlockEvaluator = nil
+        } catch {
+            activeAlert = .archiveActionFailed(message: archiveErrorMessage(for: error))
+        }
+    }
+
     private func applyUITestOverridesIfNeeded() {
         guard languageStore.hasCompletedOnboarding, hasAppliedUITestOverrides == false else { return }
         hasAppliedUITestOverrides = true
@@ -803,6 +898,28 @@ struct MapTabRootView: View {
         if forcePreviewPointForUITests,
            let point = points.first {
             state.selectPoint(point)
+        }
+    }
+
+    private var activeNavigationMemoryPoint: MemoryPoint? {
+        guard let navigationPoint = state.navigationPoint else { return nil }
+        return memoryRepository.memoryPoint(by: navigationPoint.id)
+    }
+
+    private func archiveErrorMessage(for error: Error) -> String {
+        guard let archiveError = error as? MemoryArchiveCoordinatorError else {
+            return strings.archiveActionGenericFailureBody
+        }
+
+        switch archiveError {
+        case .archiveUnavailable, .cardRenderFailed:
+            return strings.archiveCompleteFailedBody
+        case .missingGeneratedCard:
+            return strings.archiveCardUnavailable
+        case .photoLibraryDenied:
+            return strings.archivePhotoAccessDeniedBody
+        case .photoSaveFailed:
+            return strings.archiveSaveFailedBody
         }
     }
 }

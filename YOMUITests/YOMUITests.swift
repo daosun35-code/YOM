@@ -671,7 +671,7 @@ final class YOMUITests: XCTestCase {
     }
 
     func testArchiveCardShowsOpenActionAndNavigatesToRetrieval() {
-        let app = makeApp()
+        let app = makeApp(extraArguments: ["UITEST_SEED_ARCHIVE_SAMPLE"])
         app.launch()
 
         completeOnboarding(in: app)
@@ -689,7 +689,7 @@ final class YOMUITests: XCTestCase {
     }
 
     func testArchiveSubmenuSwitchesBetweenExploredAndFavorites() {
-        let app = makeApp()
+        let app = makeApp(extraArguments: ["UITEST_SEED_ARCHIVE_SAMPLE"])
         app.launch()
 
         completeOnboarding(in: app)
@@ -735,7 +735,7 @@ final class YOMUITests: XCTestCase {
     }
 
     func testSnapshotBaselineArchivePage() {
-        let app = makeApp()
+        let app = makeApp(extraArguments: ["UITEST_SEED_ARCHIVE_SAMPLE"])
         app.launch()
 
         completeOnboarding(in: app)
@@ -761,7 +761,7 @@ final class YOMUITests: XCTestCase {
     }
 
     func testSnapshotBaselineRetrievalPage() {
-        let app = makeApp()
+        let app = makeApp(extraArguments: ["UITEST_SEED_ARCHIVE_SAMPLE"])
         app.launch()
 
         completeOnboarding(in: app)
@@ -795,6 +795,30 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(memoryTitle.waitForExistence(timeout: 8))
         XCTAssertEqual(memoryTitle.label, "Market Street Corner")
         XCTAssertTrue(app.navigationBars["Memory Detail"].waitForExistence(timeout: 5))
+    }
+
+    func testCompleteExperienceCreatesArchiveEntryAndSwitchesTabs() {
+        let app = makeApp(
+            extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_LOCATION_AUTHORIZED",
+                "UITEST_FORCE_NAVIGATION_ACTIVE",
+                "UITEST_FORCE_UNLOCKED_MEMORY_DETAIL"
+            ]
+        )
+        app.launch()
+
+        let memoryTitle = app.staticTexts["memory_detail_title"]
+        XCTAssertTrue(memoryTitle.waitForExistence(timeout: 8))
+        XCTAssertEqual(memoryTitle.label, "Market Street Corner")
+
+        let completeButton = app.buttons["memory_experience_complete"]
+        XCTAssertTrue(completeButton.waitForExistence(timeout: 5))
+        completeButton.tap()
+
+        let archiveCard = app.buttons["archive_item_1935"]
+        XCTAssertTrue(archiveCard.waitForExistence(timeout: 8))
+        XCTAssertTrue(app.navigationBars["Archive"].waitForExistence(timeout: 5))
     }
 
     func testBackgroundRefreshUnavailableShowsGuidance() {

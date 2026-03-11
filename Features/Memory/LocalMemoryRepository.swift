@@ -21,22 +21,31 @@ final class LocalMemoryRepository: ObservableObject {
         memoryPoints.map(\.poi)
     }
 
+    static func bundleMemoryPointIDs(bundle: Bundle = .main) -> Set<UUID> {
+        Set(loadMemoryPoints(bundle: bundle).map(\.id))
+    }
+
     // MARK: - Private
 
     private func loadFromBundle() {
-        guard let url = Bundle.main.url(forResource: "memories", withExtension: "json") else {
+        let points = Self.loadMemoryPoints(bundle: .main)
+        self.memoryPoints = points
+        self.pointsByID = Dictionary(uniqueKeysWithValues: points.map { ($0.id, $0) })
+    }
+
+    private static func loadMemoryPoints(bundle: Bundle) -> [MemoryPoint] {
+        guard let url = bundle.url(forResource: "memories", withExtension: "json") else {
             print("[LocalMemoryRepository] ⚠️ memories.json not found in Bundle – running with empty data")
-            return
+            return []
         }
 
         do {
             let data = try Data(contentsOf: url)
             let decoded = try JSONDecoder().decode(MemoriesPayload.self, from: data)
-            let points = decoded.memoryPoints.map { $0.toMemoryPoint() }
-            self.memoryPoints = points
-            self.pointsByID = Dictionary(uniqueKeysWithValues: points.map { ($0.id, $0) })
+            return decoded.memoryPoints.map { $0.toMemoryPoint() }
         } catch {
             print("[LocalMemoryRepository] ⚠️ Failed to decode memories.json: \(error)")
+            return []
         }
     }
 }
