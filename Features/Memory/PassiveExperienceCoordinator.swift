@@ -128,7 +128,7 @@ final class SystemPassiveLocationCoordinator: NSObject, PassiveLocationCoordinat
 #if DEBUG
         if launchEnvironment["UITEST_FORCE_PASSIVE_READY"] == "1" ||
             launchArguments.contains("UITEST_FORCE_LOCATION_AUTHORIZED") {
-            return CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
+            return CLLocationCoordinate2D(latitude: 40.7144, longitude: -73.9989)
         }
 #endif
 

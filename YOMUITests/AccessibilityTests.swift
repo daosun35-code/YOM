@@ -42,7 +42,7 @@ final class AccessibilityTests: XCTestCase {
 
         let title = app.staticTexts["memory_detail_title"]
         XCTAssertTrue(title.waitForExistence(timeout: 8))
-        XCTAssertEqual(title.label, "Market Street Corner")
+        XCTAssertEqual(title.label, UITestMemoryCatalog.primaryPointTitle)
 
         let completeButton = app.buttons["memory_experience_complete"]
         XCTAssertTrue(completeButton.waitForExistence(timeout: 5))

@@ -29,7 +29,7 @@ struct ArchiveTabRootView: View {
     @State private var selectedSubmenu: ArchiveSubmenu = .explored
     @State private var actionAlert: ArchiveActionAlert?
 
-    private let favoriteYears: Set<Int> = [1935, 1962]
+    private let favoriteYears: Set<Int> = [1920, 1962]
     private var archiveEntries: [ArchivedMemoryEntry] {
         archiveCoordinator.archiveEntries(memoryPointLookup: memoryRepository.memoryPoint(by:))
     }

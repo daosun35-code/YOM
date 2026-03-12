@@ -1,7 +1,7 @@
 # 社区记忆库本地化实装规划报告（Phase 0：不连接服务器）
 
 > 创建日期：2026-03-09（America/New_York）
-> 最后更新：2026-03-11（America/New_York）
+> 最后更新：2026-03-12（America/New_York）
 > 当前约束：暂不连接任何后端服务；记忆元数据全部本地化，媒体资源允许占位并逐步补齐到本地 App。
 > 目标：先把 Active / Passive 双模式在端内跑通，再进入后端化阶段。
 
@@ -22,6 +22,7 @@
 | v0.11 | 2026-03-11 | 执行 AI-02：`ExplorationStore` 完成 SwiftData 纯存储闭环与 `ExplorationStoreTests`；`GATE-EXPLORATIONSTORE-TESTS`、`GATE-BUILD`、`GATE-MODULE-0B0C-IMPLEMENTED`、`GATE-INTERFACE-CONTRACT-FROZEN` 均转 PASS，并回填 Section 10.6 / 15.1 状态 |
 | v0.12 | 2026-03-11 | 将 SwiftLens MCP 研究整合入 Section 11.4：新增“强制使用 SwiftLens”执行铁律、AI-00 ~ AI-08 逐步必跑工具链、交接包 SwiftLens 证据要求与提示模板约束；若 SwiftLens 环境或索引未就绪，开发会话不得继续编码 |
 | v0.13 | 2026-03-11 | 补记 AI-03：`CardRenderer` 完成纯渲染闭环与 `CardRendererTests`，`GATE-CARDRENDERER-TESTS` 转 PASS；同步修正文档中仍标“待实现 / TODO / 应为 FAIL”的状态，并记录本轮 SwiftLens 仍处于 `BLOCKED-SWIFTLENS` |
+| v0.14 | 2026-03-12 | 执行 AI-08：按实测结果回填文档状态；`GATE-UI-MEMORY-TITLE-TEST`、`GATE-BG-REFRESH-GUARD-TEST`、`GATE-CONFIG-PLIST-KEYS`、`GATE-A11Y`、`GATE-GEOFENCE-TESTS`、`GATE-NOTIFICATION-TESTS` 均转 PASS；补记 Passive 主线接线证据，并更新 SwiftLens 盲区说明 |
 
 ## 0. 执行结论
 
@@ -41,16 +42,16 @@
 5. 所有新增 UI 必须通过 `xcodebuild build` 编译验证及 `xcodebuild test` 回归测试，确保编译通过及架构合规。（注：`xcodebuildmcp` 为本地 MCP 工具，等同于封装后的 `xcodebuild` 命令行调用；若未配置，直接用 `xcodebuild` 命令替代。）
 6. 所有新增交互式 UI 元素必须满足无障碍（Accessibility）最低要求：① 可交互元素（按钮、输入框）必须设置 `accessibilityLabel`，不得依赖视觉文本自动推断；② 关键信息载体（标题、状态文本）必须设置 `accessibilityIdentifier`；③ UI 必须在 `UIContentSizeCategory.accessibilityExtraExtraExtraLarge` 下不发生元素截断或重叠。门禁：`GATE-A11Y`（Section 10.7 #19），每个引入新主页面的 PR 必跑。**例外：纯装饰性图片/色块不需要 `accessibilityLabel`，应标记 `accessibilityHidden(true)`。**
 
-## 0.2 当前可执行性判定（2026-03-10 补充）
+## 0.2 当前可执行性判定（2026-03-12 更新）
 
 以当前仓库实测为准：
 
 1. `xcodebuild build`（iOS Simulator）可通过（证据 `EVID-BUILD`）。
 2. `LocalMemoryDataIntegrityTests` 可通过（当前位于 `YOMUITests` target，证据 `EVID-TEST-DATA`）。
-3. Phase 0A 尚缺 1 条 UI 断言测试：进入 `MemoryDetailView` 后验证 `memory_detail_title`（证据 `EVID-UI-TITLE-ASSERT`）。
-4. Phase 0B / 0C 仍暂不可端到端执行：`ExplorationStore` 与 `CardRenderer` 已分别完成纯存储 / 纯渲染闭环（证据 `EVID-EXPLORATIONSTORE` + `EVID-CARDRENDERER`），但 `GeofenceMonitor` / `NotificationOrchestrator` 仍待实现，且 Active / Passive 集成尚未接线（证据 `EVID-MODULE-0B0C`）。
-5. Passive 与相册链路仍有配置缺口：`NSLocationAlwaysAndWhenInUseUsageDescription` 与 `NSPhotoLibraryAddUsageDescription` 需补齐（证据 `EVID-CONFIG-KEYS`）。
-6. Passive 运行时前置条件 `Background App Refresh` 降级保护测试尚未落地（证据 `EVID-BGREFRESH-GUARD`）。
+3. Phase 0A 关键 UI 断言已补齐：地图 pin 可见性、`memory_detail_title` 断言与 a11y 基线均可通过（证据 `EVID-UI-MAP-PIN-ASSERT` + `EVID-UI-TITLE-ASSERT` + `EVID-A11Y`）。
+4. Phase 0B 仍为部分完成：`ExplorationStore` 与 `CardRenderer` 已分别完成纯存储 / 纯渲染闭环，但 Active 写档、保存/分享、档案页最小闭环仍待 AI-04（证据 `EVID-EXPLORATIONSTORE` + `EVID-CARDRENDERER`）。
+5. Phase 0C 核心 Passive 能力已完成到模块与接线层：`GeofenceMonitor` / `NotificationOrchestrator` 单测可通过，且已接入 `PassiveExperienceCoordinator`；完整复合 Gate 证据仍待统一收口（证据 `EVID-GEOFENCE` + `EVID-NOTIFICATION` + `EVID-PASSIVE-WIRING`）。
+6. Passive 前置配置与降级保护已补齐：权限键 Gate 与 `Background App Refresh` 降级 Gate 均可通过（证据 `EVID-CONFIG-KEYS` + `EVID-BGREFRESH-GUARD`）。
 
 ## 0.3 本报告的“可执行标准”定义
 
@@ -95,20 +96,20 @@
 [iOS App]
   -> LocalMemoryRepository (本地记忆数据 + 媒体索引，代码已实现[EVID-CODE-LMR]；依赖 memories.json 解码校验通过[EVID-TEST-DATA])
   -> UnlockEvaluator (距离判定 + dwell 计时，已实现[EVID-CODE-UE])
-  -> GeofenceMonitor (CLMonitor geofence 轮换，待实现)
+  -> GeofenceMonitor (CLMonitor geofence 轮换，已实现并通过单测[EVID-GEOFENCE]；Passive 接线见[EVID-PASSIVE-WIRING])
   -> ExplorationStore (已探索记录，纯存储闭环已实现[EVID-EXPLORATIONSTORE]；UI 接线待 AI-04)
   -> CardRenderer (端上卡片渲染，纯渲染闭环已实现[EVID-CARDRENDERER]；保存/分享接线待 AI-04)
-  -> NotificationOrchestrator (本地通知编排，待实现)
+  -> NotificationOrchestrator (本地通知编排，已实现并通过单测[EVID-NOTIFICATION]；Passive 接线见[EVID-PASSIVE-WIRING])
 ```
 
 ### 2.1 模块职责
 
 1. `LocalMemoryRepository`：加载本地记忆数据（Bundle JSON）；`MemoryPoint.media` 数组即媒体索引，无需独立 `LocalMediaCatalog`。**代码已实现**（`Features/Memory/LocalMemoryRepository.swift`，证据 `EVID-CODE-LMR`），并要求 `Resources/memories.json` 通过 UUID/解码校验（见 Section 10.1，证据 `EVID-TEST-DATA`）。
 2. `UnlockEvaluator`：进入范围判定（`distance <= unlockRadius`）+ 容错累计 dwell 计时。**已实现（当前为采样驱动版本）**（`Features/Memory/UnlockEvaluator.swift`，证据 `EVID-CODE-UE`）。
-3. `GeofenceMonitor`：最近点计算（Top-N）、`CLMonitor` 条件注册与轮换。**待实现**。
+3. `GeofenceMonitor`：最近点计算（Top-N）、`CLMonitor` 条件注册与轮换。**已实现核心闭环**（`Features/Memory/GeofenceMonitor.swift` + `YOMUITests/GeofenceMonitorTests.swift`，证据 `EVID-GEOFENCE`）；Passive 主线接线见 `PassiveExperienceCoordinator`（证据 `EVID-PASSIVE-WIRING`）。
 4. `ExplorationStore`：记录探索状态、完成时间、来源（active/passive）。**已实现纯存储闭环**（`Features/Memory/ExplorationStore.swift` + `YOMUITests/ExplorationStoreTests.swift`，证据 `EVID-EXPLORATIONSTORE`）；Active 链路接线留待 AI-04。
 5. `CardRenderer`：把记忆内容渲染为图片（卡片模板）。**已实现纯渲染闭环**（`Features/Memory/CardRenderer.swift` + `YOMUITests/CardRendererTests.swift`，证据 `EVID-CARDRENDERER`）；保存/分享 UI 接线留待 AI-04。
-6. `NotificationOrchestrator`：注册本地提醒、去重与冷却。**待实现**。
+6. `NotificationOrchestrator`：注册本地提醒、去重与冷却。**已实现核心闭环**（`Features/Memory/NotificationOrchestrator.swift` + `YOMUITests/NotificationOrchestratorTests.swift`，证据 `EVID-NOTIFICATION`）；通知调度 / 点击回跳已接入 `PassiveExperienceCoordinator`（证据 `EVID-PASSIVE-WIRING`）。
 
 ### 2.2 Phase 0B/0C 模块接口契约（执行前冻结）
 
@@ -354,11 +355,11 @@ IDLE --(tap pin)--> NAVIGATING --(in range)--> IN_RANGE --(dwell ok)--> UNLOCKED
 | Risk-ID | 风险描述 | 可能性 | 影响面 | 缓解措施 | 预警信号 | 当前状态 |
 | --- | --- | --- | --- | --- | --- | --- |
 | RISK-01 | iOS 18 早期版本 `CLMonitor` exit 事件在远处误触发 | 中 | Passive 通知误发、体验混乱 | 在 `GeofenceMonitor` 中对每次 exit 事件追加距离二次校验（`distance > unlockRadius * 3`），低于阈值不下发通知 | Passive 测试中出现非预期 exit 回调 | 待实现（PR-3） |
-| RISK-02 | 用户设备 `Background App Refresh` 被禁用导致 Passive 围栏事件不可用 | 高（iOS 系统省电策略频繁限制） | Passive 全链路静默失效 | 检测 `UIApplication.backgroundRefreshStatus`；若非 `.available`，关闭 Passive 开关并展示引导文案（T-PR1-04） | `testBackgroundRefreshUnavailableShowsGuidance` FAIL | 待实现（T-PR1-04） |
+| RISK-02 | 用户设备 `Background App Refresh` 被禁用导致 Passive 围栏事件不可用 | 高（iOS 系统省电策略频繁限制） | Passive 全链路静默失效 | 检测 `UIApplication.backgroundRefreshStatus`；若非 `.available`，关闭 Passive 开关并展示引导文案（T-PR1-04） | `testBackgroundRefreshUnavailableShowsGuidance` FAIL | 缓解已落地（`EVID-BGREFRESH-GUARD` PASS），待持续回归 |
 | RISK-03 | SwiftData 在 iOS 17.0–17.1 存在并发写入 bug（已知 rdar） | 低（目标用户多为 iOS 17.2+） | `ExplorationRecord` 偶发持久化失败 | 采用 `ModelContext` 主线程单写策略，避免后台并发写入；若发现崩溃率上升，降级至 CoreData | `ExplorationStore` 单测持久化用例出现随机失败 | 待监控（PR-2） |
-| RISK-04 | 记忆点数量未来超出 `CLMonitor` 20 条件治理阈值，长尾记忆点 Passive 失效 | 中（Phase 0 数量少，远期风险） | 距用户当前位置较远的记忆点无法触发通知 | Top-N 轮换策略已在 `GeofenceMonitor` 接口契约中内置（Section 2.2）；超限前必须触发轮换逻辑 | 监控集合注册数 >= 18 时告警 | 接口已设计，待实现（T-PR3-01） |
+| RISK-04 | 记忆点数量未来超出 `CLMonitor` 20 条件治理阈值，长尾记忆点 Passive 失效 | 中（Phase 0 数量少，远期风险） | 距用户当前位置较远的记忆点无法触发通知 | Top-N 轮换策略已在 `GeofenceMonitor` 接口契约中内置（Section 2.2）；超限前必须触发轮换逻辑 | 监控集合注册数 >= 18 时告警 | 缓解已落地（`EVID-GEOFENCE` PASS），待真机与复合 Gate 持续回归 |
 | RISK-05 | 卡片渲染 P95 超过 1.5s（NFR-PERF-03），主要原因为大尺寸图片解码 | 低 | 卡片生成体验卡顿 | 使用 `ImageRenderer` 限制最终分辨率；封面图在写入时预缩略（`thumbnailAssetName` 字段） | `CardRenderer` 基准测试 P95 > 1.2s 时提前预警 | 待验证（T-PR2-02） |
-| RISK-06 | `NSLocationAlwaysAndWhenInUseUsageDescription` 缺失导致 Passive 权限请求被系统静默拒绝 | 高（已确认当前缺口，`EVID-CONFIG-KEYS` FAIL） | Passive 链路完全无法启动 | T-PR1-01 补齐配置键；`GATE-CONFIG-PLIST-KEYS` 纳入 PR-1 合入门禁 | 配置补齐前禁止合入任何 PR-3 内容 | 待补齐（T-PR1-01） |
+| RISK-06 | `NSLocationAlwaysAndWhenInUseUsageDescription` 缺失导致 Passive 权限请求被系统静默拒绝 | 高（历史缺口，现已补齐） | Passive 链路完全无法启动 | T-PR1-01 补齐配置键；`GATE-CONFIG-PLIST-KEYS` 纳入 PR-1 合入门禁 | 配置 Gate 回退为 FAIL | 已缓解（`EVID-CONFIG-KEYS` PASS） |
 
 ## 9. 分阶段实施（仅本地）
 
@@ -482,13 +483,13 @@ xcodebuild -scheme YOM -destination "$DEST" \
 | DoD-ID | 需求描述 | 验证方式 | 命令 / 用例 | 当前状态 |
 | --- | --- | --- | --- | --- |
 | DOD-0A-01 | 本地 JSON 可加载且 pin 正常渲染 | 自动化 + UI 自动化 | `GATE-DATA-INTEGRITY` + `GATE-UI-MAP-PIN-TEST` | PASS（证据 `EVID-TEST-DATA` + `EVID-UI-MAP-PIN-ASSERT`） |
-| DOD-0A-02 | Active 链路可达详情并展示核心字段 | UI 自动化 | `GATE-UI-MEMORY-TITLE-TEST` | TODO |
+| DOD-0A-02 | Active 链路可达详情并展示核心字段 | UI 自动化 | `GATE-UI-MEMORY-TITLE-TEST` | PASS（证据 `EVID-UI-TITLE-ASSERT`） |
 | DOD-0B-01 | 完成体验后归档可持久化 | 单测 + UI 流程 | `GATE-EXPLORATIONSTORE-TESTS` + 重启验证 | PARTIAL（证据 `EVID-EXPLORATIONSTORE`；纯存储已通过，UI 接线待 AI-04） |
 | DOD-0B-02 | 卡片可生成并可保存/分享 | 单测 + 集成接线 | `GATE-CARDRENDERER-TESTS` | PARTIAL（证据 `EVID-CARDRENDERER`；纯渲染已通过，保存/分享接线待 AI-04） |
-| DOD-0C-01 | Passive 围栏提醒可触发 | 集成测试 | `GATE-GEOFENCE-TESTS` + `GATE-NOTIFICATION-TESTS` | TODO |
-| DOD-0C-02 | 去重/冷却生效 | 单测 | `GATE-NOTIFICATION-TESTS` | TODO |
-| DOD-CONFIG-01 | Always + PhotoAdd 权限键齐全且对 App Target 生效 | 配置核查 | `GATE-CONFIG-PLIST-KEYS` | TODO |
-| DOD-CONFIG-02 | Background App Refresh 不可用时降级链路正确 | UI 自动化 + 断言 | `GATE-BG-REFRESH-GUARD-TEST` | TODO |
+| DOD-0C-01 | Passive 围栏提醒可触发 | 集成测试 | `GATE-GEOFENCE-TESTS` + `GATE-NOTIFICATION-TESTS` | PARTIAL（证据 `EVID-GEOFENCE` + `EVID-NOTIFICATION` + `EVID-PASSIVE-WIRING`；模块测试与 Passive 接线已完成，待 `GATE-PR3-COMPOSITE` / 通知点击链路统一收口） |
+| DOD-0C-02 | 去重/冷却生效 | 单测 | `GATE-NOTIFICATION-TESTS` | PASS（证据 `EVID-NOTIFICATION`） |
+| DOD-CONFIG-01 | Always + PhotoAdd 权限键齐全且对 App Target 生效 | 配置核查 | `GATE-CONFIG-PLIST-KEYS` | PASS（证据 `EVID-CONFIG-KEYS`） |
+| DOD-CONFIG-02 | Background App Refresh 不可用时降级链路正确 | UI 自动化 + 断言 | `GATE-BG-REFRESH-GUARD-TEST` | PASS（证据 `EVID-BGREFRESH-GUARD`） |
 | DOD-I18N-01 | 新增记忆内容字段（name/summary/story）有 en / zhHans / yue 三语覆盖 | 自动化 | `GATE-I18N`（PR 合入前必跑） | PASS（证据 `EVID-TEST-DATA`） |
 
 ### 10.7 门禁命令字典（机器可执行）
@@ -529,7 +530,7 @@ scripts/community_memory_gate.sh GATE-SNAPSHOT-BASELINE-TESTS
 ```bash
 scripts/community_memory_gate.sh GATE-SNAPSHOT-THRESHOLD-CONFIG
 ```
-9. `GATE-BG-REFRESH-GUARD-TEST`（当前应为 FAIL，直到实现）
+9. `GATE-BG-REFRESH-GUARD-TEST`（2026-03-12 实测 PASS，证据 `EVID-BGREFRESH-GUARD`）
 ```bash
 scripts/community_memory_gate.sh GATE-BG-REFRESH-GUARD-TEST
 ```
@@ -553,11 +554,11 @@ scripts/community_memory_gate.sh GATE-EXPLORATIONSTORE-TESTS
 ```bash
 scripts/community_memory_gate.sh GATE-CARDRENDERER-TESTS
 ```
-14. `GATE-GEOFENCE-TESTS`（当前应为 FAIL，直到实现）
+14. `GATE-GEOFENCE-TESTS`（2026-03-12 实测 PASS，证据 `EVID-GEOFENCE`）
 ```bash
 scripts/community_memory_gate.sh GATE-GEOFENCE-TESTS
 ```
-15. `GATE-NOTIFICATION-TESTS`（当前应为 FAIL，直到实现）
+15. `GATE-NOTIFICATION-TESTS`（2026-03-12 实测 PASS，证据 `EVID-NOTIFICATION`）
 ```bash
 scripts/community_memory_gate.sh GATE-NOTIFICATION-TESTS
 ```
@@ -573,7 +574,7 @@ scripts/community_memory_gate.sh GATE-PR2-COMPOSITE
 ```bash
 scripts/community_memory_gate.sh GATE-PR3-COMPOSITE
 ```
-19. `GATE-A11Y`（当前应为 FAIL，直到 T-PR1-05 完成；每个引入新主页面的 PR 必跑）
+19. `GATE-A11Y`（2026-03-12 实测 PASS，证据 `EVID-A11Y`；每个引入新主页面的 PR 必跑）
 ```bash
 scripts/community_memory_gate.sh GATE-A11Y
 ```
@@ -582,7 +583,7 @@ scripts/community_memory_gate.sh GATE-A11Y
 ```bash
 scripts/community_memory_gate.sh GATE-INTERFACE-CONTRACT-FROZEN
 ```
-> 校验内容：4 个协议文件存在且包含 Section 2.2 中定义的核心方法签名关键词（`upsertArchive`、`render(memory:`、`refreshMonitors`、`scheduleNearbyReminder`）。当前应为 FAIL，直到 PR-2 实现这些协议。
+> 校验内容：4 个协议文件存在且包含 Section 2.2 中定义的核心方法签名关键词（`upsertArchive`、`render(memory:`、`refreshMonitors`、`scheduleNearbyReminder`）。2026-03-12 实测为 PASS（证据 `EVID-INTERFACE-CONTRACT`）；后续若改签名，必须同 PR 同步更新本节、测试与 Gate。
 
 ## 11. 开工清单
 
@@ -592,12 +593,12 @@ scripts/community_memory_gate.sh GATE-INTERFACE-CONTRACT-FROZEN
 4. ~~实现 `UnlockEvaluator`（距离 + 停留时长）。~~ **已完成**（`Features/Memory/UnlockEvaluator.swift`，证据 `EVID-CODE-UE`）
 5. ~~实现 `ExplorationStore`（SwiftData 优先，iOS 17+）。~~ **已完成纯存储闭环**（`Features/Memory/ExplorationStore.swift`、`YOMUITests/ExplorationStoreTests.swift`，证据 `EVID-EXPLORATIONSTORE`；Active 链路接线留待 AI-04）
 6. ~~实现 `CardRenderer`（固定模板 1 套即可）。~~ **已完成纯渲染闭环**（`Features/Memory/CardRenderer.swift`、`YOMUITests/CardRendererTests.swift`，证据 `EVID-CARDRENDERER`；保存/分享接线留待 AI-04）
-7. 实现 `GeofenceMonitor`：`CLMonitor` + 最近点 Top-N 轮换。
-8. 实现 `NotificationOrchestrator`：本地通知触发、去重、冷却。
-9. 补齐权限与系统配置：`NSLocationAlwaysAndWhenInUseUsageDescription`、`NSPhotoLibraryAddUsageDescription`，并回归验证 Passive/相册保存权限弹窗链路。
+7. ~~实现 `GeofenceMonitor`：`CLMonitor` + 最近点 Top-N 轮换。~~ **已完成核心闭环**（`Features/Memory/GeofenceMonitor.swift`、`YOMUITests/GeofenceMonitorTests.swift`，证据 `EVID-GEOFENCE`；Passive 主线接线见 `EVID-PASSIVE-WIRING`）
+8. ~~实现 `NotificationOrchestrator`：本地通知触发、去重、冷却。~~ **已完成核心闭环**（`Features/Memory/NotificationOrchestrator.swift`、`YOMUITests/NotificationOrchestratorTests.swift`，证据 `EVID-NOTIFICATION`；Passive 主线接线见 `EVID-PASSIVE-WIRING`）
+9. 补齐权限与系统配置：`NSLocationAlwaysAndWhenInUseUsageDescription`、`NSPhotoLibraryAddUsageDescription`，并回归验证 Passive/相册保存权限弹窗链路。**已完成配置键补齐**（`project.yml`，证据 `EVID-CONFIG-KEYS`）；相册保存真实交互验证仍待 AI-04
 10. 对齐 Snapshot 门禁文档与 CI：维持现行阻塞式阈值（`diffRatio <= 1%`），并在新增/更新基线时要求 PR 附差异说明；后续再评估收紧阈值到 `0.1%`。
-11. 新增 Phase 0A UI Test：进入 `MemoryDetailView` 后断言 `memory_detail_title` 存在且文本匹配（当前待实现）。
-12. 新增 Passive 降级保护：`Background App Refresh` 不可用时给出引导，不宣称 Passive 已启用（当前待实现）。
+11. 新增 Phase 0A UI Test：进入 `MemoryDetailView` 后断言 `memory_detail_title` 存在且文本匹配。**已完成**（`YOMUITests/YOMUITests.swift::testMemoryDetailTitleAssertion`，证据 `EVID-UI-TITLE-ASSERT`）
+12. 新增 Passive 降级保护：`Background App Refresh` 不可用时给出引导，不宣称 Passive 已启用。**已完成**（`YOMUITests/YOMUITests.swift::testBackgroundRefreshUnavailableShowsGuidance`，证据 `EVID-BGREFRESH-GUARD`）
 13. 新增 Phase 0A UI Test：Map 首屏 `map_point_1935` pin 可见且可点击。**已完成**（`YOMUITests/YOMUITests.swift::testMapPointPinVisibleAfterOnboarding`，证据 `EVID-UI-MAP-PIN-ASSERT`）
 
 ### 11.1 建议 PR 拆分（执行顺序）
@@ -820,14 +821,14 @@ https://developer.apple.com/news/?id=3xpv8r2m
 2. 本报告仅保留“执行门禁与引用关系”，不再复制字段表与模板。
 3. 若两文档出现冲突，以写入指南为准，并在同一 PR 内同步修复本报告引用。
 
-## 15. 第二轮核验与交叉验证（2026-03-11，含 AI-03 补记）
+## 15. 第三轮核验与交叉验证（2026-03-12，含 AI-08 收口）
 
 ### 15.1 本地命令核验结果
 
 | EVID-ID | 核验时间（America/New_York） | 检查项 | 核验命令 | 结果 | 说明 |
 | --- | --- | --- | --- | --- | --- |
 | EVID-DEST | 2026-03-09 23:05 | 可用 destination 列表 | `xcodebuild -scheme YOM -showdestinations` | PASS | `iPhone 17 (iOS 26.2)` 可用 |
-| EVID-BUILD | 2026-03-11 19:05 | 构建门禁 | `scripts/community_memory_gate.sh GATE-BUILD` | PASS | AI-03 收口后整体编译通过 |
+| EVID-BUILD | 2026-03-12 19:01 | 构建门禁 | `scripts/community_memory_gate.sh GATE-BUILD` | PASS | AI-08 收口前整体编译通过 |
 | EVID-TEST-DATA | 2026-03-11 19:06 | 数据门禁 | `scripts/community_memory_gate.sh GATE-DATA-INTEGRITY` | PASS | 1/1 通过 |
 | EVID-TEST-CLASS | 2026-03-09 23:03 | `LocalMemoryDataIntegrityTests` 类存在 | `rg -n "final class LocalMemoryDataIntegrityTests" YOMUITests/YOMUITests.swift` | PASS | 测试类已落地 |
 | EVID-CODE-LMR | 2026-03-09 23:03 | `LocalMemoryRepository` 实现存在 | `test -f Features/Memory/LocalMemoryRepository.swift` | PASS | 文件存在 |
@@ -840,15 +841,18 @@ https://developer.apple.com/news/?id=3xpv8r2m
 | EVID-SNAPSHOT-THRESHOLD | 2026-03-09 23:08 | Snapshot 阈值配置 | `rg -n "snapshotDiffTolerance: Double = 0.01|snapshotChannelDeltaTolerance: Int = 8" YOMUITests/YOMUITests.swift` | PASS | 阈值与文档一致 |
 | EVID-A11Y-TITLE-ID | 2026-03-09 23:03 | 详情页标题标识存在性 | `rg -n "memory_detail_title" Features` | PASS | `MemoryDetailView` 已有标识 |
 | EVID-UI-MAP-PIN-ASSERT | 2026-03-10 13:24 | 地图 pin 可见性 UI 断言 | `scripts/community_memory_gate.sh GATE-UI-MAP-PIN-TEST` | PASS | `Executed 1 test`，`testMapPointPinVisibleAfterOnboarding` 通过 |
-| EVID-UI-TITLE-ASSERT | 2026-03-10 13:24 | 详情页标题 UI 断言用例 | `scripts/community_memory_gate.sh GATE-UI-MEMORY-TITLE-TEST` | FAIL（预期） | 严格门禁已加入“测试方法存在性”校验，当前方法未落地（T-PR1-02） |
-| EVID-BGREFRESH-GUARD | 2026-03-10 13:24 | Background App Refresh 降级保护用例 | `scripts/community_memory_gate.sh GATE-BG-REFRESH-GUARD-TEST` | FAIL（预期） | 严格门禁已加入“测试方法存在性”校验，当前方法未落地（T-PR1-04） |
-| EVID-CONFIG-KEYS | 2026-03-10 13:24 | Passive/相册权限键（Build Settings 生效） | `scripts/community_memory_gate.sh GATE-CONFIG-PLIST-KEYS` | FAIL（预期） | 目前两键未对 App Target 生效（T-PR1-01） |
+| EVID-UI-TITLE-ASSERT | 2026-03-12 18:59 | 详情页标题 UI 断言用例 | `scripts/community_memory_gate.sh GATE-UI-MEMORY-TITLE-TEST` | PASS | 1/1 通过，`memory_detail_title` 与导航栏标题均可见 |
+| EVID-BGREFRESH-GUARD | 2026-03-12 19:00 | Background App Refresh 降级保护用例 | `scripts/community_memory_gate.sh GATE-BG-REFRESH-GUARD-TEST` | PASS | 1/1 通过，模拟器注入 `UITEST_SIMULATE_BG_REFRESH_UNAVAILABLE=1` 后展示降级提示并保持未启用状态 |
+| EVID-CONFIG-KEYS | 2026-03-12 18:58 | Passive/相册权限键（Build Settings 生效） | `scripts/community_memory_gate.sh GATE-CONFIG-PLIST-KEYS` | PASS | `NSLocationAlwaysAndWhenInUseUsageDescription` 与 `NSPhotoLibraryAddUsageDescription` 已对 App Target 生效 |
 | EVID-MODULE-0B0C | 2026-03-11 18:41 | 0B/0C 核心模块实现度（文件 + 协议 + 测试类） | `scripts/community_memory_gate.sh GATE-MODULE-0B0C-IMPLEMENTED` | PASS | 四个模块文件、协议与测试类均已齐备；真实实现进度以各自 Gate 为准 |
 | EVID-EXPLORATIONSTORE | 2026-03-11 19:06 | `ExplorationStore` 纯存储闭环 | `scripts/community_memory_gate.sh GATE-EXPLORATIONSTORE-TESTS` | PASS | 4/4 通过，覆盖幂等更新、重启后持久化、非法 ID、损坏数据错误路径 |
 | EVID-CARDRENDERER | 2026-03-11 19:05 | `CardRenderer` 纯渲染闭环 | `scripts/community_memory_gate.sh GATE-CARDRENDERER-TESTS` | PASS | 5/5 通过，覆盖 PNG 输出、媒体 fallback、非法 scale、`assetMissing`、`renderFailed` |
-| EVID-A11Y | — | a11y 基线测试（AccessibilityTests 类 + XXXL 字体断言） | `scripts/community_memory_gate.sh GATE-A11Y` | FAIL（预期） | T-PR1-05 未落地（AccessibilityTests 类不存在） |
+| EVID-GEOFENCE | 2026-03-12 19:01 | `GeofenceMonitor` 核心闭环 | `scripts/community_memory_gate.sh GATE-GEOFENCE-TESTS` | PASS | 5/5 通过，覆盖 Top-N 选择、监控轮换、治理阈值、权限拒绝与 enter/exit 事件翻译 |
+| EVID-NOTIFICATION | 2026-03-12 18:57 | `NotificationOrchestrator` 核心闭环 | `scripts/community_memory_gate.sh GATE-NOTIFICATION-TESTS` | PASS | 10/10 通过，覆盖 scheduled / skippedCooldown / skippedArchived、权限拒绝、执行预算超时与 payload 解析 |
+| EVID-PASSIVE-WIRING | 2026-03-12 19:02 | Passive 主线接线存在性 | `rg -n "geofenceMonitor.refreshMonitors|geofenceMonitor.startEventStream|notificationOrchestrator.scheduleNearbyReminder|notificationOrchestrator.extractMemoryId|pendingNavigationRequest" Features/Memory/PassiveExperienceCoordinator.swift` | PASS | `PassiveExperienceCoordinator` 已串起围栏刷新、事件流、通知调度与点击回跳 |
+| EVID-A11Y | 2026-03-12 19:01 | a11y 基线测试（AccessibilityTests 类 + XXXL 字体断言） | `scripts/community_memory_gate.sh GATE-A11Y` | PASS | 3/3 通过，覆盖动态字体主流程可达性、详情页核心元素标识与 Passive 开关可访问性 |
 | EVID-INTERFACE-CONTRACT | 2026-03-11 18:41 | 接口契约冻结（4 个 Protocol 签名存在于源码） | `scripts/community_memory_gate.sh GATE-INTERFACE-CONTRACT-FROZEN` | PASS | Section 2.2 的 4 个核心方法签名已在源码中落地 |
-| EVID-SWIFTLENS-BLOCKED | 2026-03-11 19:01 | SwiftLens 预热与索引状态 | `swift_check_environment` + `swift_lsp_diagnostics(project_path)` + `swift_build_index(project_path, scheme: "YOM")` | BLOCKED-SWIFTLENS | `swift_build_index` 失败后 `SourceKit-LSP process died during startup`；`swift_validate_file` / `swift_get_file_imports` / `swift_search_pattern` 仍可部分使用，但定义/引用图未就绪 |
+| EVID-SWIFTLENS-BLOCKED | 2026-03-12 19:02 | SwiftLens 预热与索引状态 | `swift_check_environment` + `swift_lsp_diagnostics(project_path)` + `swift_build_index(project_path, scheme: "YOM")` + `swift_search_pattern(...)` + `swift_analyze_files(...)` | BLOCKED-SWIFTLENS | `swift_check_environment` / `swift_lsp_diagnostics` 可运行，`swift_search_pattern` 已核验 `AccessibilityTests.swift`、`YOMUITests.swift`、`GeofenceMonitor.swift`、`NotificationOrchestrator.swift`、`PassiveExperienceCoordinator.swift` 的关键 symbol；但 `swift_build_index` 仍以 Xcode build exit 65 失败，`swift_analyze_files` 仍报 `SourceKit-LSP process died during startup`，且 `swift_validate_file` 的单文件结果缺少 target 上下文，不能替代 `xcodebuild` / Gate / UI Test 真值 |
 
 ### 15.2 文档交叉验证结果
 
@@ -857,7 +861,7 @@ https://developer.apple.com/news/?id=3xpv8r2m
 3. 任务可派发性：已为 PR-1/2/3 拆出任务卡，明确允许改动文件、门禁（Gate ID）、回滚条件。
 4. 状态可审计性：已引入 `EVID-*` 证据索引；所有“已完成”声明必须可在 Section 15.1 回溯。
 5. 严格门禁：新增统一脚本入口 `scripts/community_memory_gate.sh`，并在关键 UI Gate 中加入“测试方法存在性”前置校验，避免 `only-testing` 命中 0 条测试却误判 PASS。
-6. SwiftLens 状态：本轮已按 Section 11.4 运行预热、文件级校验与桥接依赖核对，但索引与引用分析仍被 `SourceKit-LSP process died during startup` 阻塞；交接包需继续标记该盲区，不能把当前会话记成“SwiftLens 完全健康”。
+6. SwiftLens 状态：AI-08 已按 Section 11.4 运行 `swift_check_environment`、`swift_lsp_diagnostics`、`swift_build_index`、`swift_search_pattern`、`swift_analyze_files`、`swift_validate_file`。其中 `swift_search_pattern` 已核验协议、测试方法、`UITEST_SIMULATE_BG_REFRESH_UNAVAILABLE` 注入点与 `PassiveExperienceCoordinator` 接线；但索引与 `swift_analyze_files` 仍被 `SourceKit-LSP process died during startup` 阻塞，`swift_validate_file` 的单文件结果也缺少 target 上下文，因此最终状态仍以 `xcodebuild`、Gate、UI Test 为准，不能把当前会话记成“SwiftLens 完全健康”。
 
 ### 15.3 外部依据（用于冲突裁决）
 

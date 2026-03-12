@@ -1,107 +1,206 @@
 {
     "memoryPoints": [
         {
-            "id": "A1B2C3D4-E5F6-7890-ABCD-EF1234567890",
-            "year": 1935,
-            "latitude": 37.7749,
-            "longitude": -122.4194,
-            "distanceMeters": 240,
+            "id": "D4E5F6A7-B8C9-0123-DEF0-456789ABCDEF",
+            "year": 1920,
+            "latitude": 40.7139,
+            "longitude": -73.9981,
+            "distanceMeters": 120,
             "nameByLanguage": {
-                "en": "Market Street Corner",
-                "zhHans": "市场街街角",
-                "yue": "市場街街角"
+                "en": "Nom Wah Tea Parlor",
+                "zhHans": "南华茶室",
+                "yue": "南華茶室"
             },
             "summaryByLanguage": {
-                "en": "A storefront photo and oral story from a busy tram stop.",
-                "zhHans": "一张有轨电车站旁店铺照片与口述故事。",
-                "yue": "一張電車站旁店舖相片同口述故事。"
+                "en": "The oldest dim sum parlor in New York City, opened in 1920 on Doyers Street.",
+                "zhHans": "纽约最古老的点心茶室，1920年在宰也街开业。",
+                "yue": "紐約最古老嘅點心茶室，1920年喺宰也街開業。"
             },
             "storyByLanguage": {
-                "en": "In 1935, the corner of Market Street was alive with the clatter of trams and the bustle of merchants. Mrs. Chen ran a small dry-goods shop here, where the scent of dried tangerine peel mingled with freshly printed newspapers. Neighbors would gather each evening, sharing stories of home across the ocean.",
-                "zhHans": "1935年，市场街街角充满了有轨电车的叮当声和商贩的喧闹。陈太太在这里经营一家小杂货铺，晾晒的陈皮香气和新印的报纸气味交织在一起。每到傍晚，邻居们都会聚在一起，分享大洋彼岸的故乡故事。",
-                "yue": "1935年，市場街街角充滿咗電車叮叮聲同商販嘅喧鬧。陳太太喺呢度經營一間細雜貨舖，曬乾嘅陳皮香味同新印嘅報紙味混埋一齊。每到黃昏，街坊都會聚埋一齊，分享大洋彼岸嘅故鄉故事。"
+                "en": "Nom Wah Tea Parlor opened its doors at 13 Doyers Street in 1920, making it the oldest continuously operating restaurant in Manhattan's Chinatown. In an era when the Chinese Exclusion Act still barred most Chinese immigrants, Nom Wah became a rare gathering place where bachelor laborers could share a pot of tea and plates of har gow, momentarily easing the loneliness of life far from home. The parlor's neon sign and tiled floors have barely changed in over a century, preserving a living snapshot of early Chinese American life.",
+                "zhHans": "南华茶室于1920年在宰也街13号开业，是曼哈顿华埠至今仍在经营的最古老餐厅。在《排华法案》仍然禁止大多数华人入境的年代，南华茶室成为单身劳工们难得的聚会场所——一壶茶、几笼虾饺，暂时缓解远离故土的孤独。茶室的霓虹灯招牌和瓷砖地板历经百年几乎未变，保存了早期华裔美国人生活的鲜活切面。",
+                "yue": "南華茶室喺1920年喺宰也街13號開業，係曼哈頓華埠而家仲開緊嘅最老餐廳。嗰陣時《排華法案》仲禁止大多數華人入境，南華茶室成為單身勞工難得嘅聚腳地方——一壺茶、幾籠蝦餃，暫時紓緩離鄉別井嘅孤單。茶室嘅霓虹燈招牌同瓷磚地板過咗成百年都無點變，保存住早期華裔美國人生活嘅真實面貌。"
             },
             "unlockRadiusM": 50,
-            "tags": ["commerce", "oral-history", "1930s"],
+            "tags": ["food", "commerce", "immigration", "1920s"],
             "media": [
                 {
                     "id": "10000001-0001-0001-0001-000000000001",
                     "type": "image",
-                    "localAssetName": "memory_market_street_1935",
+                    "localAssetName": "memory_nom_wah_1920",
                     "duration": null,
                     "thumbnailAssetName": null
                 }
             ]
         },
         {
-            "id": "B2C3D4E5-F6A7-8901-BCDE-F12345678901",
-            "year": 1947,
-            "latitude": 37.7793,
-            "longitude": -122.4184,
-            "distanceMeters": 540,
+            "id": "E5F6A7B8-C9D0-1234-EF01-56789ABCDEF0",
+            "year": 1897,
+            "latitude": 40.7146,
+            "longitude": -74.0000,
+            "distanceMeters": 200,
             "nameByLanguage": {
-                "en": "Civic Hall Steps",
-                "zhHans": "市政厅台阶",
-                "yue": "市政廳台階"
+                "en": "Columbus Park",
+                "zhHans": "哥伦布公园",
+                "yue": "哥倫布公園"
             },
             "summaryByLanguage": {
-                "en": "Community gathering memories recorded after the war.",
-                "zhHans": "战后社区集会的记忆记录。",
-                "yue": "戰後社區聚會嘅記憶紀錄。"
+                "en": "A park built in 1897 on the former Five Points slum, now the heart of Chinatown community life.",
+                "zhHans": "1897年在昔日五点区贫民窟上建成的公园，如今是华埠社区生活的核心。",
+                "yue": "1897年喺以前五點區貧民窟上面起嘅公園，而家係華埠社區生活嘅中心。"
             },
             "storyByLanguage": {
-                "en": "After the war ended in 1945, San Francisco's Chinatown erupted in celebration. By 1947, community leaders organized regular gatherings on the Civic Hall steps to discuss the future of the neighborhood. These meetings planted the seeds for the community organizations that still serve the district today.",
-                "zhHans": "1945年战争结束后，旧金山唐人街爆发了庆祝活动。到1947年，社区领袖定期在市政厅台阶上组织集会，讨论社区的未来。这些会议为至今仍服务于社区的组织播下了种子。",
-                "yue": "1945年戰爭結束之後，舊金山唐人街爆發咗慶祝活動。到1947年，社區領袖定期喺市政廳台階組織集會，討論社區嘅未來。呢啲會議為到依家仲服務緊社區嘅組織播下咗種子。"
+                "en": "Columbus Park was built in 1897 on the site of the infamous Five Points neighborhood, once considered the most dangerous slum in America. Photojournalist Jacob Riis campaigned tirelessly through his landmark work 'How the Other Half Lives' to demolish the overcrowded tenements and create green space for residents. Landscape architect Calvert Vaux, co-designer of Central Park, drew the original plans. Today the park pulses with life every morning: elderly residents practice tai chi under the ginkgo trees, mahjong tiles click on stone tables, and Cantonese opera enthusiasts gather to sing — a living testament to the resilience of the community that replaced the slum.",
+                "zhHans": "哥伦布公园于1897年建在臭名昭著的「五点区」旧址上——这里曾被认为是全美最危险的贫民窟。新闻摄影师雅各布·里斯通过其里程碑著作《另一半人怎样生活》不懈呼吁拆除拥挤的廉租屋，为居民开辟绿地。中央公园的联合设计师卡尔弗特·沃克斯绘制了公园的最初蓝图。如今这里每天清晨都充满生机：老人们在银杏树下打太极，麻将牌在石桌上清脆作响，粤剧爱好者聚在一起放声高歌——这座公园是社区韧性的活的见证。",
+                "yue": "哥倫布公園喺1897年建喺以前「五點區」嘅舊址上——呢度曾經係全美最危險嘅貧民窟。新聞攝影師雅各布·里斯通過佢嘅名作《另一半人點樣生活》不斷呼籲拆除擠迫嘅廉租屋，為居民開闢綠地。中央公園嘅聯合設計師卡爾弗特·沃克斯畫咗公園嘅最初藍圖。而家呢度每朝都好有生氣：老人家喺銀杏樹下打太極，麻雀牌喺石枱上啪啪作響，粵劇愛好者聚埋一齊高歌——呢個公園係社區頑強生命力嘅活見證。"
             },
-            "unlockRadiusM": 50,
-            "tags": ["community", "postwar", "1940s"],
+            "unlockRadiusM": 60,
+            "tags": ["community", "architecture", "oral-history", "1890s"],
             "media": [
                 {
                     "id": "10000002-0002-0002-0002-000000000002",
                     "type": "image",
-                    "localAssetName": "memory_civic_hall_1947",
+                    "localAssetName": "memory_columbus_park_1897",
                     "duration": null,
                     "thumbnailAssetName": null
                 }
             ]
         },
         {
-            "id": "C3D4E5F6-A7B8-9012-CDEF-123456789012",
+            "id": "F6A7B8C9-D0E1-2345-F012-6789ABCDEF01",
             "year": 1962,
-            "latitude": 37.7694,
-            "longitude": -122.4862,
-            "distanceMeters": 1600,
+            "latitude": 40.7132,
+            "longitude": -73.9977,
+            "distanceMeters": 80,
             "nameByLanguage": {
-                "en": "Ocean View Playfield",
-                "zhHans": "海景游乐场",
-                "yue": "海景遊樂場"
+                "en": "Kim Lau Memorial Arch",
+                "zhHans": "金楼纪念牌坊",
+                "yue": "金樓紀念牌坊"
             },
             "summaryByLanguage": {
-                "en": "Family snapshots and a neighborhood radio clip.",
-                "zhHans": "家庭照片与一段街区广播录音。",
-                "yue": "家庭相片同一段社區廣播錄音。"
+                "en": "A granite arch in Chatham Square honoring Chinese Americans who gave their lives in World War II.",
+                "zhHans": "且林广场上的花岗岩牌坊，纪念在二战中捐躯的华裔美国军人。",
+                "yue": "且林廣場上嘅花崗岩牌坊，紀念喺二戰中犧牲嘅華裔美國軍人。"
             },
             "storyByLanguage": {
-                "en": "The Ocean View Playfield in 1962 was where families from the surrounding blocks came together every Sunday afternoon. Children played kickball while parents shared picnic lunches and listened to the neighborhood radio broadcast. A photographer captured these moments, preserving a snapshot of everyday life that would soon change forever.",
-                "zhHans": "1962年的海景游乐场，是周围街区家庭每个周日下午聚会的地方。孩子们踢球玩耍，父母们分享野餐午餐，收听社区广播。一位摄影师记录下了这些瞬间，保存了一段即将永远改变的日常生活快照。",
-                "yue": "1962年嘅海景遊樂場，係周圍街區家庭每個禮拜日下晝聚會嘅地方。細路仔踢波玩耍，父母分享野餐午餐，收聽社區廣播。一位攝影師記錄低咗呢啲時刻，保存咗一段即將永遠改變嘅日常生活快照。"
+                "en": "The Kim Lau Memorial Arch was erected in Chatham Square in 1962 by the American Legion Lt. B.R. Kimlau Post 1291, honoring Chinese Americans who died in military service. It is named after Second Lieutenant Benjamin Ralph Kimlau, an aircraft commander shot down over the Pacific in 1944 at age 26. Designed by Chinese American architect Poy Gum Lee, the granite arch blends a traditional Chinese ceremonial gateway form with mid-century modern style, and bears calligraphy by the renowned Yu Youren. In 2021, it became the first New York City Landmark specifically recognizing Chinese American history and culture.",
+                "zhHans": "金楼纪念牌坊于1962年由美国退伍军人协会金楼第1291支队在且林广场竖立，纪念在服役中牺牲的华裔美国军人。牌坊以本杰明·拉尔夫·金楼中尉命名——他是一名飞机指挥官，1944年年仅26岁时在太平洋上空被击落牺牲。华裔建筑师李锦沛设计了这座花岗岩牌坊，将传统中式牌坊形制与中世纪现代风格融为一体，坊上镌刻的书法出自于右任之手。2021年，它成为纽约市首个专门表彰华裔美国人历史与文化的地标建筑。",
+                "yue": "金樓紀念牌坊喺1962年由美國退伍軍人協會金樓第1291支隊喺且林廣場竖起，紀念喺服役中犧牲嘅華裔美國軍人。牌坊以本傑明·拉爾夫·金樓中尉命名——佢係一名飛機指揮官，1944年得26歲就喺太平洋上空被擊落犧牲。華裔建築師李錦沛設計咗呢座花崗岩牌坊，將傳統中式牌坊形制同中世紀現代風格融為一體，坊上刻嘅書法出自於右任之手。2021年，佢成為紐約市首個專門表彰華裔美國人歷史同文化嘅地標建築。"
             },
-            "unlockRadiusM": 60,
-            "tags": ["family", "radio", "1960s"],
+            "unlockRadiusM": 50,
+            "tags": ["postwar", "community", "architecture", "1960s"],
             "media": [
                 {
                     "id": "10000003-0003-0003-0003-000000000003",
                     "type": "image",
-                    "localAssetName": "memory_ocean_view_1962",
+                    "localAssetName": "memory_kim_lau_arch_1962",
+                    "duration": null,
+                    "thumbnailAssetName": null
+                }
+            ]
+        },
+        {
+            "id": "A7B8C9D0-E1F2-3456-0123-789ABCDEF012",
+            "year": 1853,
+            "latitude": 40.7148,
+            "longitude": -73.9989,
+            "distanceMeters": 150,
+            "nameByLanguage": {
+                "en": "Church of the Transfiguration",
+                "zhHans": "显圣容天主堂",
+                "yue": "顯聖容天主堂"
+            },
+            "summaryByLanguage": {
+                "en": "A landmark church on Mott Street that has served Irish, Italian, and Chinese congregations since 1801.",
+                "zhHans": "勿街上的地标教堂，自1801年起先后服务爱尔兰、意大利和华人信众。",
+                "yue": "勿街上嘅地標教堂，自1801年起先後服務愛爾蘭、意大利同華人信眾。"
+            },
+            "storyByLanguage": {
+                "en": "The Church of the Transfiguration at 25 Mott Street is a living chronicle of immigration to Lower Manhattan. The building was first erected in 1801 as Zion English Lutheran Church in the Georgian style. After a devastating fire in 1815, it was rebuilt and eventually purchased by the Roman Catholic Archdiocese of New York in 1853. The parish first served Irish immigrants fleeing the famine, then Italian families at the turn of the century, and today it ministers to a predominantly Chinese American congregation with services in English, Cantonese, and Mandarin. Designated a New York City Landmark in 1966, it stands as a quiet witness to over two centuries of newcomers making Chinatown their home.",
+                "zhHans": "勿街25号的显圣容天主堂，是下曼哈顿移民史的活档案。这座建筑最初于1801年以乔治亚风格建造，是锡安英语路德教会的教堂。1815年一场大火后重建，1853年被纽约天主教总教区购入。教区起初服务于逃离饥荒的爱尔兰移民，之后是世纪之交涌入的意大利家庭，如今这里是以华裔为主的信众团体，提供英语、粤语和普通话弥撒。1966年被列为纽约市地标建筑，它安静地见证了两个多世纪以来，一批又一批新移民在华埠扎根的故事。",
+                "yue": "勿街25號嘅顯聖容天主堂，係下曼哈頓移民史嘅活檔案。呢座建築最初喺1801年以喬治亞風格起嘅，係錫安英語路德教會嘅教堂。1815年一場大火之後重建，1853年畀紐約天主教總教區買入。教區起初服務逃離饑荒嘅愛爾蘭移民，之後就係世紀之交湧入嘅意大利家庭，而家呢度係以華裔為主嘅信眾團體，提供英文、粵語同普通話嘅彌撒。1966年列為紐約市地標建築，佢靜靜噉見證咗兩個幾世紀以嚟，一批又一批新移民喺華埠落地生根嘅故事。"
+            },
+            "unlockRadiusM": 50,
+            "tags": ["architecture", "immigration", "community", "1850s"],
+            "media": [
+                {
+                    "id": "10000004-0004-0004-0004-000000000004",
+                    "type": "image",
+                    "localAssetName": "memory_transfiguration_church_1853",
+                    "duration": null,
+                    "thumbnailAssetName": null
+                }
+            ]
+        },
+        {
+            "id": "B8C9D0E1-F2A3-4567-1234-89ABCDEF0123",
+            "year": 1883,
+            "latitude": 40.7155,
+            "longitude": -73.9994,
+            "distanceMeters": 100,
+            "nameByLanguage": {
+                "en": "Chinese Consolidated Benevolent Association",
+                "zhHans": "中华公所",
+                "yue": "中華公所"
+            },
+            "summaryByLanguage": {
+                "en": "The 'City Hall of Chinatown', founded in 1883 to govern and protect the Chinese community.",
+                "zhHans": "1883年创立的「华埠市政厅」，为华人社区提供治理与保护。",
+                "yue": "1883年創立嘅「華埠市政廳」，為華人社區提供治理同保護。"
+            },
+            "storyByLanguage": {
+                "en": "The Chinese Consolidated Benevolent Association (CCBA) was founded in 1883 at 10 Chatham Square, serving as the de facto governing body of Chinatown during an era when the Chinese Exclusion Act of 1882 left the community largely cut off from mainstream American institutions. The CCBA mediated disputes, organized community events, ran Chinese-language schools, and advocated for the rights of Chinese immigrants. It later moved to 62 Mott Street, where it still operates today. For generations of Chinese Americans, this building was the first place they turned to for help in navigating life in a new country.",
+                "zhHans": "中华公所于1883年在且林广场10号成立，在《排华法案》(1882) 将华人社区与美国主流制度隔绝的时代，它充当了华埠事实上的自治机构。中华公所调解纠纷、组织社区活动、开办中文学校，并为华人移民争取权益。后来迁至勿街62号，至今仍在运作。对于一代又一代华裔美国人来说，这栋楼是他们在新国家寻求帮助的第一个去处。",
+                "yue": "中華公所喺1883年喺且林廣場10號成立，喺《排華法案》(1882) 將華人社區同美國主流制度隔絕嘅年代，佢充當咗華埠事實上嘅自治機構。中華公所調解糾紛、搞社區活動、辦中文學校，仲為華人移民爭取權益。之後搬咗去勿街62號，到而家仲運作緊。對於一代又一代華裔美國人嚟講，呢棟樓係佢哋喺新國家搵幫助嘅第一個地方。"
+            },
+            "unlockRadiusM": 50,
+            "tags": ["community", "immigration", "oral-history", "1880s"],
+            "media": [
+                {
+                    "id": "10000005-0005-0005-0005-000000000005",
+                    "type": "image",
+                    "localAssetName": "memory_ccba_mott_street_1883",
+                    "duration": null,
+                    "thumbnailAssetName": null
+                }
+            ]
+        },
+        {
+            "id": "C9D0E1F2-A3B4-5678-2345-9ABCDEF01234",
+            "year": 1905,
+            "latitude": 40.7137,
+            "longitude": -73.9980,
+            "distanceMeters": 90,
+            "nameByLanguage": {
+                "en": "Doyers Street – The Bloody Angle",
+                "zhHans": "宰也街 · 血腥转角",
+                "yue": "宰也街 · 血腥轉角"
+            },
+            "summaryByLanguage": {
+                "en": "The sharp bend of Doyers Street where tong wars erupted and the first Chinese theater in NYC once stood.",
+                "zhHans": "宰也街的急弯处，堂斗曾在此爆发，纽约第一家中国剧院也坐落于此。",
+                "yue": "宰也街嘅急彎位，堂鬥曾經喺度爆發，紐約第一間中國劇院都坐落喺呢度。"
+            },
+            "storyByLanguage": {
+                "en": "Doyers Street's sharp 90-degree bend earned it the nickname 'The Bloody Angle' during the Tong Wars of the early 1900s, when rival factions used the blind corner to stage ambushes. But this same street also housed New York's first Chinese-language theater at 5–7 Doyers, which opened in 1893 and hosted Cantonese opera performances that drew audiences from across the East Coast. In 1905, a notorious attack during a performance made national headlines. Today the street is a peaceful pedestrian lane lined with murals and restaurants, its violent past virtually invisible beneath strings of red lanterns.",
+                "zhHans": "宰也街那道90度急弯在1900年代初的堂斗时期被冠以「血腥转角」之名——敌对帮派利用这个视线死角设伏突袭。但同一条街上也坐落着纽约第一家中文剧院（宰也街5-7号），1893年开业后上演粤剧，吸引了东海岸各地的观众。1905年一场演出中发生的袭击事件登上了全国新闻。如今这条街已是宁静的步行巷，两侧点缀着壁画和餐厅，一串串红灯笼下，昔日的暴力往事几乎无迹可寻。",
+                "yue": "宰也街嗰個90度急彎喺1900年代初堂鬥時期畀人叫做「血腥轉角」——敵對幫派利用呢個睇唔到嘅死角設伏突襲。但同一條街亦都有紐約第一間中文劇院（宰也街5-7號），1893年開業之後上演粵劇，吸引咗成個東岸嘅觀眾。1905年一場演出中發生嘅襲擊事件登咗全國新聞。而家呢條街已經係寧靜嘅步行巷，兩邊有壁畫同餐廳，一串串紅燈籠下面，以前嘅暴力往事幾乎搵唔到痕跡。"
+            },
+            "unlockRadiusM": 40,
+            "tags": ["oral-history", "community", "1900s"],
+            "media": [
+                {
+                    "id": "10000006-0006-0006-0006-000000000006",
+                    "type": "image",
+                    "localAssetName": "memory_doyers_street_1905",
                     "duration": null,
                     "thumbnailAssetName": null
                 },
                 {
-                    "id": "10000004-0004-0004-0004-000000000004",
+                    "id": "10000007-0007-0007-0007-000000000007",
                     "type": "audio",
-                    "localAssetName": "memory_ocean_view_radio_1962",
-                    "duration": 45.0,
+                    "localAssetName": "memory_doyers_opera_1905",
+                    "duration": 60.0,
                     "thumbnailAssetName": null
                 }
             ]

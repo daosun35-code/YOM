@@ -30,15 +30,15 @@ final class MapScreenState: ObservableObject {
     @Published private(set) var recentSearchQueries: [String] = []
 
     private let defaultRegion = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
-        span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
+        center: CLLocationCoordinate2D(latitude: 40.7144, longitude: -73.9989),
+        span: MKCoordinateSpan(latitudeDelta: 0.015, longitudeDelta: 0.015)
     )
 
     init() {
         cameraPosition = .region(
             MKCoordinateRegion(
-                center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
-                span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
+                center: CLLocationCoordinate2D(latitude: 40.7144, longitude: -73.9989),
+                span: MKCoordinateSpan(latitudeDelta: 0.015, longitudeDelta: 0.015)
             )
         )
     }

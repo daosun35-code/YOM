@@ -31,7 +31,7 @@ final class UserLocationProvider: NSObject, ObservableObject {
 
         if launchArguments.contains("UITEST_FORCE_LOCATION_AUTHORIZED") {
             if coordinate == nil {
-                coordinate = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
+                coordinate = CLLocationCoordinate2D(latitude: 40.7144, longitude: -73.9989)
             }
             return
         }

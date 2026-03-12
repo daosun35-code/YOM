@@ -32,7 +32,7 @@ final class YOMUITests: XCTestCase {
 
         completeOnboarding(in: app)
 
-        let pointButton = app.buttons["map_point_1935"].firstMatch
+        let pointButton = app.buttons[UITestMemoryCatalog.primaryPinIdentifier].firstMatch
         XCTAssertTrue(pointButton.waitForExistence(timeout: 8))
         XCTAssertTrue(pointButton.isHittable)
     }
@@ -114,7 +114,7 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(keyboard.waitForExistence(timeout: 5))
 
         XCTAssertTrue(app.staticTexts["Recommendations"].firstMatch.waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Market Street Corner"].firstMatch.exists)
+        XCTAssertTrue(app.staticTexts[UITestMemoryCatalog.primaryPointTitle].firstMatch.exists)
 
         app.typeText("zzzzzz")
         app.typeText("\n")
@@ -297,7 +297,7 @@ final class YOMUITests: XCTestCase {
 
         completeOnboarding(in: app)
 
-        let pointButton = app.buttons["map_point_1935"]
+        let pointButton = app.buttons[UITestMemoryCatalog.primaryPinIdentifier]
         XCTAssertTrue(pointButton.waitForExistence(timeout: 8))
         pointButton.tap()
 
@@ -336,7 +336,7 @@ final class YOMUITests: XCTestCase {
             .firstMatch
         XCTAssertTrue(navigationPill.waitForExistence(timeout: 8))
 
-        let currentDestinationPin = app.buttons["map_point_1935"]
+        let currentDestinationPin = app.buttons[UITestMemoryCatalog.primaryPinIdentifier]
         XCTAssertTrue(currentDestinationPin.waitForExistence(timeout: 8))
         currentDestinationPin.tap()
 
@@ -613,7 +613,7 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(goButton.waitForExistence(timeout: 8))
 
         // Tap a different pin to trigger pin-switch path
-        let secondPin = app.buttons["map_point_1947"].firstMatch
+        let secondPin = app.buttons[UITestMemoryCatalog.secondaryPinIdentifier].firstMatch
         guard secondPin.waitForExistence(timeout: 5) else {
             // Second pin not present in test data – skip gracefully
             return
@@ -680,7 +680,7 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(archiveTab.waitForExistence(timeout: 5))
         archiveTab.tap()
 
-        let archiveCard = app.buttons["archive_item_1935"]
+        let archiveCard = app.buttons[UITestMemoryCatalog.primaryArchiveIdentifier]
         XCTAssertTrue(archiveCard.waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Open Retrieval"].firstMatch.exists)
 
@@ -701,14 +701,14 @@ final class YOMUITests: XCTestCase {
         let submenuPicker = app.segmentedControls["archive_submenu_picker"]
         XCTAssertTrue(submenuPicker.waitForExistence(timeout: 5))
 
-        let exploredOnlyItem = app.buttons["archive_item_1947"]
+        let exploredOnlyItem = app.buttons[UITestMemoryCatalog.secondaryArchiveIdentifier]
         XCTAssertTrue(exploredOnlyItem.waitForExistence(timeout: 5))
 
         let favoritesSegment = submenuPicker.buttons["Favorites"].firstMatch
         XCTAssertTrue(favoritesSegment.waitForExistence(timeout: 5))
         favoritesSegment.tap()
 
-        XCTAssertTrue(app.buttons["archive_item_1935"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[UITestMemoryCatalog.primaryArchiveIdentifier].waitForExistence(timeout: 5))
         XCTAssertTrue(waitForDisappearance(of: exploredOnlyItem, timeout: 5))
     }
 
@@ -743,7 +743,7 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(archiveTab.waitForExistence(timeout: 5))
         archiveTab.tap()
 
-        XCTAssertTrue(app.buttons["archive_item_1935"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.buttons[UITestMemoryCatalog.primaryArchiveIdentifier].waitForExistence(timeout: 8))
         assertBaselineSnapshot(named: .archive)
     }
 
@@ -770,7 +770,7 @@ final class YOMUITests: XCTestCase {
         XCTAssertTrue(archiveTab.waitForExistence(timeout: 5))
         archiveTab.tap()
 
-        let archiveCard = app.buttons["archive_item_1935"]
+        let archiveCard = app.buttons[UITestMemoryCatalog.primaryArchiveIdentifier]
         XCTAssertTrue(archiveCard.waitForExistence(timeout: 5))
         archiveCard.tap()
 
@@ -793,7 +793,7 @@ final class YOMUITests: XCTestCase {
 
         let memoryTitle = app.staticTexts["memory_detail_title"]
         XCTAssertTrue(memoryTitle.waitForExistence(timeout: 8))
-        XCTAssertEqual(memoryTitle.label, "Market Street Corner")
+        XCTAssertEqual(memoryTitle.label, UITestMemoryCatalog.primaryPointTitle)
         XCTAssertTrue(app.navigationBars["Memory Detail"].waitForExistence(timeout: 5))
     }
 
@@ -810,13 +810,13 @@ final class YOMUITests: XCTestCase {
 
         let memoryTitle = app.staticTexts["memory_detail_title"]
         XCTAssertTrue(memoryTitle.waitForExistence(timeout: 8))
-        XCTAssertEqual(memoryTitle.label, "Market Street Corner")
+        XCTAssertEqual(memoryTitle.label, UITestMemoryCatalog.primaryPointTitle)
 
         let completeButton = app.buttons["memory_experience_complete"]
         XCTAssertTrue(completeButton.waitForExistence(timeout: 5))
         completeButton.tap()
 
-        let archiveCard = app.buttons["archive_item_1935"]
+        let archiveCard = app.buttons[UITestMemoryCatalog.primaryArchiveIdentifier]
         XCTAssertTrue(archiveCard.waitForExistence(timeout: 8))
         XCTAssertTrue(app.navigationBars["Archive"].waitForExistence(timeout: 5))
     }
@@ -877,7 +877,7 @@ final class YOMUITests: XCTestCase {
                 "UITEST_FORCE_LOCATION_AUTHORIZED"
             ],
             extraEnvironment: [
-                "UITEST_TRIGGER_PASSIVE_NOTIFICATION_MEMORY_ID": "A1B2C3D4-E5F6-7890-ABCD-EF1234567890"
+                "UITEST_TRIGGER_PASSIVE_NOTIFICATION_MEMORY_ID": UITestMemoryCatalog.primaryPoint.id.uuidString
             ]
         )
         app.launch()
@@ -1439,7 +1439,7 @@ final class YOMStressTests: XCTestCase {
             XCTAssertTrue(goButton.waitForExistence(timeout: 8), "iter \(iteration): Preview not shown")
 
             // 等待相邻 pin 可点击（真实 MapKit 渲染，同视口内）
-            let secondPin = app.buttons["map_point_1947"].firstMatch
+            let secondPin = app.buttons[UITestMemoryCatalog.secondaryPinIdentifier].firstMatch
             guard secondPin.waitForExistence(timeout: 5) else {
                 skipCount += 1
                 app.terminate()
@@ -1458,7 +1458,11 @@ final class YOMStressTests: XCTestCase {
         // 跳过率 > 20% 视为环境不稳定，记录为警告
         let skipRatio = Double(skipCount) / Double(stressRepetitionCount)
         XCTContext.runActivity(named: "PinSwitch skip ratio: \(String(format: "%.0f%%", skipRatio * 100)) (\(skipCount)/\(stressRepetitionCount))") { _ in }
-        XCTAssertLessThan(skipRatio, 0.2, "Pin 1947 inaccessible in \(skipCount)/\(stressRepetitionCount) iters; map render may be too slow")
+        XCTAssertLessThan(
+            skipRatio,
+            0.2,
+            "Pin \(UITestMemoryCatalog.secondaryPoint.year) inaccessible in \(skipCount)/\(stressRepetitionCount) iters; map render may be too slow"
+        )
     }
 
     // MARK: - 时延采样：Pin 切换 P50/P95/P99 (§6.2 参考：P95 < 500ms)
@@ -1476,7 +1480,7 @@ final class YOMStressTests: XCTestCase {
             let goButton = app.buttons["map_preview_primary_action"].firstMatch
             XCTAssertTrue(goButton.waitForExistence(timeout: 8), "iter \(iteration): Preview not shown")
 
-            let secondPin = app.buttons["map_point_1947"].firstMatch
+            let secondPin = app.buttons[UITestMemoryCatalog.secondaryPinIdentifier].firstMatch
             guard secondPin.waitForExistence(timeout: 5) else {
                 app.terminate()
                 continue
@@ -1491,7 +1495,7 @@ final class YOMStressTests: XCTestCase {
         }
 
         guard samples.isEmpty == false else {
-            XCTFail("No latency samples – pin 1947 never accessible in \(latencySampleCount) iterations")
+            XCTFail("No latency samples – pin \(UITestMemoryCatalog.secondaryPoint.year) never accessible in \(latencySampleCount) iterations")
             return
         }
 
@@ -1670,7 +1674,7 @@ private struct MemoriesPayloadFixture: Decodable {
     let memoryPoints: [MemoryPointFixture]
 }
 
-private struct MemoryPointFixture: Decodable {
+struct MemoryPointFixture: Decodable {
     let id: UUID
     let year: Int
     let latitude: Double
@@ -1684,7 +1688,7 @@ private struct MemoryPointFixture: Decodable {
     let media: [MemoryMediaFixture]
 }
 
-private struct MemoryMediaFixture: Decodable {
+struct MemoryMediaFixture: Decodable {
     let id: UUID
     let type: MemoryMediaTypeFixture
     let localAssetName: String
@@ -1692,9 +1696,78 @@ private struct MemoryMediaFixture: Decodable {
     let thumbnailAssetName: String?
 }
 
-private enum MemoryMediaTypeFixture: String, Decodable {
+enum MemoryMediaTypeFixture: String, Decodable {
     case image
     case audio
     case video
     case ar
+}
+
+enum UITestMemoryCatalog {
+    private static let payload: MemoriesPayloadFixture = {
+        do {
+            let data = try Data(contentsOf: memoriesJSONURL())
+            return try JSONDecoder().decode(MemoriesPayloadFixture.self, from: data)
+        } catch {
+            fatalError("Failed to load UITest memory catalog: \(error)")
+        }
+    }()
+
+    static var primaryPoint: MemoryPointFixture {
+        guard let point = payload.memoryPoints.first else {
+            fatalError("UITest memory catalog requires at least one memory point")
+        }
+        return point
+    }
+
+    static var secondaryPoint: MemoryPointFixture {
+        guard payload.memoryPoints.count > 1 else {
+            fatalError("UITest memory catalog requires at least two memory points")
+        }
+        return payload.memoryPoints[1]
+    }
+
+    static var primaryPointTitle: String {
+        primaryPoint.nameByLanguage["en"] ?? ""
+    }
+
+    static var primaryPinIdentifier: String {
+        "map_point_\(primaryPoint.year)"
+    }
+
+    static var secondaryPinIdentifier: String {
+        "map_point_\(secondaryPoint.year)"
+    }
+
+    static var primaryArchiveIdentifier: String {
+        "archive_item_\(primaryPoint.year)"
+    }
+
+    static var secondaryArchiveIdentifier: String {
+        "archive_item_\(secondaryPoint.year)"
+    }
+}
+
+private func memoriesJSONURL() throws -> URL {
+    let fileManager = FileManager.default
+
+    let sourceRootCandidate = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .appendingPathComponent("Resources/memories.json")
+    if fileManager.fileExists(atPath: sourceRootCandidate.path) {
+        return sourceRootCandidate
+    }
+
+    let cwdCandidate = URL(fileURLWithPath: fileManager.currentDirectoryPath)
+        .appendingPathComponent("Resources/memories.json")
+    if fileManager.fileExists(atPath: cwdCandidate.path) {
+        return cwdCandidate
+    }
+
+    throw NSError(
+        domain: "LocalMemoryDataIntegrityTests",
+        code: 1,
+        userInfo: [NSLocalizedDescriptionKey: "Resources/memories.json not found from source or working directory"]
+    )
 }
