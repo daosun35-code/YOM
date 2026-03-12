@@ -112,6 +112,11 @@ protocol GeofenceAuthorizationProviding {
 
 struct SystemGeofenceAuthorizationProvider: GeofenceAuthorizationProviding {
     func isAuthorizedForMonitoring() -> Bool {
+#if DEBUG
+        if ProcessInfo.processInfo.environment["UITEST_FORCE_PASSIVE_READY"] == "1" {
+            return true
+        }
+#endif
         guard CLLocationManager.locationServicesEnabled() else {
             return false
         }

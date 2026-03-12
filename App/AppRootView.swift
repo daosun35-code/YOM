@@ -5,6 +5,7 @@ struct AppRootView: View {
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var memoryRepository: LocalMemoryRepository
     @EnvironmentObject private var archiveCoordinator: MemoryArchiveCoordinator
+    @EnvironmentObject private var passiveCoordinator: PassiveExperienceCoordinator
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var hasAppliedArchiveSeed = false
     private let launchArguments = ProcessInfo.processInfo.arguments
@@ -31,6 +32,10 @@ struct AppRootView: View {
         .animation(shellAnimation, value: languageStore.hasCompletedOnboarding)
         .onAppear {
             applyUITestArchiveSeedIfNeeded()
+            routePendingPassiveNavigationIfNeeded()
+        }
+        .onChange(of: passiveCoordinator.pendingNavigationRequest?.id) { _, _ in
+            routePendingPassiveNavigationIfNeeded()
         }
     }
 
@@ -69,5 +74,14 @@ struct AppRootView: View {
 
         hasAppliedArchiveSeed = true
         archiveCoordinator.seedArchiveSample(using: memoryRepository.memoryPoints)
+    }
+
+    private func routePendingPassiveNavigationIfNeeded() {
+        guard passiveCoordinator.pendingNavigationRequest != nil else { return }
+        guard languageStore.hasCompletedOnboarding else { return }
+
+        withAnimation(shellAnimation) {
+            shellState.selectedTab = .map
+        }
     }
 }

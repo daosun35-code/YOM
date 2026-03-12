@@ -7,6 +7,7 @@ struct YOMApp: App {
     @StateObject private var languageStore: LanguageStore
     @StateObject private var memoryRepository: LocalMemoryRepository
     @StateObject private var archiveCoordinator: MemoryArchiveCoordinator
+    @StateObject private var passiveCoordinator: PassiveExperienceCoordinator
     private let launchArguments = ProcessInfo.processInfo.arguments
 
     init() {
@@ -17,10 +18,19 @@ struct YOMApp: App {
             MemoryArchiveCoordinator.resetPersistentStore()
         }
 
+        let languageStore = LanguageStore()
+        let memoryRepository = LocalMemoryRepository()
         _shellState = StateObject(wrappedValue: AppShellState())
-        _languageStore = StateObject(wrappedValue: LanguageStore())
-        _memoryRepository = StateObject(wrappedValue: LocalMemoryRepository())
+        _languageStore = StateObject(wrappedValue: languageStore)
+        _memoryRepository = StateObject(wrappedValue: memoryRepository)
         _archiveCoordinator = StateObject(wrappedValue: MemoryArchiveCoordinator())
+        _passiveCoordinator = StateObject(
+            wrappedValue: PassiveExperienceCoordinator(
+                memoryLookup: memoryRepository.memoryPoint(by:),
+                allMemories: { memoryRepository.memoryPoints },
+                preferredLanguage: { languageStore.language }
+            )
+        )
     }
 
     var body: some Scene {
@@ -30,6 +40,7 @@ struct YOMApp: App {
                 .environmentObject(languageStore)
                 .environmentObject(memoryRepository)
                 .environmentObject(archiveCoordinator)
+                .environmentObject(passiveCoordinator)
                 .environment(\.locale, languageStore.language.locale)
                 .transformEnvironment(\.dynamicTypeSize) { value in
                     guard launchArguments.contains("UITEST_FORCE_DYNAMIC_TYPE_ACCESSIBILITY_XXXL") else { return }

@@ -848,6 +848,47 @@ final class YOMUITests: XCTestCase {
         XCTAssertFalse(app.tabBars.buttons["Map"].exists)
     }
 
+    func testPassiveReminderToggleShowsEnabledStateInSettings() {
+        let app = makeApp(
+            extraArguments: ["UITEST_BYPASS_ONBOARDING"],
+            extraEnvironment: [
+                "UITEST_FORCE_PASSIVE_READY": "1",
+                "UITEST_PRESET_PASSIVE_ENABLED": "1"
+            ]
+        )
+        app.launch()
+
+        let settingsTab = app.tabBars.buttons["Settings"]
+        XCTAssertTrue(settingsTab.waitForExistence(timeout: 5))
+        settingsTab.tap()
+
+        let passiveToggle = app.switches["settings_passive_toggle"].firstMatch
+        XCTAssertTrue(passiveToggle.waitForExistence(timeout: 5))
+
+        let statusText = app.staticTexts["settings_passive_status"].firstMatch
+        XCTAssertTrue(statusText.waitForExistence(timeout: 5))
+        XCTAssertEqual(statusText.label, "Nearby memory reminders are on. Monitoring stays on this device.")
+    }
+
+    func testPassiveNotificationTapStartsNavigationFlow() {
+        let app = makeApp(
+            extraArguments: [
+                "UITEST_BYPASS_ONBOARDING",
+                "UITEST_FORCE_LOCATION_AUTHORIZED"
+            ],
+            extraEnvironment: [
+                "UITEST_TRIGGER_PASSIVE_NOTIFICATION_MEMORY_ID": "A1B2C3D4-E5F6-7890-ABCD-EF1234567890"
+            ]
+        )
+        app.launch()
+
+        let navigationPill = app.descendants(matching: .any)
+            .matching(identifier: "map_top_navigation_pill_container")
+            .firstMatch
+        XCTAssertTrue(navigationPill.waitForExistence(timeout: 8))
+        XCTAssertFalse(app.staticTexts["memory_detail_title"].exists)
+    }
+
     func testAccessibilityDynamicTypeMaximumKeepsCoreActionsReachable() {
         let app = makeApp(extraArguments: ["UITEST_FORCE_DYNAMIC_TYPE_ACCESSIBILITY_XXXL"])
         app.launch()

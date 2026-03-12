@@ -44,6 +44,9 @@ targets:
       - YOMUITests
       - Features/Memory/CardRenderer.swift
       - Features/Memory/ExplorationStore.swift
+      - Features/Memory/GeofenceMonitor.swift
+      - Features/Memory/NotificationOrchestrator.swift
+      - Features/Memory/PassiveExperienceCoordinator.swift
       - Shared/Localization/AppLanguage.swift
       - Shared/Models/MemoryMedia.swift
       - Shared/Models/MemoryPoint.swift

@@ -7,6 +7,7 @@ struct MapTabRootView: View {
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var memoryRepository: LocalMemoryRepository
     @EnvironmentObject private var archiveCoordinator: MemoryArchiveCoordinator
+    @EnvironmentObject private var passiveCoordinator: PassiveExperienceCoordinator
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.openURL) private var openURL
 
@@ -307,6 +308,7 @@ struct MapTabRootView: View {
             applyUITestOverridesIfNeeded()
             configureUnlockEvaluatorIfNeeded()
             updateUnlockProgressIfNeeded()
+            handlePendingPassiveNavigationIfNeeded()
         }
         .onChange(of: languageStore.hasCompletedOnboarding) { _, _ in
             syncLocationUpdates()
@@ -318,6 +320,10 @@ struct MapTabRootView: View {
         }
         .onChange(of: locationProvider.coordinateKey) { _, _ in
             updateUnlockProgressIfNeeded()
+            refreshPassiveMonitoringIfNeeded()
+        }
+        .onChange(of: passiveCoordinator.pendingNavigationRequest?.id) { _, _ in
+            handlePendingPassiveNavigationIfNeeded()
         }
         // SHEET-001: 任意关闭路径（Close、下滑、Go动作）和新 pin 切入均重置 detent/高度
         .onChange(of: state.previewPoint?.id) { _, _ in
@@ -858,7 +864,7 @@ struct MapTabRootView: View {
 
     private func handleExperienceComplete(for memoryPoint: MemoryPoint) {
         do {
-            _ = try archiveCoordinator.completeExperience(for: memoryPoint, source: .active)
+            _ = try archiveCoordinator.completeExperience(for: memoryPoint, source: state.navigationSource)
             unlockedMemoryPoint = nil
             withAnimation(shellAnimation) {
                 state.endNavigation()
@@ -898,6 +904,30 @@ struct MapTabRootView: View {
         if forcePreviewPointForUITests,
            let point = points.first {
             state.selectPoint(point)
+        }
+    }
+
+    private func handlePendingPassiveNavigationIfNeeded() {
+        guard let request = passiveCoordinator.pendingNavigationRequest,
+              let memoryPoint = memoryRepository.memoryPoint(by: request.memoryId)
+        else {
+            return
+        }
+
+        withAnimation(shellAnimation) {
+            state.startPassiveNavigation(to: memoryPoint.poi)
+            shellState.selectedTab = .map
+        }
+        passiveCoordinator.consumePendingNavigationRequest()
+        configureUnlockEvaluatorIfNeeded()
+        updateUnlockProgressIfNeeded()
+    }
+
+    private func refreshPassiveMonitoringIfNeeded() {
+        guard let coordinate = locationProvider.coordinate else { return }
+
+        Task {
+            await passiveCoordinator.refreshMonitors(using: coordinate)
         }
     }
 

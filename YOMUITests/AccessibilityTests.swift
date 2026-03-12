@@ -49,6 +49,26 @@ final class AccessibilityTests: XCTestCase {
         XCTAssertFalse(completeButton.label.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
     }
 
+    func testPassiveReminderToggleHasAccessibleLabelAndStatus() {
+        let app = makeApp(
+            extraArguments: ["UITEST_BYPASS_ONBOARDING"],
+            extraEnvironment: ["UITEST_FORCE_PASSIVE_READY": "1"]
+        )
+        app.launch()
+
+        let settingsTab = app.tabBars.buttons["Settings"]
+        XCTAssertTrue(settingsTab.waitForExistence(timeout: 5))
+        settingsTab.tap()
+
+        let passiveToggle = app.switches["settings_passive_toggle"].firstMatch
+        XCTAssertTrue(passiveToggle.waitForExistence(timeout: 5))
+        XCTAssertFalse(passiveToggle.label.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        XCTAssertTrue(passiveToggle.isHittable)
+
+        let status = app.staticTexts["settings_passive_status"].firstMatch
+        XCTAssertTrue(status.waitForExistence(timeout: 5))
+    }
+
     private func makeApp(extraArguments: [String] = [], extraEnvironment: [String: String] = [:]) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments += [

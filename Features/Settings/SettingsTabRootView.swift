@@ -1,14 +1,32 @@
 import SwiftUI
+import UIKit
 
 struct SettingsTabRootView: View {
     @EnvironmentObject private var shellState: AppShellState
     @EnvironmentObject private var languageStore: LanguageStore
+    @EnvironmentObject private var passiveCoordinator: PassiveExperienceCoordinator
+    @Environment(\.openURL) private var openURL
     @State private var showsBetaResetConfirmation = false
+    @State private var passiveRemindersEnabled = false
+    @State private var isUpdatingPassiveToggle = false
+    @State private var passiveAlert: PassiveAlert?
     private let launchArguments = ProcessInfo.processInfo.arguments
 
     private var strings: AppStrings { AppStrings(language: languageStore.language) }
     private var showsBetaTools: Bool {
         isBetaBuild && launchArguments.contains("UITEST_RESET_APP_STATE") == false
+    }
+    private var passiveRemindersBinding: Binding<Bool> {
+        Binding(
+            get: { passiveRemindersEnabled },
+            set: { newValue in
+                guard isUpdatingPassiveToggle == false else { return }
+                passiveRemindersEnabled = newValue
+                Task {
+                    await handlePassiveToggleChanged(newValue)
+                }
+            }
+        )
     }
 
     private var isBetaBuild: Bool {
@@ -17,6 +35,16 @@ struct SettingsTabRootView: View {
 #else
         return Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
 #endif
+    }
+
+    private enum PassiveAlert: String, Identifiable {
+        case backgroundRefreshUnavailable
+        case notificationDenied
+        case locationDenied
+        case currentLocationUnavailable
+        case genericFailure
+
+        var id: String { rawValue }
     }
 
     var body: some View {
@@ -38,6 +66,31 @@ struct SettingsTabRootView: View {
                         Label(strings.aboutText, systemImage: "info.circle")
                     }
                     .accessibilityLabel(strings.aboutText)
+                }
+
+                Section(strings.nearbyMemoryRemindersSection) {
+                    Toggle(isOn: passiveRemindersBinding) {
+                        VStack(alignment: .leading, spacing: DSSpacing.space4) {
+                            Text(strings.nearbyMemoryRemindersTitle)
+                                .dsTextStyle(.body, weight: .medium)
+                                .foregroundStyle(DSColor.textPrimary)
+
+                            Text(strings.nearbyMemoryRemindersBody)
+                                .dsTextStyle(.caption)
+                                .foregroundStyle(DSColor.textSecondary)
+                        }
+                    }
+                    .accessibilityIdentifier("settings_passive_toggle")
+                    .accessibilityLabel(strings.nearbyMemoryRemindersTitle)
+
+                    Text(
+                        passiveRemindersEnabled
+                            ? strings.nearbyMemoryRemindersEnabledBody
+                            : strings.nearbyMemoryRemindersDisabledBody
+                    )
+                    .dsTextStyle(.caption)
+                    .foregroundStyle(DSColor.textSecondary)
+                    .accessibilityIdentifier("settings_passive_status")
                 }
 
                 if showsBetaTools {
@@ -65,6 +118,9 @@ struct SettingsTabRootView: View {
             } message: {
                 Text(strings.betaResetConfirmationMessage)
             }
+            .alert(item: $passiveAlert) { alert in
+                makePassiveAlert(alert)
+            }
             .navigationTitle(strings.settingsTitle)
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: SettingsRoute.self) { route in
@@ -73,6 +129,12 @@ struct SettingsTabRootView: View {
                     AboutView()
                 }
             }
+            .onAppear {
+                syncPassiveToggle()
+            }
+            .onChange(of: passiveCoordinator.isPassiveEnabled) { _, _ in
+                syncPassiveToggle()
+            }
         }
     }
 
@@ -80,6 +142,84 @@ struct SettingsTabRootView: View {
         shellState.settingsRoutes = []
         shellState.selectedTab = .map
         languageStore.resetOnboardingForBeta()
+    }
+
+    private func syncPassiveToggle() {
+        isUpdatingPassiveToggle = true
+        passiveRemindersEnabled = passiveCoordinator.isPassiveEnabled
+        isUpdatingPassiveToggle = false
+    }
+
+    private func handlePassiveToggleChanged(_ isEnabled: Bool) async {
+        isUpdatingPassiveToggle = true
+        defer { isUpdatingPassiveToggle = false }
+
+        let result = await passiveCoordinator.setPassiveEnabled(isEnabled)
+        switch result {
+        case .success:
+            passiveRemindersEnabled = passiveCoordinator.isPassiveEnabled
+        case .failure(let error):
+            passiveRemindersEnabled = false
+            passiveAlert = passiveAlert(for: error)
+        }
+    }
+
+    private func passiveAlert(for error: PassiveReminderError) -> PassiveAlert {
+        switch error {
+        case .backgroundRefreshUnavailable:
+            return .backgroundRefreshUnavailable
+        case .notificationPermissionDenied:
+            return .notificationDenied
+        case .locationPermissionDenied:
+            return .locationDenied
+        case .currentLocationUnavailable:
+            return .currentLocationUnavailable
+        case .geofenceRegistrationFailed:
+            return .genericFailure
+        }
+    }
+
+    private func makePassiveAlert(_ alert: PassiveAlert) -> Alert {
+        switch alert {
+        case .backgroundRefreshUnavailable:
+            return Alert(
+                title: Text(strings.backgroundRefreshUnavailableTitle),
+                message: Text(strings.backgroundRefreshUnavailableBody),
+                primaryButton: .default(Text(strings.openSettingsText), action: openAppSettings),
+                secondaryButton: .cancel(Text(strings.notNowText))
+            )
+        case .notificationDenied:
+            return Alert(
+                title: Text(strings.nearbyMemoryRemindersPermissionTitle),
+                message: Text(strings.nearbyMemoryRemindersNotificationDeniedBody),
+                primaryButton: .default(Text(strings.openSettingsText), action: openAppSettings),
+                secondaryButton: .cancel(Text(strings.notNowText))
+            )
+        case .locationDenied:
+            return Alert(
+                title: Text(strings.nearbyMemoryRemindersPermissionTitle),
+                message: Text(strings.nearbyMemoryRemindersLocationDeniedBody),
+                primaryButton: .default(Text(strings.openSettingsText), action: openAppSettings),
+                secondaryButton: .cancel(Text(strings.notNowText))
+            )
+        case .currentLocationUnavailable:
+            return Alert(
+                title: Text(strings.nearbyMemoryRemindersPermissionTitle),
+                message: Text(strings.nearbyMemoryRemindersLocationUnavailableBody),
+                dismissButton: .default(Text(strings.closeText))
+            )
+        case .genericFailure:
+            return Alert(
+                title: Text(strings.nearbyMemoryRemindersPermissionTitle),
+                message: Text(strings.nearbyMemoryRemindersGenericFailureBody),
+                dismissButton: .default(Text(strings.closeText))
+            )
+        }
+    }
+
+    private func openAppSettings() {
+        guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else { return }
+        openURL(settingsURL)
     }
 }
 

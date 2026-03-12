@@ -15,6 +15,7 @@ final class MapScreenState: ObservableObject {
     @Published var previewPoint: PointOfInterest?
     @Published var searchedPlace: SearchPlace?
     @Published var navigationPoint: PointOfInterest?
+    @Published var navigationSource: ExplorationSource = .active
     @Published var activeRoute: MKRoute?
     @Published var routeStatus: RouteStatus = .idle
 
@@ -93,13 +94,23 @@ final class MapScreenState: ObservableObject {
             return
         }
         navigationPoint = point
+        navigationSource = .active
         activeRoute = nil
         routeStatus = .loading
         dismissPreview()
     }
 
+    func startPassiveNavigation(to point: PointOfInterest) {
+        navigationPoint = point
+        navigationSource = .passive
+        activeRoute = nil
+        routeStatus = .loading
+        previewPoint = nil
+    }
+
     func endNavigation() {
         navigationPoint = nil
+        navigationSource = .active
         activeRoute = nil
         routeStatus = .idle
     }
