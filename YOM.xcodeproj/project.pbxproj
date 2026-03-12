@@ -15,6 +15,7 @@
 		1AA11AA11AA11AA11AA11AA4 /* MemoryPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE360DB4018FD969BE4FE19B /* MemoryPoint.swift */; };
 		1AA11AA11AA11AA11AA11AA5 /* PointOfInterest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30EC77F863A9C094EC9FC979 /* PointOfInterest.swift */; };
 		1AA11AA11AA11AA11AA11AA6 /* GeofenceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA7754BF47A285A27CEFF31E /* GeofenceMonitor.swift */; };
+		1AA11AA11AA11AA11AA11AA7 /* NotificationOrchestrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6280035E6B816EBDE64B4400 /* NotificationOrchestrator.swift */; };
 		1BC77F0D8634170E9E61E84F /* MemoryMedia.swift in Sources */ = {isa = PBXBuildFile; fileRef = D43B208E8AB43AFC434089B3 /* MemoryMedia.swift */; };
 		267A3D9AD562FD9EB3744E13 /* PointOfInterest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30EC77F863A9C094EC9FC979 /* PointOfInterest.swift */; };
 		2A347185509793B3DA244206 /* AppStrings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39A104DC9D4CE442E593DCA5 /* AppStrings.swift */; };
@@ -455,6 +456,7 @@
 				9DE4DD13BAD6DAE0F128AF3E /* GeofenceMonitorTests.swift in Sources */,
 				1AA11AA11AA11AA11AA11AA3 /* MemoryMedia.swift in Sources */,
 				1AA11AA11AA11AA11AA11AA4 /* MemoryPoint.swift in Sources */,
+				1AA11AA11AA11AA11AA11AA7 /* NotificationOrchestrator.swift in Sources */,
 				C544FE1D182E2F5F4BA8165A /* NotificationOrchestratorTests.swift in Sources */,
 				1AA11AA11AA11AA11AA11AA5 /* PointOfInterest.swift in Sources */,
 				922815F7B002ED3086F72266 /* YOMUITests.swift in Sources */,
