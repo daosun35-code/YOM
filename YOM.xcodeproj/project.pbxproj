@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -124,7 +124,7 @@
 		AA7754BF47A285A27CEFF31E /* GeofenceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeofenceMonitor.swift; sourceTree = "<group>"; };
 		AEB87C6F11C9CD08D683B7ED /* AppRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootView.swift; sourceTree = "<group>"; };
 		AEC4529220376050821E902A /* archive.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = archive.png; sourceTree = "<group>"; };
-		B6E3F6C94A84994F1B12C854 /* YOM.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = YOM.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B6E3F6C94A84994F1B12C854 /* YOM.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YOM.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B74B4DDF470B3FE2AF2F270C /* archive.placeholder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = archive.placeholder.png; sourceTree = "<group>"; };
 		B8AFC57212BDA90BF498EF20 /* DSTypography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSTypography.swift; sourceTree = "<group>"; };
 		BE360DB4018FD969BE4FE19B /* MemoryPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryPoint.swift; sourceTree = "<group>"; };
@@ -134,7 +134,7 @@
 		DD9C3B0E7F62AADE3CCACF75 /* GeofenceMonitorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeofenceMonitorTests.swift; sourceTree = "<group>"; };
 		DDE8EBE7EBC95A4B4258374F /* DSStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSStyles.swift; sourceTree = "<group>"; };
 		E48BA3076C1C631CC5B040BD /* LanguageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageStore.swift; sourceTree = "<group>"; };
-		EB9BA07413744F5858115582 /* YOMUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = YOMUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		EB9BA07413744F5858115582 /* YOMUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YOMUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EF92B88F9476B4C9F938CE6F /* NotificationOrchestratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationOrchestratorTests.swift; sourceTree = "<group>"; };
 		F0F2624E7F7291B5F9D5C12E /* DSTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DSTokens.swift; sourceTree = "<group>"; };
 		F3E1FFC12E94230847715E65 /* AppStrings+Archive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppStrings+Archive.swift"; sourceTree = "<group>"; };
@@ -382,10 +382,9 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					8999E9E7BAAD80538C1EF326 = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					A573D0B57D756B6343FBE0ED = {
@@ -405,7 +404,6 @@
 			);
 			mainGroup = 615244F220049760E61F6E3C;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -547,6 +545,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 58Y8HL3FTS;
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "We use your location to deliver nearby memory reminders while you explore.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use your location to show your position on the map.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "We save generated memory cards to your photo library when you choose Save to Photos.";
@@ -569,6 +568,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 58Y8HL3FTS;
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "We use your location to deliver nearby memory reminders while you explore.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We use your location to show your position on the map.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "We save generated memory cards to your photo library when you choose Save to Photos.";
@@ -647,6 +647,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -718,6 +719,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
