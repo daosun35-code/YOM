@@ -59,6 +59,25 @@ final class MapScreenState: ObservableObject {
         )
     }
 
+    func followUserLocation(followsHeading: Bool, fallbackCoordinate: CLLocationCoordinate2D?) {
+        let fallbackPosition: MapCameraPosition
+        if let fallbackCoordinate {
+            fallbackPosition = .region(
+                MKCoordinateRegion(
+                    center: fallbackCoordinate,
+                    span: Self.userFocusSpan
+                )
+            )
+        } else {
+            fallbackPosition = .region(defaultRegion)
+        }
+
+        cameraPosition = .userLocation(
+            followsHeading: followsHeading,
+            fallback: fallbackPosition
+        )
+    }
+
     func selectPoint(_ point: PointOfInterest) {
         cameraPosition = .region(
             MKCoordinateRegion(

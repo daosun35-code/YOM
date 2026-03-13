@@ -9,6 +9,7 @@ final class UserLocationProvider: NSObject, ObservableObject {
     }
 
     @Published private(set) var coordinate: CLLocationCoordinate2D?
+    @Published private(set) var headingDegrees: CLLocationDirection?
 
     private let manager = CLLocationManager()
     private let launchArguments = ProcessInfo.processInfo.arguments
@@ -17,6 +18,7 @@ final class UserLocationProvider: NSObject, ObservableObject {
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
+        manager.headingFilter = 5
     }
 
     var coordinateKey: String {
@@ -37,6 +39,9 @@ final class UserLocationProvider: NSObject, ObservableObject {
         }
 
         manager.startUpdatingLocation()
+        if CLLocationManager.headingAvailable() {
+            manager.startUpdatingHeading()
+        }
     }
 
     @discardableResult
@@ -80,6 +85,9 @@ extension UserLocationProvider: CLLocationManagerDelegate {
         Task { @MainActor in
             if status == .authorizedWhenInUse || status == .authorizedAlways {
                 manager.startUpdatingLocation()
+                if CLLocationManager.headingAvailable() {
+                    manager.startUpdatingHeading()
+                }
             }
         }
     }
@@ -91,7 +99,30 @@ extension UserLocationProvider: CLLocationManagerDelegate {
         }
     }
 
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+        let resolvedHeading = Self.resolvedHeading(from: newHeading)
+        Task { @MainActor in
+            self.headingDegrees = resolvedHeading
+        }
+    }
+
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         _ = error
+    }
+
+    nonisolated func locationManagerShouldDisplayHeadingCalibration(_ manager: CLLocationManager) -> Bool {
+        false
+    }
+
+    nonisolated private static func resolvedHeading(from heading: CLHeading) -> CLLocationDirection? {
+        if heading.trueHeading >= 0 {
+            return heading.trueHeading
+        }
+
+        if heading.magneticHeading >= 0 {
+            return heading.magneticHeading
+        }
+
+        return nil
     }
 }

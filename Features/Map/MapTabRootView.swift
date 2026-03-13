@@ -25,6 +25,7 @@ struct MapTabRootView: View {
     @State private var unlockEvaluator: UnlockEvaluator?
     @State private var unlockedMemoryPoint: MemoryPoint?
     @State private var shouldCenterOnNextLocationUpdate = false
+    @State private var shouldFollowHeadingOnNextLocationUpdate = false
     @State private var hasObservedFirstResolvedLocation = false
 
     private var points: [PointOfInterest] { memoryRepository.allPOIs }
@@ -361,7 +362,12 @@ struct MapTabRootView: View {
                         )
                 }
 
-                UserAnnotation()
+                UserAnnotation(anchor: .center) { userLocation in
+                    CurrentUserLocationAnnotationView(
+                        headingDegrees: resolvedUserHeadingDegrees(from: userLocation),
+                        accessibilityLabel: strings.locateMe
+                    )
+                }
 
                 ForEach(points) { point in
                     Annotation(point.title(in: languageStore.language), coordinate: point.coordinate) {
@@ -596,14 +602,18 @@ struct MapTabRootView: View {
         case .authorized:
             guard let coordinate = locationProvider.coordinate else {
                 shouldCenterOnNextLocationUpdate = true
+                shouldFollowHeadingOnNextLocationUpdate = true
                 return
             }
             shouldCenterOnNextLocationUpdate = false
-            centerMapOnUserLocation(coordinate)
+            shouldFollowHeadingOnNextLocationUpdate = false
+            centerMapOnUserLocation(coordinate, followsHeading: true)
         case .notDetermined:
             shouldCenterOnNextLocationUpdate = true
+            shouldFollowHeadingOnNextLocationUpdate = true
         case .deniedOrRestricted:
             shouldCenterOnNextLocationUpdate = false
+            shouldFollowHeadingOnNextLocationUpdate = false
             activeAlert = .locationPermissionDenied
         }
     }
@@ -731,18 +741,46 @@ struct MapTabRootView: View {
 
         if shouldCenterOnNextLocationUpdate {
             shouldCenterOnNextLocationUpdate = false
-            centerMapOnUserLocation(coordinate)
+            let followsHeading = shouldFollowHeadingOnNextLocationUpdate
+            shouldFollowHeadingOnNextLocationUpdate = false
+            centerMapOnUserLocation(coordinate, followsHeading: followsHeading)
             return
         }
 
         guard isFirstResolvedLocation, oldKey == "unknown", state.isMapDefaultState else { return }
-        centerMapOnUserLocation(coordinate)
+        centerMapOnUserLocation(coordinate, followsHeading: false)
     }
 
-    private func centerMapOnUserLocation(_ coordinate: CLLocationCoordinate2D) {
+    private func centerMapOnUserLocation(_ coordinate: CLLocationCoordinate2D, followsHeading: Bool) {
         withAnimation(shellAnimation) {
-            state.centerOnUserLocation(coordinate)
+            if followsHeading {
+                state.followUserLocation(followsHeading: true, fallbackCoordinate: coordinate)
+            } else {
+                state.centerOnUserLocation(coordinate)
+            }
         }
+    }
+
+    private func resolvedUserHeadingDegrees(from userLocation: UserLocation) -> CLLocationDirection? {
+        if let annotationHeading = headingDegrees(from: userLocation.heading) {
+            return annotationHeading
+        }
+
+        return locationProvider.headingDegrees
+    }
+
+    private func headingDegrees(from heading: CLHeading?) -> CLLocationDirection? {
+        guard let heading else { return nil }
+
+        if heading.trueHeading >= 0 {
+            return heading.trueHeading
+        }
+
+        if heading.magneticHeading >= 0 {
+            return heading.magneticHeading
+        }
+
+        return nil
     }
 
     private var routeRefreshKey: String {
@@ -1034,5 +1072,43 @@ struct MapTabRootView: View {
         case .photoSaveFailed:
             return strings.archiveSaveFailedBody
         }
+    }
+}
+
+private struct CurrentUserLocationAnnotationView: View {
+    let headingDegrees: CLLocationDirection?
+    let accessibilityLabel: String
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(.thinMaterial)
+                .frame(width: 34, height: 34)
+
+            Circle()
+                .strokeBorder(.white.opacity(0.92), lineWidth: 1.5)
+                .frame(width: 34, height: 34)
+
+            if let headingDegrees {
+                Image(systemName: "location.north.fill")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 24, height: 24)
+                    .background(DSColor.accentPrimary, in: Circle())
+                    .rotationEffect(.degrees(headingDegrees))
+            } else {
+                Circle()
+                    .fill(DSColor.accentPrimary)
+                    .frame(width: 14, height: 14)
+                    .overlay {
+                        Circle()
+                            .strokeBorder(.white, lineWidth: 3)
+                    }
+            }
+        }
+        .shadow(color: DSColor.borderSubtle.opacity(0.18), radius: DSRadius.r8, y: DSSpacing.space4)
+        .allowsHitTesting(false)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel)
     }
 }
