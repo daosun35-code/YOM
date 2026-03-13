@@ -24,6 +24,8 @@ struct MapTabRootView: View {
     @State private var mapContainerWidth: CGFloat = 0
     @State private var unlockEvaluator: UnlockEvaluator?
     @State private var unlockedMemoryPoint: MemoryPoint?
+    @State private var shouldCenterOnNextLocationUpdate = false
+    @State private var hasObservedFirstResolvedLocation = false
 
     private var points: [PointOfInterest] { memoryRepository.allPOIs }
 
@@ -318,7 +320,8 @@ struct MapTabRootView: View {
             configureUnlockEvaluatorIfNeeded()
             updateUnlockProgressIfNeeded()
         }
-        .onChange(of: locationProvider.coordinateKey) { _, _ in
+        .onChange(of: locationProvider.coordinateKey) { oldKey, newKey in
+            handleLocationCoordinateChange(from: oldKey, to: newKey)
             updateUnlockProgressIfNeeded()
             refreshPassiveMonitoringIfNeeded()
         }
@@ -357,6 +360,8 @@ struct MapTabRootView: View {
                             style: StrokeStyle(lineWidth: DSBorder.routeLine, lineCap: .round, lineJoin: .round)
                         )
                 }
+
+                UserAnnotation()
 
                 ForEach(points) { point in
                     Annotation(point.title(in: languageStore.language), coordinate: point.coordinate) {
@@ -589,18 +594,16 @@ struct MapTabRootView: View {
     private func handleLocateMeAction() {
         switch locationProvider.requestAuthorizationForUserIntent() {
         case .authorized:
-            guard let coordinate = locationProvider.coordinate else { return }
-            withAnimation(shellAnimation) {
-                state.cameraPosition = .region(
-                    MKCoordinateRegion(
-                        center: coordinate,
-                        span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-                    )
-                )
+            guard let coordinate = locationProvider.coordinate else {
+                shouldCenterOnNextLocationUpdate = true
+                return
             }
+            shouldCenterOnNextLocationUpdate = false
+            centerMapOnUserLocation(coordinate)
         case .notDetermined:
-            break
+            shouldCenterOnNextLocationUpdate = true
         case .deniedOrRestricted:
+            shouldCenterOnNextLocationUpdate = false
             activeAlert = .locationPermissionDenied
         }
     }
@@ -718,6 +721,30 @@ struct MapTabRootView: View {
         }
     }
 
+    private func handleLocationCoordinateChange(from oldKey: String, to newKey: String) {
+        guard let coordinate = locationProvider.coordinate, newKey != "unknown" else { return }
+
+        let isFirstResolvedLocation = hasObservedFirstResolvedLocation == false
+        if isFirstResolvedLocation {
+            hasObservedFirstResolvedLocation = true
+        }
+
+        if shouldCenterOnNextLocationUpdate {
+            shouldCenterOnNextLocationUpdate = false
+            centerMapOnUserLocation(coordinate)
+            return
+        }
+
+        guard isFirstResolvedLocation, oldKey == "unknown", state.isMapDefaultState else { return }
+        centerMapOnUserLocation(coordinate)
+    }
+
+    private func centerMapOnUserLocation(_ coordinate: CLLocationCoordinate2D) {
+        withAnimation(shellAnimation) {
+            state.centerOnUserLocation(coordinate)
+        }
+    }
+
     private var routeRefreshKey: String {
         guard let navigationPoint = state.navigationPoint else {
             return "route:none:\(state.routeRetryNonce)"
@@ -733,26 +760,39 @@ struct MapTabRootView: View {
             return
         }
 
+        let expectedRefreshKey = routeRefreshKey
         state.routeStatus = .loading
-        let sourceCoordinate = locationProvider.coordinate ?? state.routeSourceFallback
-        let cacheKey = RouteCacheKey(destinationID: destination.id, source: sourceCoordinate)
+        let preferredSourceCoordinate = locationProvider.coordinate
+        let cacheKey = preferredSourceCoordinate.map { RouteCacheKey(destinationID: destination.id, source: $0) }
         let now = Date()
 
         if forceRouteFailureForUITests {
             // Keep loading visible briefly so UI tests can validate retry-chain transitions.
             try? await Task.sleep(nanoseconds: 2_500_000_000)
+            guard shouldApplyRouteResult(for: destination.id, expectedRefreshKey: expectedRefreshKey) else { return }
             state.activeRoute = nil
             state.routeStatus = .failed
             return
         }
 
-        if let cached = state.routeCache[cacheKey], now.timeIntervalSince(cached.createdAt) <= 120 {
+        if let cacheKey,
+           let cached = state.routeCache[cacheKey],
+           now.timeIntervalSince(cached.createdAt) <= 120 {
             state.activeRoute = cached.route
             state.routeStatus = .ready
+            withAnimation(shellAnimation) {
+                state.focusOnRoute(
+                    cached.route,
+                    actualSource: cached.sourceCoordinate,
+                    destination: destination.coordinate
+                )
+            }
             return
         }
 
-        if state.lastRouteAttemptKey == cacheKey, now.timeIntervalSince(state.lastRouteAttemptAt) < 3 {
+        if let cacheKey,
+           state.lastRouteAttemptKey == cacheKey,
+           now.timeIntervalSince(state.lastRouteAttemptAt) < 3 {
             return
         }
 
@@ -760,16 +800,29 @@ struct MapTabRootView: View {
         state.lastRouteAttemptAt = now
 
         let request = MKDirections.Request()
-        request.source = MKMapItem(placemark: MKPlacemark(coordinate: sourceCoordinate))
+        if let preferredSourceCoordinate {
+            request.source = MKMapItem(placemark: MKPlacemark(coordinate: preferredSourceCoordinate))
+        } else {
+            request.source = MKMapItem.forCurrentLocation()
+        }
         request.destination = MKMapItem(placemark: MKPlacemark(coordinate: destination.coordinate))
         request.transportType = .walking
 
         do {
             let response = try await MKDirections(request: request).calculate()
+            guard shouldApplyRouteResult(for: destination.id, expectedRefreshKey: expectedRefreshKey) else { return }
             if let route = response.routes.first {
+                let routeSourceCoordinate = resolvedRouteSourceCoordinate(from: response, fallback: preferredSourceCoordinate)
                 state.activeRoute = route
                 state.routeStatus = .ready
-                state.routeCache[cacheKey] = CachedRoute(route: route, createdAt: now)
+                if let routeSourceCoordinate {
+                    let resolvedCacheKey = RouteCacheKey(destinationID: destination.id, source: routeSourceCoordinate)
+                    state.routeCache[resolvedCacheKey] = CachedRoute(
+                        route: route,
+                        sourceCoordinate: routeSourceCoordinate,
+                        createdAt: now
+                    )
+                }
                 if state.routeCache.count > 12 {
                     state.routeCache = Dictionary(
                         uniqueKeysWithValues: state.routeCache
@@ -778,14 +831,44 @@ struct MapTabRootView: View {
                             .map { ($0.key, $0.value) }
                     )
                 }
+                withAnimation(shellAnimation) {
+                    state.focusOnRoute(
+                        route,
+                        actualSource: routeSourceCoordinate,
+                        destination: destination.coordinate
+                    )
+                }
             } else {
                 state.activeRoute = nil
                 state.routeStatus = .unavailable
             }
         } catch {
+            guard shouldApplyRouteResult(for: destination.id, expectedRefreshKey: expectedRefreshKey) else { return }
             state.activeRoute = nil
             state.routeStatus = .failed
         }
+    }
+
+    private func shouldApplyRouteResult(for destinationID: UUID, expectedRefreshKey: String) -> Bool {
+        guard Task.isCancelled == false else { return false }
+        guard state.navigationPoint?.id == destinationID else { return false }
+        return routeRefreshKey == expectedRefreshKey
+    }
+
+    private func resolvedRouteSourceCoordinate(
+        from response: MKDirections.Response,
+        fallback: CLLocationCoordinate2D?
+    ) -> CLLocationCoordinate2D? {
+        let responseCoordinate = response.source.placemark.coordinate
+        if CLLocationCoordinate2DIsValid(responseCoordinate) {
+            return responseCoordinate
+        }
+
+        if let fallback, CLLocationCoordinate2DIsValid(fallback) {
+            return fallback
+        }
+
+        return nil
     }
 
     private func routeMetricsText(for route: MKRoute) -> String {

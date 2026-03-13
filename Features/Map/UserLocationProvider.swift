@@ -21,7 +21,7 @@ final class UserLocationProvider: NSObject, ObservableObject {
 
     var coordinateKey: String {
         guard let coordinate else { return "unknown" }
-        return String(format: "%.3f,%.3f", coordinate.latitude, coordinate.longitude)
+        return String(format: "%.4f,%.4f", coordinate.latitude, coordinate.longitude)
     }
 
     func startIfAuthorized() {
@@ -92,8 +92,6 @@ extension UserLocationProvider: CLLocationManagerDelegate {
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        Task { @MainActor in
-            self.coordinate = nil
-        }
+        _ = error
     }
 }
