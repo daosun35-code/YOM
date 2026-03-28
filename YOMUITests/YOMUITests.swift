@@ -66,20 +66,37 @@ final class YOMUITests: XCTestCase {
         XCTAssertEqual(skipButton.label, "Open Map Without Notifications")
     }
 
-    func testLocateMeShowsRecoveryAlertWhenPermissionDenied() {
+    func testFollowShowsRecoveryAlertWhenPermissionDenied() {
         let app = makeApp(extraArguments: ["UITEST_FORCE_LOCATION_DENIED"])
         app.launch()
 
         completeOnboarding(in: app)
-        let locateButton = app.buttons["map_locate_me"]
-        XCTAssertTrue(locateButton.waitForExistence(timeout: 5))
-        locateButton.tap()
+        let followButton = app.buttons["map_locate_me"]
+        XCTAssertTrue(followButton.waitForExistence(timeout: 5))
+        followButton.tap()
 
         let permissionAlert = app.alerts["Location Access Needed"]
         XCTAssertTrue(permissionAlert.waitForExistence(timeout: 5))
         XCTAssertTrue(permissionAlert.buttons["Open Settings"].exists)
         XCTAssertTrue(permissionAlert.buttons["Not Now"].exists)
         permissionAlert.buttons["Not Now"].tap()
+    }
+
+    func testFollowButtonTogglesToStopFollowingWhileActive() {
+        let app = makeApp(extraArguments: ["UITEST_FORCE_LOCATION_AUTHORIZED"])
+        app.launch()
+
+        completeOnboarding(in: app)
+
+        let followButton = app.buttons["map_locate_me"]
+        XCTAssertTrue(followButton.waitForExistence(timeout: 5))
+        XCTAssertEqual(followButton.label, "Follow")
+
+        followButton.tap()
+        XCTAssertTrue(waitForLabel("Stop Following", on: followButton, timeout: 5))
+
+        followButton.tap()
+        XCTAssertTrue(waitForLabel("Follow", on: followButton, timeout: 5))
     }
 
     func testSearchButtonPresentsKeyboardImmediately() {
@@ -969,6 +986,12 @@ final class YOMUITests: XCTestCase {
         return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
     }
 
+    private func waitForLabel(_ label: String, on element: XCUIElement, timeout: TimeInterval) -> Bool {
+        let predicate = NSPredicate(format: "label == %@", label)
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
+        return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
+    }
+
     @discardableResult
     private func tapTopNavigationPill(
         in app: XCUIApplication,
@@ -1589,6 +1612,7 @@ final class YOMStressTests: XCTestCase {
         let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
         return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
     }
+
 }
 
 final class LocalMemoryDataIntegrityTests: XCTestCase {

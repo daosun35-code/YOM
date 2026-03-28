@@ -234,16 +234,16 @@ struct MapTabRootView: View {
 
                 if !state.isSearchPresented {
                     Button {
-                        handleLocateMeAction()
+                        handleFollowToggleAction()
                     } label: {
-                        Image(systemName: "location.fill")
+                        Image(systemName: state.isFollowingUser ? "location.slash.fill" : "location.fill")
                             .font(DSTypography.iconMedium.weight(.semibold))
                             .frame(width: DSControl.minTouchTarget, height: DSControl.minTouchTarget)
                             .background(.ultraThinMaterial, in: Circle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityIdentifier("map_locate_me")
-                    .accessibilityLabel(strings.locateMe)
+                    .accessibilityLabel(state.isFollowingUser ? strings.stopFollowing : strings.followUser)
                     .transition(.scale(scale: 0.92, anchor: .trailing).combined(with: .opacity))
                 }
             }
@@ -365,7 +365,7 @@ struct MapTabRootView: View {
                 UserAnnotation(anchor: .center) { userLocation in
                     CurrentUserLocationAnnotationView(
                         headingDegrees: resolvedUserHeadingDegrees(from: userLocation),
-                        accessibilityLabel: strings.locateMe
+                        accessibilityLabel: strings.currentLocation
                     )
                 }
 
@@ -425,7 +425,7 @@ struct MapTabRootView: View {
 
     private var floatingControlsTopInset: CGFloat {
         guard state.navigationPoint != nil else { return DSSpacing.space8 }
-        // STEP3-FIX: account for retry banner height so locateMe doesn't overlap it
+        // STEP3-FIX: account for retry banner height so the follow button doesn't overlap it
         let base = DSSpacing.space8 + DSControl.floatingActionTopInsetWithBanner
         guard shouldShowQuickRouteRetry else { return base }
         return base + DSSpacing.space8 + DSControl.minTouchTarget
@@ -597,7 +597,16 @@ struct MapTabRootView: View {
         mapContainerWidth = width
     }
 
-    private func handleLocateMeAction() {
+    private func handleFollowToggleAction() {
+        if state.isFollowingUser {
+            stopFollowingUserLocation()
+            return
+        }
+
+        startFollowingUserLocation()
+    }
+
+    private func startFollowingUserLocation() {
         switch locationProvider.requestAuthorizationForUserIntent() {
         case .authorized:
             guard let coordinate = locationProvider.coordinate else {
@@ -615,6 +624,26 @@ struct MapTabRootView: View {
             shouldCenterOnNextLocationUpdate = false
             shouldFollowHeadingOnNextLocationUpdate = false
             activeAlert = .locationPermissionDenied
+        }
+    }
+
+    private func stopFollowingUserLocation() {
+        shouldCenterOnNextLocationUpdate = false
+        shouldFollowHeadingOnNextLocationUpdate = false
+
+        withAnimation(shellAnimation) {
+            if let route = state.activeRoute,
+               let destination = state.navigationPoint?.coordinate {
+                state.focusOnRoute(
+                    route,
+                    actualSource: locationProvider.coordinate,
+                    destination: destination
+                )
+            } else if let coordinate = locationProvider.coordinate {
+                state.centerOnUserLocation(coordinate)
+            } else {
+                state.recenterDefault()
+            }
         }
     }
 
@@ -818,12 +847,14 @@ struct MapTabRootView: View {
            now.timeIntervalSince(cached.createdAt) <= 120 {
             state.activeRoute = cached.route
             state.routeStatus = .ready
-            withAnimation(shellAnimation) {
-                state.focusOnRoute(
-                    cached.route,
-                    actualSource: cached.sourceCoordinate,
-                    destination: destination.coordinate
-                )
+            if state.isFollowingUser == false {
+                withAnimation(shellAnimation) {
+                    state.focusOnRoute(
+                        cached.route,
+                        actualSource: cached.sourceCoordinate,
+                        destination: destination.coordinate
+                    )
+                }
             }
             return
         }
@@ -869,12 +900,14 @@ struct MapTabRootView: View {
                             .map { ($0.key, $0.value) }
                     )
                 }
-                withAnimation(shellAnimation) {
-                    state.focusOnRoute(
-                        route,
-                        actualSource: routeSourceCoordinate,
-                        destination: destination.coordinate
-                    )
+                if state.isFollowingUser == false {
+                    withAnimation(shellAnimation) {
+                        state.focusOnRoute(
+                            route,
+                            actualSource: routeSourceCoordinate,
+                            destination: destination.coordinate
+                        )
+                    }
                 }
             } else {
                 state.activeRoute = nil

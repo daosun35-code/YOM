@@ -22,6 +22,7 @@ final class MapScreenState: ObservableObject {
     @Published var navigationSource: ExplorationSource = .active
     @Published var activeRoute: MKRoute?
     @Published var routeStatus: RouteStatus = .idle
+    @Published private(set) var isFollowingUser = false
 
     @Published var routeRetryNonce: Int = 0
     var routeCache: [RouteCacheKey: CachedRoute] = [:]
@@ -47,10 +48,12 @@ final class MapScreenState: ObservableObject {
     }
 
     func recenterDefault() {
+        isFollowingUser = false
         cameraPosition = .region(defaultRegion)
     }
 
     func centerOnUserLocation(_ coordinate: CLLocationCoordinate2D) {
+        isFollowingUser = false
         cameraPosition = .region(
             MKCoordinateRegion(
                 center: coordinate,
@@ -60,6 +63,7 @@ final class MapScreenState: ObservableObject {
     }
 
     func followUserLocation(followsHeading: Bool, fallbackCoordinate: CLLocationCoordinate2D?) {
+        isFollowingUser = true
         let fallbackPosition: MapCameraPosition
         if let fallbackCoordinate {
             fallbackPosition = .region(
@@ -79,6 +83,7 @@ final class MapScreenState: ObservableObject {
     }
 
     func selectPoint(_ point: PointOfInterest) {
+        isFollowingUser = false
         cameraPosition = .region(
             MKCoordinateRegion(
                 center: point.coordinate,
@@ -98,6 +103,7 @@ final class MapScreenState: ObservableObject {
     }
 
     func selectSearchPlace(_ place: SearchPlace, query: String) {
+        isFollowingUser = false
         cameraPosition = .region(
             MKCoordinateRegion(
                 center: place.coordinate,
@@ -147,6 +153,7 @@ final class MapScreenState: ObservableObject {
         actualSource: CLLocationCoordinate2D?,
         destination: CLLocationCoordinate2D
     ) {
+        isFollowingUser = false
         var mapRect = route.polyline.boundingMapRect
 
         if let source = actualSource, CLLocationCoordinate2DIsValid(source) {

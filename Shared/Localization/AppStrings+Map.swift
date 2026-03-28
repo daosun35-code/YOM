@@ -32,10 +32,20 @@ extension AppStrings {
             .zhHans: "暂无最近搜索",
             .yue: "暫無最近搜尋"
         ],
-        "locateMe": [
-            .en: "Locate Me",
-            .zhHans: "定位我",
-            .yue: "定位我"
+        "followUser": [
+            .en: "Follow",
+            .zhHans: "跟随",
+            .yue: "跟隨"
+        ],
+        "stopFollowing": [
+            .en: "Stop Following",
+            .zhHans: "停止跟随",
+            .yue: "停止跟隨"
+        ],
+        "currentLocation": [
+            .en: "Current Location",
+            .zhHans: "当前位置",
+            .yue: "目前位置"
         ],
         "goText": [
             .en: "Go",
@@ -153,9 +163,9 @@ extension AppStrings {
             .yue: "需要位置權限"
         ],
         "locationPermissionBody": [
-            .en: "Enable location access in Settings to use Locate Me and route guidance.",
-            .zhHans: "请在设置中启用定位权限，以使用“定位我”和路线导航。",
-            .yue: "請在設定啟用定位權限，以使用「定位我」同路線導航。"
+            .en: "Enable location access in Settings to use Follow and route guidance.",
+            .zhHans: "请在设置中启用定位权限，以使用“跟随”和路线导航。",
+            .yue: "請在設定啟用定位權限，以使用「跟隨」同路線導航。"
         ],
         "openSettingsText": [
             .en: "Open Settings",
@@ -170,7 +180,9 @@ extension AppStrings {
     var searchRecommendations: String { text("searchRecommendations") }
     var searchRecents: String { text("searchRecents") }
     var searchNoRecents: String { text("searchNoRecents") }
-    var locateMe: String { text("locateMe") }
+    var followUser: String { text("followUser") }
+    var stopFollowing: String { text("stopFollowing") }
+    var currentLocation: String { text("currentLocation") }
     var goText: String { text("goText") }
     var changeDestination: String { text("changeDestination") }
     var searchResultFallbackTitle: String { text("searchResultFallbackTitle") }
